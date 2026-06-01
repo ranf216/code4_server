@@ -1,0 +1,13 @@
+1. Run npm install
+2. Connect windsurf_cascade_brain - in admin command:
+	cd <project root>
+	mklink docs\brain.md C:\Development\FuzzyClick\windsurf_cascade_brain\brain.md
+	mklink docs\code_review_checklist.md C:\Development\FuzzyClick\windsurf_cascade_brain\code_review_checklist.md
+	echo docs/brain.md >> .git/info/exclude
+	echo docs/code_review_checklist.md >> .git/info/exclude
+3. Restart IDE (to make .git/info/exclude take affect)
+4. Setup config.js
+5. Setup .<branch>.config.dec.js, and run the create_config tool
+6. Setup server.config.js
+7. Setup runtime.config.js
+8. Setup ecosystem.config.js

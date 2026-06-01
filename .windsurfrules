@@ -1,0 +1,29 @@
+# AI Workflow
+- Always read the `docs/brain.md` file completely before generating any code.
+- Always read the `db/db.sql` file completely to understand the db structure before generating any code.
+- Always search `docs/brain.md` for implementation patterns before writing any new code.
+- CRITICAL: Before writing ANY custom implementation (parsing, conversion, validation, etc.), actively search brain.md for existing utilities, patterns, and parameter types. Never reinvent functionality that already exists in the infrastructure.
+- CRITICAL: Before writing ANY database code, search brain.md for "CRITICAL", "loop", and "transaction" to review mandatory patterns. Never execute $Db.executeQuery() inside loops. Never include SELECT queries inside transactions. Always use bulk operations and prepare data in memory before transactions.
+- CRITICAL: After writing ANY database code, go through the code review checklist in `docs/code_review_checklist.md` to ensure compliance.
+- When requested to create API or API group, any database changes needed, always add to both `db/db.sql` and to `db/UpgradeDB.sql` and Use all the standard flows defined in docs/brain.md
+- When adding to `db/UpgradeDB.sql`, always add the changes at the end of the file, assuming all precious script is already deployed on the DB, and do not make changes on the existing script.
+- When requested to update the `docs/brain.md` file, always update its Document Version and Last Updated fields.
+- Never update `docs/brain.md` with project specific information.
+- When creating a new API module (platform/api/*.js and platform/funcs/*.js), always add a corresponding test method in `platform/funcs/api_test.js` that tests all APIs in the new module using $executeAPI and session impersonation.
+- When updating an existing API module, always update the corresponding test in `platform/funcs/api_test.js` to ensure it tests the updated functionality correctly.
+
+# Project AI Workflow
+- Always read the `docs/project_dev.md` file completely before generating any code.
+- Always write to the `docs/project_dev.md` file any new flow added to the project.
+
+# Style Guide
+- Always use tab of 4 spaces for code indentation.
+- Always place curly braces on a new line (Allman style).
+
+# SQL Syntax and Style
+- Use 'JOIN' instead of 'INNER JOIN'
+- Use 'LEFT OUTER JOIN' instead of 'LEFT JOIN'
+- Indent JOINs on a new line in one tab more than the 'FROM' clause
+- Don't use table aliases if not needed
+- Don't use 'AS' keyword for table aliases
+- Don't use 'AS' keyword for column aliases

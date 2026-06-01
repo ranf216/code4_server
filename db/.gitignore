@@ -1,0 +1,5 @@
+*
+!.gitignore
+!db.sql
+!UpgrdeDB.sql
+!triggers_def.js

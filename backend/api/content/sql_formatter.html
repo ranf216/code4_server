@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8" />
+        <title>{{system}} {{environment}} - SQL Formatter</title>
+		<link rel="shortcut icon" href="/favicon.ico?src=sql_formatter" />
+
+		<script type="text/javascript" src="/public/jquery-1.8.2.mini.js"></script>
+		
+		<style type="text/css">
+			body {
+				font-family: Arial, sans-serif;
+				margin: 20px;
+				background: #f5f5f5;
+			}
+			.container {
+				max-width: 1200px;
+				margin: 0 auto;
+				background: white;
+				padding: 20px;
+				border-radius: 8px;
+				box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+			}
+			h1 {
+				color: #333;
+				margin-bottom: 20px;
+			}
+			.settings {
+				margin-bottom: 20px;
+				padding: 10px;
+				background: #f9f9f9;
+				border-radius: 4px;
+			}
+			.settings label {
+				margin-right: 10px;
+				font-weight: bold;
+			}
+			.settings input[type="number"] {
+				width: 80px;
+				padding: 5px;
+				border: 1px solid #ccc;
+				border-radius: 4px;
+			}
+			textarea {
+				width: 100%;
+				border: 1px solid #ccc;
+				padding: 10px;
+				font-family: 'Courier New', monospace;
+				font-size: 14px;
+				border-radius: 4px;
+				box-sizing: border-box;
+			}
+			#inputArea {
+				height: 200px;
+				margin-bottom: 10px;
+			}
+			#outputArea {
+				height: 400px;
+				background: #f9f9f9;
+				cursor: pointer;
+				position: relative;
+			}
+			#outputArea:hover {
+				background: #f0f0f0;
+			}
+			.button-container {
+				margin: 10px 0;
+			}
+			button {
+				padding: 10px 20px;
+				background: #007bff;
+				color: white;
+				border: none;
+				border-radius: 4px;
+				cursor: pointer;
+				font-size: 14px;
+				font-weight: bold;
+			}
+			button:hover {
+				background: #0056b3;
+			}
+			button:active {
+				background: #004085;
+			}
+			.label {
+				font-weight: bold;
+				margin-bottom: 5px;
+				color: #555;
+			}
+			.copy-hint {
+				position: absolute;
+				top: 10px;
+				right: 10px;
+				color: #999;
+				font-size: 12px;
+				pointer-events: none;
+			}
+			.copied-notification {
+				position: fixed;
+				top: 20px;
+				right: 20px;
+				background: #28a745;
+				color: white;
+				padding: 15px 20px;
+				border-radius: 4px;
+				box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+				display: none;
+				z-index: 1000;
+			}
+			.error {
+				color: #dc3545;
+				margin-top: 10px;
+				padding: 10px;
+				background: #f8d7da;
+				border: 1px solid #f5c6cb;
+				border-radius: 4px;
+				display: none;
+			}
+		</style>
+
+		<script type="text/javascript">
+			var MAX_LINE_LENGTH = 120;
+
+			$(document).ready(function()
+			{
+				$('#maxLineLength').val(MAX_LINE_LENGTH);
+
+				$('#formatBtn').click(function()
+				{
+					formatSQL();
+				});
+
+				$('#outputArea').click(function()
+				{
+					copyToClipboard();
+				});
+
+				$('#maxLineLength').change(function()
+				{
+					MAX_LINE_LENGTH = parseInt($(this).val()) || 120;
+				});
+			});
+
+			function formatSQL()
+			{
+				var input = $('#inputArea').val().trim();
+				if (!input)
+				{
+					showError('Please enter SQL query and parameters');
+					return;
+				}
+
+				hideError();
+
+				try
+				{
+					var result = parseSQLAndParams(input);
+					var formattedSQL = formatSQLStatement(result.sql, result.params);
+					$('#outputArea').val(formattedSQL);
+				}
+				catch (e)
+				{
+					showError('Error: ' + e.message);
+				}
+			}
+
+			function parseSQLAndParams(input)
+			{
+				input = decodeHTMLEntities(input);
+				
+				var lastBracketIndex = input.lastIndexOf('[');
+				if (lastBracketIndex === -1)
+				{
+					return { sql: input, params: [] };
+				}
+
+				var sqlPart = input.substring(0, lastBracketIndex).trim();
+				var paramsPart = input.substring(lastBracketIndex).trim();
+
+				var params = [];
+				try
+				{
+					params = JSON.parse(paramsPart);
+					if (!Array.isArray(params))
+					{
+						params = [];
+					}
+				}
+				catch (e)
+				{
+					return { sql: input, params: [] };
+				}
+
+				return { sql: sqlPart, params: params };
+			}
+
+			function formatSQLStatement(sql, params)
+			{
+				var paramIndex = 0;
+				var formattedSQL = sql.replace(/\?/g, function()
+				{
+					if (paramIndex >= params.length)
+					{
+						return '?';
+					}
+					var param = params[paramIndex++];
+					if (param === null || param === undefined)
+					{
+						return 'NULL';
+					}
+					if (typeof param === 'string')
+					{
+						return "'" + param.replace(/'/g, "''") + "'";
+					}
+					return param;
+				});
+
+				formattedSQL = formattedSQL.replace(/\s+/g, ' ').trim();
+
+				formattedSQL = formattedSQL.replace(/\bLEFT\s+OUTER\s+JOIN\b/gi, '\n    LEFT_OUTER_JOIN');
+				formattedSQL = formattedSQL.replace(/\bRIGHT\s+OUTER\s+JOIN\b/gi, '\n    RIGHT_OUTER_JOIN');
+				formattedSQL = formattedSQL.replace(/\bFULL\s+OUTER\s+JOIN\b/gi, '\n    FULL_OUTER_JOIN');
+				formattedSQL = formattedSQL.replace(/\bINNER\s+JOIN\b/gi, '\n    INNER_JOIN');
+				formattedSQL = formattedSQL.replace(/\bLEFT\s+JOIN\b/gi, '\n    LEFT_JOIN');
+				formattedSQL = formattedSQL.replace(/\bRIGHT\s+JOIN\b/gi, '\n    RIGHT_JOIN');
+				formattedSQL = formattedSQL.replace(/\bFULL\s+JOIN\b/gi, '\n    FULL_JOIN');
+				formattedSQL = formattedSQL.replace(/\bCROSS\s+JOIN\b/gi, '\n    CROSS_JOIN');
+				formattedSQL = formattedSQL.replace(/\bJOIN\b/gi, '\n    JOIN');
+				
+				formattedSQL = formattedSQL.replace(/\bSELECT\b/gi, '\nSELECT');
+				formattedSQL = formattedSQL.replace(/\bUPDATE\b/gi, '\nUPDATE');
+				formattedSQL = formattedSQL.replace(/\bINSERT\s+INTO\b/gi, '\nINSERT INTO');
+				formattedSQL = formattedSQL.replace(/\bDELETE\s+FROM\b/gi, '\nDELETE FROM');
+				formattedSQL = formattedSQL.replace(/\bFROM\b/gi, '\nFROM');
+				formattedSQL = formattedSQL.replace(/\bWHERE\b/gi, '\nWHERE');
+				formattedSQL = formattedSQL.replace(/\bGROUP\s+BY\b/gi, '\nGROUP BY');
+				formattedSQL = formattedSQL.replace(/\bHAVING\b/gi, '\nHAVING');
+				formattedSQL = formattedSQL.replace(/\bORDER\s+BY\b/gi, '\nORDER BY');
+				formattedSQL = formattedSQL.replace(/\bLIMIT\b/gi, '\nLIMIT');
+				formattedSQL = formattedSQL.replace(/\bSET\b/gi, '\nSET');
+				formattedSQL = formattedSQL.replace(/\bVALUES\b/gi, '\nVALUES');
+				
+				formattedSQL = formattedSQL.replace(/LEFT_OUTER_JOIN/g, 'LEFT OUTER JOIN');
+				formattedSQL = formattedSQL.replace(/RIGHT_OUTER_JOIN/g, 'RIGHT OUTER JOIN');
+				formattedSQL = formattedSQL.replace(/FULL_OUTER_JOIN/g, 'FULL OUTER JOIN');
+				formattedSQL = formattedSQL.replace(/INNER_JOIN/g, 'INNER JOIN');
+				formattedSQL = formattedSQL.replace(/LEFT_JOIN/g, 'LEFT JOIN');
+				formattedSQL = formattedSQL.replace(/RIGHT_JOIN/g, 'RIGHT JOIN');
+				formattedSQL = formattedSQL.replace(/FULL_JOIN/g, 'FULL JOIN');
+				formattedSQL = formattedSQL.replace(/CROSS_JOIN/g, 'CROSS JOIN');
+
+				var lines = formattedSQL.split('\n');
+				var wrappedLines = [];
+
+				for (var i = 0; i < lines.length; i++)
+				{
+					var line = lines[i];
+					var trimmedLine = line.trim();
+					
+					if (trimmedLine === '')
+					{
+						continue;
+					}
+					
+					if (line.length <= MAX_LINE_LENGTH)
+					{
+						wrappedLines.push(line);
+					}
+					else
+					{
+						var wrapped = wrapLine(line, MAX_LINE_LENGTH);
+						wrappedLines = wrappedLines.concat(wrapped);
+					}
+				}
+
+				return wrappedLines.join('\n');
+			}
+
+			function wrapLine(line, maxLength)
+			{
+				var result = [];
+				var currentLine = '';
+				var isFirstLine = true;
+				var indent = '        ';
+				
+				var joinMatch = line.match(/^\s*(LEFT OUTER JOIN|RIGHT OUTER JOIN|FULL OUTER JOIN|INNER JOIN|LEFT JOIN|RIGHT JOIN|FULL JOIN|CROSS JOIN|JOIN)\s+/i);
+				var isJoinLine = joinMatch !== null;
+				
+				if (isJoinLine)
+				{
+					indent = '        ';
+				}
+
+				var keywordMatch = line.match(/^\s*(SELECT|UPDATE|INSERT INTO|DELETE FROM|FROM|WHERE|GROUP BY|HAVING|ORDER BY|LIMIT|SET|VALUES)\s+/i);
+				
+				if (joinMatch)
+				{
+					var leadingSpaces = joinMatch[0].match(/^(\s*)/)[1];
+					currentLine = leadingSpaces + joinMatch[1];
+					line = line.substring(joinMatch[0].length);
+					isFirstLine = false;
+					indent = leadingSpaces + '    ';
+				}
+				else if (keywordMatch)
+				{
+					var leadingSpaces = keywordMatch[0].match(/^(\s*)/)[1];
+					currentLine = leadingSpaces + keywordMatch[1];
+					line = line.substring(keywordMatch[0].length);
+					isFirstLine = false;
+				}
+
+				var tokens = tokenizeLine(line);
+
+				for (var i = 0; i < tokens.length; i++)
+				{
+					var token = tokens[i];
+					var testLine = currentLine + (currentLine ? ' ' : '') + token;
+
+					if (testLine.length > maxLength && currentLine)
+					{
+						result.push(currentLine);
+						currentLine = (isFirstLine ? '' : indent) + token;
+						isFirstLine = false;
+					}
+					else
+					{
+						currentLine = testLine;
+					}
+				}
+
+				if (currentLine)
+				{
+					result.push(currentLine);
+				}
+
+				return result;
+			}
+
+			function tokenizeLine(line)
+			{
+				var tokens = [];
+				var current = '';
+				var inQuotes = false;
+				var quoteChar = '';
+
+				for (var i = 0; i < line.length; i++)
+				{
+					var char = line[i];
+
+					if (!inQuotes && (char === "'" || char === '"' || char === '`'))
+					{
+						inQuotes = true;
+						quoteChar = char;
+						current += char;
+					}
+					else if (inQuotes && char === quoteChar)
+					{
+						current += char;
+						if (i + 1 < line.length && line[i + 1] === quoteChar)
+						{
+							current += line[i + 1];
+							i++;
+						}
+						else
+						{
+							inQuotes = false;
+							quoteChar = '';
+						}
+					}
+					else if (!inQuotes && char === ' ')
+					{
+						if (current)
+						{
+							tokens.push(current);
+							current = '';
+						}
+					}
+					else
+					{
+						current += char;
+					}
+				}
+
+				if (current)
+				{
+					tokens.push(current);
+				}
+
+				return tokens;
+			}
+
+			function copyToClipboard()
+			{
+				var textarea = document.getElementById('outputArea');
+				var selectedText = textarea.value.substring(textarea.selectionStart, textarea.selectionEnd);
+				
+				if (selectedText.length > 0)
+				{
+					return;
+				}
+				
+				var text = $('#outputArea').val();
+				if (!text)
+				{
+					return;
+				}
+
+				var $temp = $('<textarea>');
+				$('body').append($temp);
+				$temp.val(text).select();
+				document.execCommand('copy');
+				$temp.remove();
+
+				showCopiedNotification();
+			}
+
+			function showCopiedNotification()
+			{
+				$('#copiedNotification').fadeIn(200).delay(1500).fadeOut(200);
+			}
+
+			function showError(message)
+			{
+				$('#errorMessage').text(message).show();
+			}
+
+			function hideError()
+			{
+				$('#errorMessage').hide();
+			}
+			
+			function decodeHTMLEntities(text)
+			{
+				var textArea = document.createElement('textarea');
+				textArea.innerHTML = text;
+				return textArea.value;
+			}
+		</script>
+
+    </head>
+    <body>
+		{{getWebClientMessages}}
+		{{getWebClientEnvironment}}
+		
+		<div class="container">
+			<h1>SQL Formatter</h1>
+			
+			<div class="settings">
+				<label for="maxLineLength">Max Line Length:</label>
+				<input type="number" id="maxLineLength" min="50" max="500" step="10" />
+			</div>
+
+			<div class="label">Input (SQL Query + Parameters):</div>
+			<textarea id="inputArea" placeholder="Paste your SQL query here, followed by parameters in JSON array format.&#10;&#10;Example:&#10;SELECT * FROM users WHERE id=? AND name=? [123, 'John Doe']"></textarea>
+
+			<div class="button-container">
+				<button id="formatBtn">Format</button>
+			</div>
+
+			<div class="error" id="errorMessage"></div>
+
+			<div class="label">Formatted SQL (click to copy):</div>
+			<textarea id="outputArea" readonly placeholder="Formatted SQL will appear here..."></textarea>
+			<div class="copy-hint">Click to copy</div>
+		</div>
+
+		<div class="copied-notification" id="copiedNotification">
+			Copied to clipboard!
+		</div>
+    </body>
+</html>

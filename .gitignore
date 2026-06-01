@@ -1,0 +1,11 @@
+package-lock.json
+node_modules
+.vscode
+/test*
+backend/platform/config/.config.js
+backend/platform/config/firebase.json
+backend/platform/config/*.config.dec.js
+reconstruct_config.js
+private.config.js
+!backend/platform/config/.sample.config.dec.js
+dummy
