@@ -43,11 +43,11 @@ The project infrastructure is set up with the following **built-in platform modu
 
 Before any API module, set up the project-level foundations:
 
-1. **Define admin roles** in `platform/definitions/user_roles.js` (Super Admin, Manager, Planning, Logistics, Finance)
-2. **Define project error codes** in `platform/definitions/errorcodes.en.js` (starting at RC 500)
+1. ~~**Define admin roles**~~ ✅ Done — `USER_ROLE_SUPER_ADMIN` (2), `USER_ROLE_MANAGER` (3), `USER_ROLE_PLANNING` (4), `USER_ROLE_LOGISTICS` (5), `USER_ROLE_FINANCE` (6) in `platform/definitions/user_roles.js`
+2. ~~**Define project error codes**~~ ✅ Done — RC 500–779 in `platform/definitions/errorcodes.en.js`
 3. ~~**Add user types**~~ ✅ Done — `USER_TYPE_OFFICER` (2) and `USER_TYPE_RESIDENT` (3) defined in `platform/definitions/user_types.js`
-4. **Set up `$DataItems`** tables for lookup lists: `service_type`, `task_type`, `asset_type`, `po_section_type`
-5. **Create the `community` table** in `db/db.sql` and `db/UpgrdeDB.sql`
+4. ~~**Set up `$DataItems`**~~ ✅ Done — `service_type.json`, `task_type.json`, `asset_type.json`, `po_section_type.json` in `platform/data/`
+5. ~~**Create the `community` table**~~ ✅ Done — `community` + `featured_officer` tables in `db/db.sql` and `db/UpgrdeDB.sql` (V 4.0.0)
 
 **Why first:** Every other module depends on user roles, error codes, and the community entity.
 

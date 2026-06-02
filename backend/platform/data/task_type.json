@@ -1,0 +1,11 @@
+{
+    "lights":               {"name": {"en": "Lights"},              "define": "TASK_TYPE_LIGHTS"                    },
+    "sprinklers":           {"name": {"en": "Sprinklers"},          "define": "TASK_TYPE_SPRINKLERS"                },
+    "leaks":                {"name": {"en": "Leaks"},               "define": "TASK_TYPE_LEAKS"                     },
+    "damaged_property":     {"name": {"en": "Damaged Property"},    "define": "TASK_TYPE_DAMAGED_PROPERTY"          },
+    "maintenance":          {"name": {"en": "Maintenance"},         "define": "TASK_TYPE_MAINTENANCE"               },
+    "inspection":           {"name": {"en": "Inspection Required"}, "define": "TASK_TYPE_INSPECTION"                },
+    "damaged_equipment":    {"name": {"en": "Damaged Equipment"},   "define": "TASK_TYPE_DAMAGED_EQUIPMENT"         },
+    "operational_report":   {"name": {"en": "Operational Report"},  "define": "TASK_TYPE_OPERATIONAL_REPORT"        },
+    "supply_request":       {"name": {"en": "Supply Request"},      "define": "TASK_TYPE_SUPPLY_REQUEST"            }
+}

@@ -136,4 +136,121 @@ module.exports = {
 
 	// Content
 
+	// =============================================
+	// Project-specific error codes (RC 500+)
+	// =============================================
+
+	// Community (500-519)
+	"ERR_COMMUNITY_NOT_FOUND"							: {"rc" : 500,	"message" : "community not found"},
+	"ERR_COMMUNITY_NAME_ALREADY_EXISTS"					: {"rc" : 501,	"message" : "a community with this name already exists"},
+	"ERR_COMMUNITY_HAS_ACTIVE_OFFICERS"					: {"rc" : 502,	"message" : "cannot delete community with active officers"},
+	"ERR_COMMUNITY_HAS_ACTIVE_RESIDENTS"				: {"rc" : 503,	"message" : "cannot delete community with active residents"},
+	"ERR_COMMUNITY_HAS_ACTIVE_CALLS"					: {"rc" : 504,	"message" : "cannot delete community with active calls"},
+	"ERR_COMMUNITY_IS_NOT_ACTIVE"						: {"rc" : 505,	"message" : "community is not active"},
+	"ERR_FEATURED_OFFICER_NOT_FOUND"					: {"rc" : 506,	"message" : "featured officer not found"},
+
+	// Officer (520-539)
+	"ERR_OFFICER_NOT_FOUND"								: {"rc" : 520,	"message" : "officer not found"},
+	"ERR_OFFICER_ALREADY_IN_COMMUNITY"					: {"rc" : 521,	"message" : "officer is already assigned to this community"},
+	"ERR_OFFICER_HAS_ACTIVE_CALLS"						: {"rc" : 522,	"message" : "cannot delete officer with active calls"},
+	"ERR_OFFICER_HAS_ACTIVE_SHIFTS"						: {"rc" : 523,	"message" : "cannot delete officer with active shifts"},
+	"ERR_OFFICER_NOT_IN_COMMUNITY"						: {"rc" : 524,	"message" : "officer is not assigned to this community"},
+	"ERR_OFFICER_NOT_ON_DUTY"							: {"rc" : 525,	"message" : "officer is not on duty"},
+
+	// Resident (540-559)
+	"ERR_RESIDENT_NOT_FOUND"							: {"rc" : 540,	"message" : "resident not found"},
+	"ERR_RESIDENT_HAS_ACTIVE_CALLS"						: {"rc" : 541,	"message" : "cannot delete resident with active calls"},
+	"ERR_RESIDENT_ALREADY_EXISTS"						: {"rc" : 542,	"message" : "resident already exists in this community"},
+
+	// Call (560-589)
+	"ERR_CALL_NOT_FOUND"								: {"rc" : 560,	"message" : "call not found"},
+	"ERR_CALL_ALREADY_ACCEPTED"							: {"rc" : 561,	"message" : "call has already been accepted"},
+	"ERR_CALL_ALREADY_RESOLVED"							: {"rc" : 562,	"message" : "call has already been resolved"},
+	"ERR_CALL_ALREADY_CANCELED"							: {"rc" : 563,	"message" : "call has already been canceled"},
+	"ERR_CALL_CANNOT_ACCEPT"							: {"rc" : 564,	"message" : "call cannot be accepted in its current status"},
+	"ERR_CALL_CANNOT_RESOLVE"							: {"rc" : 565,	"message" : "call cannot be resolved in its current status"},
+	"ERR_CALL_CANNOT_CANCEL"							: {"rc" : 566,	"message" : "call cannot be canceled in its current status"},
+	"ERR_CALL_ACTIVE_EMERGENCY_EXISTS"					: {"rc" : 567,	"message" : "an active emergency call already exists"},
+	"ERR_CALL_INVALID_CATEGORY"							: {"rc" : 568,	"message" : "invalid call category"},
+	"ERR_CALL_INVALID_STATUS"							: {"rc" : 569,	"message" : "invalid call status"},
+	"ERR_CALL_INVALID_PRIORITY"							: {"rc" : 570,	"message" : "invalid call priority"},
+	"ERR_CALL_INVALID_SERVICE_TYPE"						: {"rc" : 571,	"message" : "invalid service type"},
+	"ERR_CALL_MEDIA_LIMIT_REACHED"						: {"rc" : 572,	"message" : "maximum number of media files reached"},
+	"ERR_CALL_NOT_ASSIGNED_TO_OFFICER"					: {"rc" : 573,	"message" : "call is not assigned to this officer"},
+	"ERR_CALL_IS_NOT_TEST"								: {"rc" : 574,	"message" : "only test calls can be deleted"},
+
+	// Task (590-609)
+	"ERR_TASK_NOT_FOUND"								: {"rc" : 590,	"message" : "task not found"},
+	"ERR_TASK_INVALID_STATUS"							: {"rc" : 591,	"message" : "invalid task status"},
+	"ERR_TASK_CANNOT_ACCEPT"							: {"rc" : 592,	"message" : "task cannot be accepted in its current status"},
+	"ERR_TASK_CANNOT_COMPLETE"							: {"rc" : 593,	"message" : "task cannot be completed in its current status"},
+	"ERR_TASK_CANNOT_CANCEL"							: {"rc" : 594,	"message" : "task cannot be canceled in its current status"},
+	"ERR_TASK_CANNOT_REJECT"							: {"rc" : 595,	"message" : "task cannot be rejected in its current status"},
+	"ERR_TASK_INVALID_TYPE"								: {"rc" : 596,	"message" : "invalid task type"},
+
+	// Shift (610-639)
+	"ERR_SHIFT_NOT_FOUND"								: {"rc" : 610,	"message" : "shift not found"},
+	"ERR_SHIFT_INVALID_STATUS"							: {"rc" : 611,	"message" : "invalid shift status"},
+	"ERR_SHIFT_CANNOT_PUBLISH"							: {"rc" : 612,	"message" : "shift cannot be published in its current status"},
+	"ERR_SHIFT_CANNOT_CANCEL"							: {"rc" : 613,	"message" : "shift cannot be canceled in its current status"},
+	"ERR_SHIFT_OFFICER_ALREADY_ALLOCATED"				: {"rc" : 614,	"message" : "officer is already allocated to this shift"},
+	"ERR_SHIFT_OFFICER_NOT_ALLOCATED"					: {"rc" : 615,	"message" : "officer is not allocated to this shift"},
+	"ERR_SHIFT_OFFICER_CONFLICT"						: {"rc" : 616,	"message" : "officer has a scheduling conflict"},
+	"ERR_SHIFT_ALREADY_CHECKED_IN"						: {"rc" : 617,	"message" : "officer has already checked in"},
+	"ERR_SHIFT_NOT_CHECKED_IN"							: {"rc" : 618,	"message" : "officer has not checked in"},
+	"ERR_SHIFT_INVALID_TIME_RANGE"						: {"rc" : 619,	"message" : "invalid shift time range"},
+
+	// Route (640-659)
+	"ERR_ROUTE_NOT_FOUND"								: {"rc" : 640,	"message" : "route not found"},
+	"ERR_ROUTE_NO_POSTS_AVAILABLE"						: {"rc" : 641,	"message" : "no posts available for route generation"},
+	"ERR_ROUTE_ALREADY_PUSHED"							: {"rc" : 642,	"message" : "route has already been pushed to officer"},
+	"ERR_WAYPOINT_NOT_FOUND"							: {"rc" : 643,	"message" : "waypoint not found"},
+	"ERR_WAYPOINT_ALREADY_VISITED"						: {"rc" : 644,	"message" : "waypoint has already been visited"},
+
+	// Tracking (660-669)
+	"ERR_TRACKING_INVALID_COORDINATES"					: {"rc" : 660,	"message" : "invalid GPS coordinates"},
+
+	// Post Order (670-689)
+	"ERR_POST_ORDER_NOT_FOUND"							: {"rc" : 670,	"message" : "post order not found"},
+	"ERR_POST_ORDER_CANNOT_PUBLISH"						: {"rc" : 671,	"message" : "post order cannot be published in its current status"},
+	"ERR_POST_ORDER_CANNOT_ARCHIVE"						: {"rc" : 672,	"message" : "post order cannot be archived in its current status"},
+	"ERR_POST_ORDER_CANNOT_DELETE"						: {"rc" : 673,	"message" : "cannot delete a post order with published history"},
+	"ERR_POST_ORDER_SECTION_NOT_FOUND"					: {"rc" : 674,	"message" : "post order section not found"},
+	"ERR_POST_ORDER_ALREADY_ACKNOWLEDGED"				: {"rc" : 675,	"message" : "post order version already acknowledged"},
+	"ERR_POST_ORDER_INVALID_SECTION_TYPE"				: {"rc" : 676,	"message" : "invalid post order section type"},
+
+	// POI (690-709)
+	"ERR_POI_RECORD_NOT_FOUND"							: {"rc" : 690,	"message" : "POI record not found"},
+	"ERR_POI_INVALID_RECORD_TYPE"						: {"rc" : 691,	"message" : "invalid POI record type"},
+	"ERR_POI_INVALID_THREAT_LEVEL"						: {"rc" : 692,	"message" : "invalid threat level"},
+	"ERR_POI_CANNOT_PUBLISH"							: {"rc" : 693,	"message" : "POI record cannot be published in its current status"},
+	"ERR_POI_CANNOT_INACTIVATE"							: {"rc" : 694,	"message" : "POI record cannot be inactivated in its current status"},
+	"ERR_POI_CANNOT_ARCHIVE"							: {"rc" : 695,	"message" : "POI record cannot be archived in its current status"},
+
+	// Report (710-729)
+	"ERR_REPORT_NOT_FOUND"								: {"rc" : 710,	"message" : "report not found"},
+	"ERR_REPORT_TEMPLATE_NOT_FOUND"						: {"rc" : 711,	"message" : "report template not found"},
+	"ERR_REPORT_CANNOT_SUBMIT"							: {"rc" : 712,	"message" : "report cannot be submitted in its current status"},
+	"ERR_REPORT_CANNOT_APPROVE"							: {"rc" : 713,	"message" : "report cannot be approved in its current status"},
+	"ERR_REPORT_CANNOT_DELIVER"							: {"rc" : 714,	"message" : "report cannot be delivered in its current status"},
+
+	// Notification (730-739)
+	"ERR_NOTIFICATION_NOT_FOUND"						: {"rc" : 730,	"message" : "notification not found"},
+
+	// Settings (740-749)
+	"ERR_SETTING_NOT_FOUND"								: {"rc" : 740,	"message" : "setting not found"},
+	"ERR_SETTING_NAME_ALREADY_EXISTS"					: {"rc" : 741,	"message" : "a setting with this name already exists"},
+
+	// Asset & Post (750-769)
+	"ERR_ASSET_NOT_FOUND"								: {"rc" : 750,	"message" : "asset not found"},
+	"ERR_ASSET_INVALID_TYPE"							: {"rc" : 751,	"message" : "invalid asset type"},
+	"ERR_POST_NOT_FOUND"								: {"rc" : 752,	"message" : "post not found"},
+	"ERR_POST_NAME_ALREADY_EXISTS"						: {"rc" : 753,	"message" : "a post with this name already exists in this community"},
+	"ERR_MAP_ZONE_NOT_FOUND"							: {"rc" : 754,	"message" : "map zone not found"},
+
+	// Admin User (770-779)
+	"ERR_ADMIN_USER_NOT_FOUND"							: {"rc" : 770,	"message" : "admin user not found"},
+	"ERR_ADMIN_CANNOT_DELETE_SELF"						: {"rc" : 771,	"message" : "cannot delete your own account"},
+	"ERR_ADMIN_CANNOT_EDIT_SELF_ROLE"					: {"rc" : 772,	"message" : "cannot change your own role"},
+
 };

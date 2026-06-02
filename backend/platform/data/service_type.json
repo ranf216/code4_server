@@ -1,0 +1,7 @@
+{
+    "dumpsters_recovery":   {"name": {"en": "Dumpsters Recovery"},  "define": "SERVICE_TYPE_DUMPSTERS_RECOVERY"   },
+    "welfare_check":        {"name": {"en": "Welfare Check"},       "define": "SERVICE_TYPE_WELFARE_CHECK"          },
+    "property_walk":        {"name": {"en": "Property Walk"},       "define": "SERVICE_TYPE_PROPERTY_WALK"          },
+    "package_recovery":     {"name": {"en": "Package Recovery"},    "define": "SERVICE_TYPE_PACKAGE_RECOVERY"       },
+    "package_delivery":     {"name": {"en": "Package Delivery"},    "define": "SERVICE_TYPE_PACKAGE_DELIVERY"       }
+}

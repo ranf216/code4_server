@@ -1,0 +1,14 @@
+{
+    "general_info":         {"name": {"en": "General Information"},          "client_visible": true,     "define": "PO_SECTION_GENERAL_INFO"         },
+    "duties":               {"name": {"en": "Duties & Responsibilities"},   "client_visible": true,     "define": "PO_SECTION_DUTIES"               },
+    "emergency":            {"name": {"en": "Emergency Procedures"},        "client_visible": true,     "define": "PO_SECTION_EMERGENCY"            },
+    "access_control":       {"name": {"en": "Access Control Rules"},        "client_visible": true,     "define": "PO_SECTION_ACCESS_CONTROL"       },
+    "patrol":               {"name": {"en": "Patrol Instructions"},         "client_visible": false,    "define": "PO_SECTION_PATROL"               },
+    "use_of_force":         {"name": {"en": "Use of Force & Legal Guidance"}, "client_visible": false,  "define": "PO_SECTION_USE_OF_FORCE"         },
+    "reporting":            {"name": {"en": "Reporting Requirements"},      "client_visible": true,     "define": "PO_SECTION_REPORTING"            },
+    "equipment":            {"name": {"en": "Equipment & Uniform"},         "client_visible": false,    "define": "PO_SECTION_EQUIPMENT"            },
+    "communication":        {"name": {"en": "Communication Protocols"},     "client_visible": false,    "define": "PO_SECTION_COMMUNICATION"        },
+    "poi":                  {"name": {"en": "Persons of Interest"},         "client_visible": false,    "define": "PO_SECTION_POI"                  },
+    "client_instructions":  {"name": {"en": "Client-Specific Instructions"}, "client_visible": true,    "define": "PO_SECTION_CLIENT_INSTRUCTIONS"  },
+    "vendor":               {"name": {"en": "Vendor & Contractor Rules"},   "client_visible": true,     "define": "PO_SECTION_VENDOR"               }
+}
