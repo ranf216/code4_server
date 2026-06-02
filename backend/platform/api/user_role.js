@@ -40,7 +40,7 @@ module.exports =
 
 
 			"get_my_roles"						: {
-													"@acl"							: [$ACL.USER_TYPE_ADMIN, $ACL.USER_TYPE_REGULAR],
+													"@acl"							: [$ACL.USER_TYPE_ADMIN],
 													"#token"						: "s",
 												},
 

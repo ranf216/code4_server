@@ -33,6 +33,7 @@ module.exports =
 
 			"register"							: {
 													"@acl"							: [$ACL.USER_TYPE_NA],
+													"@mode"							: "off",
 													"@protected"					: "password",
 													"first_name"					: "s",
 													"last_name"						: "s",
@@ -94,6 +95,7 @@ module.exports =
 
 			"register_with_phone"				: {
 													"@acl"							: [$ACL.USER_TYPE_NA],
+													"@mode"							: "off",
 													"auth_key"						: "s",
 													"first_name"					: "s",
 													"last_name"						: "s",
@@ -108,22 +110,26 @@ module.exports =
 
 			"send_email_code"					: {
 													"@acl"							: [$ACL.USER_TYPE_NA],
+													"@mode"							: "off",
 													"email"							: "s",
 												},
 
 			"resend_email_code"					: {
 													"@acl"							: [$ACL.USER_TYPE_NA],
+													"@mode"							: "off",
 													"email"							: "s",
 												},
 
 			"verify_email_code"					: {
 													"@acl"							: [$ACL.USER_TYPE_NA],
+													"@mode"							: "off",
 													"email"							: "s",
 													"verification_code"				: "s",
 												},
 
 			"login_with_email"					: {
 													"@acl"							: [$ACL.USER_TYPE_NA],
+													"@mode"							: "off",
 													"auth_key"						: "s",
 													"device_id"						: "o:s:*** the FCM device id for push notifications. You can also call update_device_info later",
 													"os_type"						: "o:i:0*** 1=Android, 2=iOS, 3=Web Browser",
@@ -135,6 +141,7 @@ module.exports =
 
 			"register_with_email"				: {
 													"@acl"							: [$ACL.USER_TYPE_NA],
+													"@mode"							: "off",
 													"auth_key"						: "s",
 													"first_name"					: "s",
 													"last_name"						: "s",
@@ -203,7 +210,7 @@ module.exports =
 												},
 
 			"delete_profile"					: {
-													"@acl"							: [$ACL.USER_TYPE_REGULAR],
+													"@acl"							: [$ACL.USER_TYPE_OFFICER, $ACL.USER_TYPE_RESIDENT],
 													"#token"						: "s",
 												},
 
