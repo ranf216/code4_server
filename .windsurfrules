@@ -14,7 +14,10 @@
 
 # Project AI Workflow
 - Always read the `docs/project_dev.md` file completely before generating any code.
+- Always read the `docs/sds.md` file completely before generating any code.
 - Always write to the `docs/project_dev.md` file any new flow added to the project.
+- Always read `docs/api_db.sql` and `docs/api_list.md` before generating any code. They contain the recommended API structure and recommended database schema. CRITICAL: Actual implementation can deviate from them if needed.
+- Always update `docs/dev_flow.md` file with any progress to the project.
 
 # Style Guide
 - Always use tab of 4 spaces for code indentation.
