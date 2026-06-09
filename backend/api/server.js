@@ -166,6 +166,14 @@ app.get('/apiclient', function (req, res)
     $HttpContext.get("session").closeDb();
 });
 
+app.get('/apiclient/doc', function (req, res)
+{
+    const ApiClient = require("./apiclient.js");
+    ApiClient.getDoc(req, res);
+
+    $HttpContext.get("session").closeDb();
+});
+
 app.get('/tools', function (req, res)
 {
     const Tools = require("./tools.js");

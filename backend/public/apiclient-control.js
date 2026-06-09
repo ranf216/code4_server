@@ -4,6 +4,7 @@ var RestControl =
 {
 	_savedCalls: new Object(),
 	_loadingCall: null,
+	_docCache: {},
 	
 	init: function()
 	{
@@ -69,6 +70,8 @@ var RestControl =
 					RestControl.loadCallData(RestControl._loadingCall);
 					RestControl._loadingCall = null;
 				}
+
+				RestControl.updateDocButtons();
 			});
 		};
 		
@@ -107,6 +110,7 @@ var RestControl =
 			var group = $("#selectApiGroup").val();
 			var userType = $("#selectUserTypes").val();
 			fillSelectApi(group == "All API" ? apiCalls : apiGroups[group], userType);
+			RestControl.updateDocButtons();
 		});
 
 		
@@ -225,6 +229,29 @@ var RestControl =
 			else
 			{
 				$("#request, #postData, #response").removeClass("wrap-content");
+			}
+		});
+
+		$("#btnDocModule").unbind().click(function()
+		{
+			RestControl.showModuleDoc();
+		});
+
+		$("#btnDocEndpoint").unbind().click(function()
+		{
+			RestControl.showEndpointDoc();
+		});
+
+		$("#docOverlayClose").unbind().click(function()
+		{
+			RestControl.closeDocPopup();
+		});
+
+		$("#docOverlay").click(function(e)
+		{
+			if (e.target === this)
+			{
+				RestControl.closeDocPopup();
 			}
 		});
 
@@ -603,6 +630,266 @@ var RestControl =
 			document.body.removeChild(textarea);
 			RestControl.showToast("Copied to clipboard!");
 		}
+	},
+
+	getCurrentModule: function()
+	{
+		var api = $("#selectApi").val();
+		if (api && api !== "null")
+		{
+			return api.split("__")[0];
+		}
+
+		var group = $("#selectApiGroup").val();
+		if (group && group !== "All API")
+		{
+			return group;
+		}
+
+		return null;
+	},
+
+	getCurrentEndpoint: function()
+	{
+		var api = $("#selectApi").val();
+		if (api && api !== "null")
+		{
+			var parts = api.split("__");
+			return parts.length > 1 ? parts[1] : null;
+		}
+		return null;
+	},
+
+	updateDocButtons: function()
+	{
+		var module = RestControl.getCurrentModule();
+		var endpoint = RestControl.getCurrentEndpoint();
+
+		if (!module)
+		{
+			$("#btnDocModule").prop("disabled", true);
+			$("#btnDocEndpoint").prop("disabled", true);
+			return;
+		}
+
+		var cached = RestControl._docCache[module];
+		if (cached !== undefined)
+		{
+			$("#btnDocModule").prop("disabled", !cached.exists);
+			var hasEndpoint = cached.exists && endpoint && RestControl.findEndpointSection(cached.content, module, endpoint);
+			$("#btnDocEndpoint").prop("disabled", !hasEndpoint);
+			return;
+		}
+
+		$("#btnDocModule").prop("disabled", true);
+		$("#btnDocEndpoint").prop("disabled", true);
+
+		$.getJSON("/apiclient/doc?module=" + encodeURIComponent(module), function(data)
+		{
+			RestControl._docCache[module] = data;
+			RestControl.updateDocButtons();
+		}).fail(function()
+		{
+			RestControl._docCache[module] = {exists: false};
+		});
+	},
+
+	findEndpointSection: function(content, module, endpoint)
+	{
+		if (!content) return null;
+
+		var searchStr = module + "/" + endpoint;
+		var escaped = searchStr.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+		var pattern = new RegExp("^###\\s+\\w+\\s+" + escaped, "m");
+		var match = pattern.exec(content);
+
+		if (!match) return null;
+
+		var startIdx = match.index;
+		var endIdx = content.indexOf("\n---", startIdx + match[0].length);
+
+		if (endIdx === -1)
+		{
+			return content.substring(startIdx);
+		}
+
+		return content.substring(startIdx, endIdx);
+	},
+
+	showModuleDoc: function()
+	{
+		var module = RestControl.getCurrentModule();
+		if (!module) return;
+
+		var cached = RestControl._docCache[module];
+		if (!cached || !cached.exists) return;
+
+		RestControl.showDocPopup(module + " API", cached.content);
+	},
+
+	showEndpointDoc: function()
+	{
+		var module = RestControl.getCurrentModule();
+		var endpoint = RestControl.getCurrentEndpoint();
+		if (!module || !endpoint) return;
+
+		var cached = RestControl._docCache[module];
+		if (!cached || !cached.exists) return;
+
+		var section = RestControl.findEndpointSection(cached.content, module, endpoint);
+		if (!section) return;
+
+		RestControl.showDocPopup(module + "/" + endpoint, section);
+	},
+
+	showDocPopup: function(title, markdown)
+	{
+		var overlay = document.getElementById("docOverlay");
+		var titleEl = document.getElementById("docPopupTitle");
+		var bodyEl = document.getElementById("docPopupBody");
+
+		titleEl.textContent = title;
+		bodyEl.innerHTML = RestControl.renderMarkdown(markdown);
+		overlay.style.display = "flex";
+	},
+
+	closeDocPopup: function()
+	{
+		document.getElementById("docOverlay").style.display = "none";
+	},
+
+	escapeHtml: function(text)
+	{
+		return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+	},
+
+	inlineFormat: function(text)
+	{
+		text = RestControl.escapeHtml(text);
+		text = text.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
+		text = text.replace(/\*([^*]+)\*/g, "<em>$1</em>");
+		text = text.replace(/`([^`]+)`/g, "<code>$1</code>");
+		return text;
+	},
+
+	renderMarkdown: function(md)
+	{
+		var lines = md.split("\n");
+		var html = "";
+		var inCodeBlock = false;
+		var codeContent = "";
+		var inTable = false;
+
+		for (var i = 0; i < lines.length; i++)
+		{
+			var line = lines[i];
+
+			if (line.trim().indexOf("```") === 0)
+			{
+				if (inCodeBlock)
+				{
+					html += "<pre><code>" + RestControl.escapeHtml(codeContent) + "</code></pre>";
+					codeContent = "";
+					inCodeBlock = false;
+				}
+				else
+				{
+					inCodeBlock = true;
+				}
+				continue;
+			}
+
+			if (inCodeBlock)
+			{
+				codeContent += (codeContent ? "\n" : "") + line;
+				continue;
+			}
+
+			if (inTable && line.trim().indexOf("|") !== 0)
+			{
+				html += "</tbody></table>";
+				inTable = false;
+			}
+
+			if (/^\s*---+\s*$/.test(line))
+			{
+				html += "<hr>";
+				continue;
+			}
+
+			if (line.indexOf("### ") === 0)
+			{
+				html += "<h3>" + RestControl.inlineFormat(line.substr(4)) + "</h3>";
+				continue;
+			}
+			if (line.indexOf("## ") === 0)
+			{
+				html += "<h2>" + RestControl.inlineFormat(line.substr(3)) + "</h2>";
+				continue;
+			}
+			if (line.indexOf("# ") === 0)
+			{
+				html += "<h1>" + RestControl.inlineFormat(line.substr(2)) + "</h1>";
+				continue;
+			}
+
+			if (line.trim().indexOf("|") === 0)
+			{
+				if (/^\s*\|[\s\-:|]+\|\s*$/.test(line))
+				{
+					continue;
+				}
+
+				var cells = line.split("|");
+				cells = cells.filter(function(c, idx) { return idx > 0 && idx < cells.length - 1; });
+
+				if (!inTable)
+				{
+					html += "<table><thead><tr>";
+					for (var j = 0; j < cells.length; j++)
+					{
+						html += "<th>" + RestControl.inlineFormat(cells[j].trim()) + "</th>";
+					}
+					html += "</tr></thead><tbody>";
+					inTable = true;
+					continue;
+				}
+
+				html += "<tr>";
+				for (var j = 0; j < cells.length; j++)
+				{
+					html += "<td>" + RestControl.inlineFormat(cells[j].trim()) + "</td>";
+				}
+				html += "</tr>";
+				continue;
+			}
+
+			var listMatch = line.match(/^(\s*)-\s(.*)/);
+			if (listMatch)
+			{
+				var indent = listMatch[1].length;
+				html += "<div class='md-list-item' style='padding-left:" + (indent * 6 + 16) + "px'>&bull; " + RestControl.inlineFormat(listMatch[2]) + "</div>";
+				continue;
+			}
+
+			if (line.trim() === "")
+			{
+				continue;
+			}
+
+			html += "<p>" + RestControl.inlineFormat(line) + "</p>";
+		}
+
+		if (inCodeBlock)
+		{
+			html += "<pre><code>" + RestControl.escapeHtml(codeContent) + "</code></pre>";
+		}
+		if (inTable)
+		{
+			html += "</tbody></table>";
+		}
+
+		return html;
 	},
 
 	showToast: function(message, isErr = false)
