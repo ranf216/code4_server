@@ -8,7 +8,7 @@ module.exports =
         // "fcm",
         // "geolocation",
         // "json_db",
-        // "mailer",
+        "mailer",
         // "mailer_queue",
         // "message_queue",
         // "notes",
@@ -23,5 +23,6 @@ module.exports =
         // "user_roles",
     ],
     user: [
+        "data_items_crud",
     ]
 };

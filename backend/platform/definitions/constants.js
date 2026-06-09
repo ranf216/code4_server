@@ -68,4 +68,9 @@ module.exports = {
 
     ENTITY_LOCK_DEFAULT_TTL_SECONDS                         : 1800, // 30 minutes
 
+    KVL_SETTINGS_GPS                                        : "settings:gps",
+    KVL_SETTINGS_NOTIFICATION                               : "settings:notification",
+    KVL_SETTINGS_POI                                        : "settings:poi",
+    KVL_SETTINGS_WORKING_HOURS                              : "settings:working_hours",
+
 };

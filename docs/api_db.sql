@@ -951,10 +951,10 @@ CREATE TABLE `notification` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- ============================================================
--- STATIC LOOKUP LISTS (managed via $DataItems module)
+-- LOOKUP TYPES (stored in data_item table)
 -- ============================================================
--- The following lists are NOT stored as separate DB tables.
--- They are managed via the platform's $DataItems module:
+-- The following lookup types are stored in the `data_item` table
+-- with a DIT_TABLE discriminator column:
 --
 --   service_type     - Service/Incident type dropdown (Lockout, Noise Complaint, etc.)
 --   task_type        - Maintenance task type dropdown (Lights, Sprinklers, Supply Request, etc.)
@@ -962,7 +962,8 @@ CREATE TABLE `notification` (
 --   po_section_type  - Post Order section type with client_visible flag in DIT_EXTRA JSON
 --
 -- Admin CRUD for these is handled through the Settings APIs
--- using $DataItems.get(), $DataItems.set(), $DataItems.remove().
+-- using the data_item DB table (multi-instance safe).
+-- Other tables reference these by DIT_KEY (varchar(100)).
 -- ============================================================
 
 -- ============================================================

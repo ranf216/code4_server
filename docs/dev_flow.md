@@ -32,7 +32,7 @@ The project infrastructure is set up with the following **built-in platform modu
 - `USER_ROLE_LOGISTICS` = 5
 - `USER_ROLE_FINANCE` = 6
 
-**No project-specific API modules** have been implemented yet.
+**Implemented project-specific API modules:** `settings` (Phase 1.1)
 
 ---
 
@@ -58,12 +58,13 @@ Before any API module, set up the project-level foundations:
 
 These are the foundational CRUD modules that all other features depend on. They have minimal dependencies on each other, so they can be developed in parallel or in quick succession.
 
-#### 1.1 Settings (`platform/api/settings.js`)
-- CRUD for `service_type`, `task_type`, `asset_type`, `po_section_type` via `$DataItems`
-- GPS & tracking configuration, notification settings, POI settings, working hours
-- **DB tables:** None (uses `$DataItems` and config)
+#### ~~1.1 Settings (`platform/api/settings.js`)~~ ✅ Done
+- ~~CRUD for `service_type`, `task_type`, `asset_type`, `po_section_type` via `$DataItems`~~
+- ~~GPS & tracking configuration, notification settings, POI settings, working hours~~
+- **DB tables:** `data_item` (lookup types CRUD), `key_value` (config settings storage)
 - **Depends on:** Phase 0 (roles)
 - **Why early:** Other modules reference these lookup types (calls use `service_type`, tasks use `task_type`, assets use `asset_type`, post orders use `po_section_type`)
+- **Implementation:** 24 API endpoints (4 CRUD groups × 4 operations + 4 config groups × get/update). Data item CRUD uses the `data_item` table (multi-instance safe). Config settings use the `key_value` table with namespaced keys (e.g., `settings:gps`).
 
 #### 1.2 Community (`platform/api/community.js`)
 - Full CRUD for communities + featured officer banner

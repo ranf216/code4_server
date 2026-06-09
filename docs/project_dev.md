@@ -1,7 +1,7 @@
 # Server Implementation Documentation
 
-**Document Version:** 1.1  
-**Last Updated:** 2026
+**Document Version:** 1.2  
+**Last Updated:** 2026-06-02
 **Purpose:** Comprehensive documentation of the project server business logic implementation
 
 ---
@@ -58,6 +58,90 @@ Project-specific error codes start at RC 500:
 | `community` | `COM_` | Managed communities/sites |
 | `featured_officer` | `FTO_` | One featured officer banner per community |
 
+### Database Tables (V 4.1.0)
+| Table | Prefix | Description |
+|---|---|---|
+| `data_item` | `DIT_` | Runtime-manageable lookup types (service_type, task_type, asset_type, po_section_type) |
+
+
+---
+
+## Phase 1 — Core Entities
+
+### 1.1 Settings (`platform/api/settings.js`, `platform/funcs/settings.js`)
+
+Manages system-wide configuration and lookup data items via database tables (multi-instance safe).
+
+#### Data Item CRUD (service_type, task_type, asset_type, po_section_type)
+
+All lookup types are stored in the `data_item` DB table with a `DIT_TABLE` discriminator column. Each data item type supports full CRUD via the same pattern:
+- **get_{type}s** — SELECT from `data_item` WHERE `DIT_TABLE`=type AND not soft-deleted
+- **add_{type}** — INSERT with auto-generated slug key from name; duplicate key returns `ERR_SETTING_NAME_ALREADY_EXISTS`
+- **update_{type}** — UPDATE name (and extra attributes) for existing item; returns `ERR_SETTING_NOT_FOUND` if missing
+- **delete_{type}** — Soft delete (SET `DIT_DELETED_ON`); returns `ERR_SETTING_NOT_FOUND` if missing
+
+Type-specific extra attributes (e.g., `client_visible` for po_section_type) are stored in the `DIT_EXTRA` JSON column.
+
+| API | ACL | Description |
+|---|---|---|
+| `Settings/get_service_types` | ADMIN, OFFICER, RESIDENT | Get service/incident types list |
+| `Settings/add_service_type` | ADMIN | Add a new service type |
+| `Settings/update_service_type` | ADMIN | Edit a service type |
+| `Settings/delete_service_type` | ADMIN | Delete a service type |
+| `Settings/get_task_types` | ADMIN, OFFICER | Get maintenance task types list |
+| `Settings/add_task_type` | ADMIN | Add a new task type |
+| `Settings/update_task_type` | ADMIN | Edit a task type |
+| `Settings/delete_task_type` | ADMIN | Delete a task type |
+| `Settings/get_asset_types` | ADMIN | Get asset types list |
+| `Settings/add_asset_type` | ADMIN | Add a new asset type |
+| `Settings/update_asset_type` | ADMIN | Edit an asset type |
+| `Settings/delete_asset_type` | ADMIN | Delete an asset type |
+| `Settings/get_po_section_types` | ADMIN | Get post order section types |
+| `Settings/add_po_section_type` | ADMIN | Add a post order section type (with `client_visible`) |
+| `Settings/update_po_section_type` | ADMIN | Edit a post order section type |
+| `Settings/delete_po_section_type` | ADMIN | Delete a post order section type |
+
+#### Configuration Settings (GPS, Notifications, POI, Working Hours)
+
+Configuration settings are persisted in the `key_value` DB table (multi-instance safe). Each config group is stored as a single JSON value under a namespaced key (e.g., `settings:gps`). Defaults are returned when no stored value exists.
+
+| API | ACL | Description |
+|---|---|---|
+| `Settings/get_gps_settings` | ADMIN | Get GPS & tracking config (intervals, thresholds, map provider) |
+| `Settings/update_gps_settings` | ADMIN | Update GPS & tracking config |
+| `Settings/get_notification_settings` | ADMIN | Get push notification settings (methods, triggers) |
+| `Settings/update_notification_settings` | ADMIN | Update push notification settings |
+| `Settings/get_poi_settings` | ADMIN | Get POI & Trespass settings (reminders, archiving, guidance texts) |
+| `Settings/update_poi_settings` | ADMIN | Update POI & Trespass settings |
+| `Settings/get_working_hours_settings` | ADMIN | Get working hours config (max hours per day) |
+| `Settings/update_working_hours_settings` | ADMIN | Update working hours config |
+
+#### GPS Settings Defaults
+| Parameter | Default | Description |
+|---|---|---|
+| `gps_interval_normal` | 30 | Seconds between location updates (normal patrol) |
+| `gps_interval_emergency` | 10 | Seconds between location updates (emergency) |
+| `gps_stale_threshold` | 2 | Minutes without update before alert |
+| `location_history_retention` | 90 | Days to keep GPS history |
+| `map_refresh_interval` | 30 | Portal map refresh interval (seconds) |
+| `patrol_compliance_threshold` | 15 | Minutes overdue before skip alert |
+| `emergency_eta_interval` | 60 | ETA recalculation interval (seconds) |
+| `map_provider` | google_maps | Map provider |
+
+#### POI Settings Defaults
+| Parameter | Default | Description |
+|---|---|---|
+| `renewal_reminder_days` | 14 | Days before expiry for reminder |
+| `archive_threshold_months` | 24 | Months after expiry before archiving |
+| `pdf_export_enabled` | true | Whether PDF export is available |
+| `default_poi_guidance` | (text) | Default response guidance for POI |
+| `default_trespass_guidance` | (text) | Default response guidance for Trespass |
+| `default_red_card_guidance` | (text) | Default response guidance for Metro Red Card |
+
+#### Working Hours Defaults
+| Parameter | Default | Description |
+|---|---|---|
+| `max_hours_per_day` | 8 | Maximum officer working hours per day |
 
 ---
 
