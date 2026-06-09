@@ -245,7 +245,7 @@ module.exports = {
 
 	// AWS		
 	"aws"									: {
-												"bucket_name"							: "com.iuetechnologies.surgistream.stg",
+												"bucket_name"							: "com.iuetechnologies.code4.staging",
 												"#access_key"							: "{AWS Access Key}",
 												"#access_secret"						: "{AWS Access Secret}",
 												"region"								: "us-west-1",
