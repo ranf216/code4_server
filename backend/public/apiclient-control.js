@@ -178,6 +178,16 @@ var RestControl =
 			RestControl.saveCall();
 		});
 		
+		$("#btnExportCalls").unbind().click(function()
+		{
+			RestControl.exportSavedCalls();
+		});
+		
+		$("#btnImportCalls").unbind().click(function()
+		{
+			RestControl.importSavedCalls();
+		});
+		
 		$("#scriptRunBtn").unbind().click(function()
 		{
 			RestControl.runScript();
@@ -399,6 +409,65 @@ var RestControl =
 		
 		jQuery.cookie("calls", JSON.stringify(RestControl._savedCalls), {expires: 365});
 	},
+
+	exportSavedCalls: function()
+	{
+		if ($.isEmptyObject(RestControl._savedCalls))
+		{
+			alert("No saved calls to export");
+			return;
+		}
+
+		var json = JSON.stringify(RestControl._savedCalls, null, 2);
+		var blob = new Blob([json], {type: "application/json"});
+		var url = URL.createObjectURL(blob);
+		var a = document.createElement("a");
+		a.href = url;
+		a.download = "saved_calls.json";
+		document.body.appendChild(a);
+		a.click();
+		document.body.removeChild(a);
+		URL.revokeObjectURL(url);
+	},
+
+	importSavedCalls: function()
+	{
+		var input = document.createElement("input");
+		input.type = "file";
+		input.accept = ".json";
+		input.onchange = function(e)
+		{
+			var file = e.target.files[0];
+			if (!file) return;
+
+			var reader = new FileReader();
+			reader.onload = function(ev)
+			{
+				try
+				{
+					var calls = JSON.parse(ev.target.result);
+					if (typeof calls !== "object" || Array.isArray(calls))
+					{
+						alert("Invalid saved calls format");
+						return;
+					}
+
+					for (var key in calls)
+					{
+						RestControl._savedCalls[key] = calls[key];
+					}
+
+					RestControl.updateSavedCalls();
+				}
+				catch (ex)
+				{
+					alert("Failed to parse JSON file");
+				}
+			};
+			reader.readAsText(file);
+		};
+		input.click();
+	},
 	
 	saveCall: function()
 	{
@@ -412,7 +481,7 @@ var RestControl =
 		var dateStr = d.getFullYear() + "-" + (d.getMonth() + 1) + "-" + d.getDate() + " " + d.getHours() + ":" + d.getMinutes() + ":" + d.getSeconds();
 		var defaultName = $("#selectApi").val().replace("__", "/");
 		var alias = prompt("Enter call alias", defaultName);
-		if (alias == "")
+		if (alias == null || alias.trim() == "")
 		{
 			return;
 		}
