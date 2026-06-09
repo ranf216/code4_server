@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>{{system}} {{environment}} - Audit Trail</title>
+	<link rel="shortcut icon" href="/favicon.ico?src=audit_trail" />
+	<script type="text/javascript" src="/public/jquery-1.8.2.mini.js"></script>
+	<script type="text/javascript" src="/public/jquery.cookie.js"></script>
+
+	<style type="text/css">
+		html, body {height: 100%; width: 100%; margin: 0; padding:0; font-family: Arial, sans-serif;}
+		#outer {height: 100%; width: 100%; margin: 0; padding:0; display: flex; flex-direction: column;}
+		#header {padding: 10px; background: #f5f5f5; border-bottom: 2px solid #ccc;}
+		#tabs_container {padding: 0 10px; background: #f5f5f5; border-bottom: 1px solid #ccc;}
+		#content_container {flex: 1; overflow: auto; position: relative;}
+		
+		.tab {display: inline-block; padding: 8px 16px; margin: 5px 2px 0 2px; background: #ddd; border: 1px solid #999; border-bottom: none; cursor: pointer; border-radius: 5px 5px 0 0;}
+		.tab.active {background: #fff; font-weight: bold; border-bottom: 2px solid #fff; margin-bottom: -1px;}
+		.tab .close {margin-left: 10px; color: #999; font-weight: bold;}
+		.tab .close:hover {color: #f00;}
+		#new_tab {display: inline-block; padding: 8px 16px; margin: 5px 2px 0 2px; background: #4CAF50; color: white; border: 1px solid #45a049; cursor: pointer; border-radius: 5px 5px 0 0;}
+		#new_tab:hover {background: #45a049;}
+		
+		.tab_content {display: none; height: 100%; overflow: auto; padding: 10px;}
+		.tab_content.active {display: block;}
+		
+		.search_panel {background: #fafafa; padding: 15px; border: 1px solid #ddd; border-radius: 5px; margin-bottom: 15px;}
+		.search_row {margin-bottom: 10px;}
+		.search_row label {display: inline-block; width: 120px; font-weight: bold;}
+		.search_row input[type="text"], .search_row select {padding: 5px; border: 1px solid #ccc; border-radius: 3px;}
+		.search_row input[type="radio"] {margin: 0 5px 0 15px;}
+		.search_row button {padding: 8px 20px; background: #2196F3; color: white; border: none; border-radius: 3px; cursor: pointer; margin-left: 10px;}
+		.search_row button:hover {background: #0b7dda;}
+		
+		#logout {background-color: #f7ae66; border: #df7002 2px solid; font-weight: bold; cursor: pointer; padding: 5px 15px; {{enable_system_login}} }
+		
+		.results_table {width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 14px;}
+		.results_table th {background: #4CAF50; color: white; padding: 10px; text-align: left; position: sticky; top: 0;}
+		.results_table td {padding: 8px; border-bottom: 1px solid #ddd;}
+		.results_table tr:hover {background: #f5f5f5;}
+		
+		.current_values {background-color: #e8f5e9; border: 2px solid #4CAF50; padding: 10px; margin: 10px 0; border-radius: 5px;}
+		.Insert_values {background-color: #e3f2fd; border: 2px solid #2196F3; padding: 10px; margin: 10px 0; border-radius: 5px;}
+		.Delete_values {background-color: #ffebee; border: 2px solid #f44336; padding: 10px; margin: 10px 0; border-radius: 5px;}
+		.Update_values {background-color: #fff3e0; border: 2px solid #ff9800; padding: 10px; margin: 10px 0; border-radius: 5px;}
+		
+		.values_title {font-weight: bold; font-size: 16px; margin-bottom: 10px; padding: 5px; background: rgba(0,0,0,0.05); border-radius: 3px;}
+		.field_row {display: grid; grid-template-columns: 250px 1fr; gap: 10px; padding: 5px 0; border-bottom: 1px solid rgba(0,0,0,0.1); align-items: start;}
+		.field_row:last-child {border-bottom: none;}
+		.field_name {font-weight: bold; color: #555; cursor: pointer; white-space: nowrap; padding-right: 10px; overflow: hidden; text-overflow: ellipsis;}
+		.field_name:hover {background: #e3f2fd; border-radius: 3px;}
+		.field_value {word-break: break-all; cursor: pointer; text-align: left;}
+		.field_value:hover {background: #fff3e0; border-radius: 3px;}
+		.field_changed {background-color: #ffeb3b; padding: 2px 4px; border-radius: 2px;}
+		
+		.update_field {margin-bottom: 15px; padding: 10px; background: rgba(0,0,0,0.02); border-radius: 3px;}
+		.update_field .field_name {font-weight: bold; margin-bottom: 5px; color: #333;}
+		.old_value {color: #d32f2f; padding: 5px; background: #ffebee; border-radius: 3px; margin: 2px 0; text-align: left; cursor: pointer;}
+		.new_value {color: #388e3c; padding: 5px; background: #e8f5e9; border-radius: 3px; margin: 2px 0; text-align: left; cursor: pointer;}
+		
+		.rc_error {color: #f44336; font-weight: bold; padding: 15px; background: #ffebee; border: 2px solid #f44336; border-radius: 5px; margin: 10px 0;}
+		.no_results {padding: 20px; text-align: center; color: #999; font-style: italic;}
+		
+		.input_wide {width: 300px;}
+		.input_medium {width: 200px;}
+		.input_short {width: 150px;}
+		
+		.loading {text-align: center; padding: 40px; color: #666; font-size: 18px;}
+		.loading:after {content: '...'; animation: dots 1.5s steps(4, end) infinite;}
+		@keyframes dots {0%, 20% {content: '.';} 40% {content: '..';} 60%, 100% {content: '...';}}
+		
+		.toast {position: fixed; bottom: 20px; right: 20px; background: #323232; color: white; padding: 12px 24px; border-radius: 4px; font-size: 14px; z-index: 10000; animation: slideIn 0.3s, slideOut 0.3s 2.7s;}
+		@keyframes slideIn {from {transform: translateX(400px); opacity: 0;} to {transform: translateX(0); opacity: 1;}}
+		@keyframes slideOut {from {transform: translateX(0); opacity: 1;} to {transform: translateX(400px); opacity: 0;}}
+	</style>
+
+	<script type="text/javascript">
+		let tabCounter = 0;
+		let activeTabId = null;
+
+		$(document).ready(function()
+		{
+			createNewTab();
+		});
+
+		function createNewTab()
+		{
+			tabCounter++;
+			const tabId = `tab_${tabCounter}`;
+			
+			const tabHtml = `<div class="tab" data-tab-id="${tabId}" onclick="switchTab('${tabId}')">
+								Search ${tabCounter}
+								<span class="close" onclick="closeTab('${tabId}', event)">×</span>
+							</div>`;
+			
+			const contentHtml = `<div class="tab_content" id="${tabId}">
+									<div class="search_panel">
+										<div class="search_row">
+											<label>Table:</label>
+											<select id="${tabId}_table" class="input_medium" onchange="onTableChange('${tabId}')">
+												<option value="">-- Select Table --</option>
+												{{table_options}}
+											</select>
+										</div>
+										<div class="search_row">
+											<label>Search By:</label>
+											<input type="radio" name="${tabId}_search_type" value="record_id" checked onchange="onSearchTypeChange('${tabId}')">
+											<label style="width: auto; font-weight: normal;">Record ID</label>
+											<input type="radio" name="${tabId}_search_type" value="date_range" onchange="onSearchTypeChange('${tabId}')" disabled="disabled">
+											<label style="width: auto; font-weight: normal; color: #999;">Date Range</label>
+											<input type="radio" name="${tabId}_search_type" value="field_value" onchange="onSearchTypeChange('${tabId}')" disabled="disabled">
+											<label style="width: auto; font-weight: normal; color: #999;">Field Value</label>
+										</div>
+										<div class="search_row" id="${tabId}_record_id_row">
+											<label>Record ID:</label>
+											<input type="text" id="${tabId}_record_id" class="input_wide" placeholder="Enter record ID" />
+										</div>
+										<div class="search_row" id="${tabId}_date_range_row" style="display: none;">
+											<label>Date From:</label>
+											<input type="text" id="${tabId}_date_from" class="input_short" placeholder="YYYY-MM-DD HH:MM:SS" />
+											<label style="width: auto; margin-left: 20px;">Date To:</label>
+											<input type="text" id="${tabId}_date_to" class="input_short" placeholder="YYYY-MM-DD HH:MM:SS" />
+										</div>
+										<div class="search_row" id="${tabId}_field_value_row" style="display: none;">
+											<label>Field Name:</label>
+											<input type="text" id="${tabId}_field_name" class="input_medium" placeholder="Enter field name" />
+											<label style="width: auto; margin-left: 20px;">Field Value:</label>
+											<input type="text" id="${tabId}_field_value" class="input_medium" placeholder="Enter value to search" />
+										</div>
+										<div class="search_row">
+											<label></label>
+											<button onclick="search('${tabId}')">Search</button>
+											<button onclick="clearResults('${tabId}')" style="background: #999;">Clear</button>
+										</div>
+									</div>
+									<div id="${tabId}_results"></div>
+								</div>`;
+			
+			$("#new_tab").before(tabHtml);
+			$("#content_container").append(contentHtml);
+			
+			switchTab(tabId);
+		}
+
+		function switchTab(tabId)
+		{
+			$(".tab").removeClass("active");
+			$(".tab_content").removeClass("active");
+			
+			$(`.tab[data-tab-id="${tabId}"]`).addClass("active");
+			$(`#${tabId}`).addClass("active");
+			
+			activeTabId = tabId;
+		}
+
+		function closeTab(tabId, event)
+		{
+			event.stopPropagation();
+			
+			if ($(".tab").length <= 1)
+			{
+				alert("Cannot close the last tab");
+				return;
+			}
+			
+			const wasActive = $(`.tab[data-tab-id="${tabId}"]`).hasClass("active");
+			
+			$(`.tab[data-tab-id="${tabId}"]`).remove();
+			$(`#${tabId}`).remove();
+			
+			if (wasActive)
+			{
+				const firstTab = $(".tab").first();
+				switchTab(firstTab.data("tab-id"));
+			}
+		}
+
+		function onTableChange(tabId)
+		{
+			clearResults(tabId);
+			
+			const table = $(`#${tabId}_table`).val();
+			const tabElement = $(`.tab[data-tab-id="${tabId}"]`);
+			
+			if (table)
+			{
+				tabElement.contents().first()[0].textContent = table + ' ';
+			}
+			else
+			{
+				const tabNumber = tabId.replace('tab_', '');
+				tabElement.contents().first()[0].textContent = `Search ${tabNumber} `;
+			}
+		}
+
+		function onSearchTypeChange(tabId)
+		{
+			const searchType = $(`input[name="${tabId}_search_type"]:checked`).val();
+			
+			$(`#${tabId}_record_id_row`).hide();
+			$(`#${tabId}_date_range_row`).hide();
+			$(`#${tabId}_field_value_row`).hide();
+			
+			if (searchType === "record_id")
+			{
+				$(`#${tabId}_record_id_row`).show();
+			}
+			else if (searchType === "date_range")
+			{
+				$(`#${tabId}_date_range_row`).show();
+			}
+			else if (searchType === "field_value")
+			{
+				$(`#${tabId}_field_value_row`).show();
+			}
+		}
+
+		function search(tabId)
+		{
+			const table = $(`#${tabId}_table`).val();
+			if (!table)
+			{
+				alert("Please select a table");
+				return;
+			}
+
+			const searchType = $(`input[name="${tabId}_search_type"]:checked`).val();
+			const resultsDiv = $(`#${tabId}_results`);
+			
+			resultsDiv.html('<div class="loading">Loading</div>');
+
+			let request = {
+				"#request": "System/search_audit_trail",
+				"token": jQuery.cookie("system_token"),
+				"table": table,
+				"search_type": searchType
+			};
+
+			if (searchType === "record_id")
+			{
+				const recordId = $(`#${tabId}_record_id`).val().trim();
+				if (!recordId)
+				{
+					alert("Please enter a record ID");
+					resultsDiv.html('');
+					return;
+				}
+				request.row_id = recordId;
+			}
+			else if (searchType === "date_range")
+			{
+				const dateFrom = $(`#${tabId}_date_from`).val().trim();
+				const dateTo = $(`#${tabId}_date_to`).val().trim();
+				if (!dateFrom || !dateTo)
+				{
+					alert("Please enter both date from and date to");
+					resultsDiv.html('');
+					return;
+				}
+				request.date_from = dateFrom;
+				request.date_to = dateTo;
+			}
+			else if (searchType === "field_value")
+			{
+				const fieldName = $(`#${tabId}_field_name`).val().trim();
+				const fieldValue = $(`#${tabId}_field_value`).val().trim();
+				if (!fieldName || !fieldValue)
+				{
+					alert("Please enter both field name and field value");
+					resultsDiv.html('');
+					return;
+				}
+				request.field_name = fieldName;
+				request.field_value = fieldValue;
+			}
+
+			makeApiCall(request, rc =>
+			{
+				if (rc.rc !== 0)
+				{
+					resultsDiv.html(`<div class="rc_error">[${rc.rc}] ${rc.message}</div>`);
+					return;
+				}
+
+				displayResults(tabId, rc, searchType);
+			});
+		}
+
+		function displayResults(tabId, rc, searchType)
+		{
+			const resultsDiv = $(`#${tabId}_results`);
+			let html = '';
+
+			if (searchType === "record_id")
+			{
+				html = displaySingleRecordResults(rc);
+			}
+			else
+			{
+				html = displayMultipleRecordsResults(rc);
+			}
+
+			resultsDiv.html(html);
+		}
+
+		function displaySingleRecordResults(rc)
+		{
+			let html = '';
+
+			if (rc.current_values)
+			{
+				html += '<div class="current_values">';
+				html += '<div class="values_title">Current Values</div>';
+				
+				Object.entries(rc.current_values).forEach(([fieldName, fieldVal]) =>
+				{
+					const changedFields = getChangedFieldsSet(rc.change_log);
+					const isChanged = changedFields.has(fieldName);
+					const valueClass = isChanged ? 'field_value field_changed' : 'field_value';
+					const displayValue = fieldVal === null ? 'NULL' : String(fieldVal);
+					
+					html += `<div class="field_row">
+								<div class="field_name" onclick="copyToClipboard('${escapeHtml(fieldName).replace(/'/g, "\\'")}')">${ escapeHtml(fieldName)}</div>
+								<div class="${valueClass}" onclick="copyToClipboard('${escapeHtml(displayValue).replace(/'/g, "\\'")}')">${ escapeHtml(displayValue)}</div>
+							</div>`;
+				});
+				
+				html += '</div>';
+			}
+
+			if (rc.change_log && rc.change_log.length > 0)
+			{
+				rc.change_log.forEach(log =>
+				{
+					const className = log.operation === "Update" ? "Update_values" : `${log.operation}_values`;
+					html += `<div class="${className}">`;
+					html += `<div class="values_title">${log.datetime} - ${log.operation}</div>`;
+
+					if (log.operation === "Insert")
+					{
+						Object.entries(log.values).forEach(([fieldName, fieldVal]) =>
+						{
+							const displayValue = fieldVal === null ? 'NULL' : String(fieldVal);
+							html += `<div class="field_row">
+										<div class="field_name" onclick="copyToClipboard('${escapeHtml(fieldName).replace(/'/g, "\\'")}')">${ escapeHtml(fieldName)}</div>
+										<div class="field_value" onclick="copyToClipboard('${escapeHtml(displayValue).replace(/'/g, "\\'")}')">${ escapeHtml(displayValue)}</div>
+									</div>`;
+						});
+					}
+					else if (log.operation === "Update")
+					{
+						Object.entries(log.values).forEach(([fieldName, vals]) =>
+						{
+							const oldValue = vals.old === null ? 'NULL' : String(vals.old);
+							const newValue = vals.new === null ? 'NULL' : String(vals.new);
+							html += `<div class="update_field">
+										<div class="field_name" onclick="copyToClipboard('${escapeHtml(fieldName).replace(/'/g, "\\'")}')">${ escapeHtml(fieldName)}</div>
+										<div class="old_value" onclick="copyToClipboard('${escapeHtml(oldValue).replace(/'/g, "\\'")}')">Old: ${ escapeHtml(oldValue)}</div>
+										<div class="new_value" onclick="copyToClipboard('${escapeHtml(newValue).replace(/'/g, "\\'")}')">New: ${ escapeHtml(newValue)}</div>
+									</div>`;
+						});
+					}
+					else if (log.operation === "Delete")
+					{
+						html += '<div class="field_row"><div class="field_value">Record was deleted</div></div>';
+					}
+
+					html += '</div>';
+				});
+			}
+
+			if (!rc.current_values && (!rc.change_log || rc.change_log.length === 0))
+			{
+				html = '<div class="no_results">No results found</div>';
+			}
+
+			return html;
+		}
+
+		function displayMultipleRecordsResults(rc)
+		{
+			let html = '';
+
+			if (!rc.records || rc.records.length === 0)
+			{
+				return '<div class="no_results">No results found</div>';
+			}
+
+			html += '<table class="results_table">';
+			html += '<thead><tr>';
+			html += '<th>Record ID</th>';
+			html += '<th>Operation</th>';
+			html += '<th>Date/Time</th>';
+			html += '<th>Changed Fields</th>';
+			html += '<th>Action</th>';
+			html += '</tr></thead><tbody>';
+
+			rc.records.forEach(record =>
+			{
+				const changedFields = record.operation === "UPDATE" 
+					? Object.keys(record.old_values).join(", ")
+					: (record.operation === "INSERT" ? Object.keys(record.new_values).join(", ") : "-");
+
+				const operationClass = record.operation === "INSERT" ? "Insert_values" : 
+									   (record.operation === "UPDATE" ? "Update_values" : "Delete_values");
+
+				html += `<tr>
+							<td>${escapeHtml(record.record_id)}</td>
+							<td><span style="padding: 3px 8px; border-radius: 3px; background: ${getOperationColor(record.operation)}; color: white;">${record.operation}</span></td>
+							<td>${record.created_on}</td>
+							<td>${escapeHtml(changedFields)}</td>
+							<td><button onclick="viewRecordDetails('${escapeHtml(rc.table)}', '${escapeHtml(record.record_id)}')">View Details</button></td>
+						</tr>`;
+			});
+
+			html += '</tbody></table>';
+
+			return html;
+		}
+
+		function getChangedFieldsSet(changeLog)
+		{
+			const changedFields = new Set();
+			if (!changeLog) return changedFields;
+
+			changeLog.forEach(log =>
+			{
+				if (log.operation === "Insert" || log.operation === "Update")
+				{
+					Object.keys(log.values).forEach(field => changedFields.add(field));
+				}
+			});
+
+			return changedFields;
+		}
+
+		function getOperationColor(operation)
+		{
+			switch(operation)
+			{
+				case "INSERT": return "#2196F3";
+				case "UPDATE": return "#ff9800";
+				case "DELETE": return "#f44336";
+				default: return "#999";
+			}
+		}
+
+		function viewRecordDetails(table, recordId)
+		{
+			createNewTab();
+			const tabId = activeTabId;
+			
+			$(`#${tabId}_table`).val(table);
+			onTableChange(tabId);
+			$(`#${tabId}_record_id`).val(recordId);
+			$(`input[name="${tabId}_search_type"][value="record_id"]`).prop("checked", true);
+			onSearchTypeChange(tabId);
+			
+			search(tabId);
+		}
+
+		function clearResults(tabId)
+		{
+			$(`#${tabId}_results`).html('');
+		}
+
+		function doOnLogout()
+		{
+			if (!confirm("Are you sure you want to logout?"))
+			{
+				return;
+			}
+
+			makeApiCall({"#request": "User/system_logout", "token": jQuery.cookie("system_token")}, rc =>
+			{
+				jQuery.removeCookie("system_token");
+				window.location = "system_login/audit_trail";
+			});
+		}
+
+		function makeApiCall(request, callback)
+		{
+			$.ajax({
+				url: "{{api_url}}",
+				type: "POST",
+				data: JSON.stringify(request),
+				dataType: 'json',
+				headers: { 'Content-Type': 'application/json' },
+				success: function (json)
+				{
+					if (json.rc == undefined)
+					{
+						alert(JSON.stringify(json));
+						return;
+					}
+
+					callback(json);
+				},
+				error: function()
+				{
+					alert(arguments[0].responseText);
+				}
+			});
+		}
+
+		function escapeHtml(text)
+		{
+			if (text === null || text === undefined) return '';
+			const map = {
+				'&': '&amp;',
+				'<': '&lt;',
+				'>': '&gt;',
+				'"': '&quot;',
+				"'": '&#039;'
+			};
+			return String(text).replace(/[&<>"']/g, m => map[m]);
+		}
+		
+		function copyToClipboard(text)
+		{
+			if (window.getSelection().toString().length > 0)
+			{
+				return;
+			}
+			
+			if (navigator.clipboard)
+			{
+				navigator.clipboard.writeText(text)
+					.then(() => showToast("Copied to clipboard!"))
+					.catch(err => console.error("Failed to copy:", err));
+			}
+			else
+			{
+				const textarea = document.createElement("textarea");
+				textarea.value = text;
+				document.body.appendChild(textarea);
+				textarea.select();
+				document.execCommand("copy");
+				document.body.removeChild(textarea);
+				showToast("Copied to clipboard!");
+			}
+		}
+		
+		function showToast(message)
+		{
+			const toast = $('<div class="toast">' + message + '</div>');
+			$('body').append(toast);
+			setTimeout(() => toast.remove(), 3000);
+		}
+	</script>
+</head>
+<body>
+	<div id="outer">
+		<div id="header">
+			<div>{{getWebClientMessages}}{{getWebClientEnvironment}}</div>
+			<div><input type="button" id="logout" onclick="doOnLogout()" value="Logout" /></div>
+		</div>
+		<div id="tabs_container">
+			<div id="new_tab" onclick="createNewTab()">+ New Search</div>
+		</div>
+		<div id="content_container"></div>
+	</div>
+</body>
+</html>

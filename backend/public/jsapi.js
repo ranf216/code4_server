@@ -65,14 +65,32 @@ $(document).ready(function()
 
 function customResetPage()
 {
+	fillContextSelector();
 }
 
 function customBeforeCallAPI(reqParams, postData, getParams)
 {
-	if (postData["#request"] == "User/login")
+	var req = postData["#request"] || "";
+	var method = req.split("/")[1] || "";
+
+	if (isLoginOrRegisterMethod(method))
 	{
-		loginEmail = postData["email"];
+		var captured = postData["email"] || postData["user_name"] || postData["phone_num"] || postData["grant_id"] || "";
+		if (captured !== "")
+		{
+			loginEmail = captured;
+		}
 	}
+}
+
+function isLoginOrRegisterMethod(method)
+{
+	var methods = ["login", "login_with_auth_grant", "register",
+		"login_with_phone", "register_with_phone",
+		"login_with_email", "register_with_email",
+		"login_with_social", "register_with_social",
+		"system_login", "verify_otp_code"];
+	return methods.indexOf(method) !== -1;
 }
 
 function onSuccess(json)
@@ -101,27 +119,54 @@ function onSuccessLogin(json)
 		return onSuccess(json);
 	}
 
+	var token = json["token"];
+	if (!token)
+	{
+		return onSuccess(json);
+	}
+
+	// Build the best label from response data, falling back to pre-captured loginEmail
+	var label = json["email"] || json["user_name"] || loginEmail || "";
+	if (label === "" && json["user_id"])
+	{
+		label = "user_" + json["user_id"];
+	}
+	if (label === "")
+	{
+		label = "session_" + Date.now();
+	}
+
+	// Add name info if available for better identification
+	var displayLabel = label;
+	if (json["first_name"] && label.indexOf(json["first_name"]) === -1)
+	{
+		displayLabel = json["first_name"] + (json["last_name"] ? " " + json["last_name"] : "") + " (" + label + ")";
+	}
+
 	var context = loadContext();
 	var ctxFound = false;
 	
 	for (var i = 0; i < context.sessions.length; i++)
 	{
-		if (context.sessions[i].email == loginEmail)
+		if (context.sessions[i].email == label)
 		{
 			ctxFound = true;
-			context.sessions[i].token = json["#token"];
+			context.sessions[i].token = token;
+			context.sessions[i].display = displayLabel;
 		}
 	}
 	
 	if (!ctxFound)
 	{
 		var newCtx = new Object();
-		newCtx.email = loginEmail;
-		newCtx.token = json["#token"];
+		newCtx.email = label;
+		newCtx.display = displayLabel;
+		newCtx.token = token;
 		context.sessions.push(newCtx);
 	}
 	
 	saveContext(context);
+	fillContextSelector();
 	
 	loginEmail = "";
 	
@@ -143,13 +188,16 @@ function fillContextSelector()
 		setNoContextLoaded();
 		return;
 	}
+
+	$("#userCtx").show();
 	
 	var html = "";
 
 	for (var i = 0; i < context.sessions.length; i++)
 	{
 		var ctx = context.sessions[i];
-		html += "<option value=\\"" + ctx.email + "\\">" + ctx.email + "</option>"
+		var display = ctx.display || ctx.email;
+		html += "<option value=\\"" + ctx.email + "\\">" + display + "</option>"
 	}
 	
 	$("#userCtxSelect").html(html);
@@ -352,7 +400,13 @@ var userRoles = new Array();`;
 			}
 			
 			let paramsOrder = (request == "get_image" || request == "get_file" ? "null, postData" : "postData, null");
-			contentText += `RestControl.createRequest('POST', BASE_API_URL, doc, ` + paramsOrder + `, ` + (request == "login" ? "onSuccessLogin" : "onSuccess") + `, null, optionals, docData, paramTypes);`;
+			let loginMethods = ["login", "login_with_auth_grant", "register",
+				"login_with_phone", "register_with_phone",
+				"login_with_email", "register_with_email",
+				"login_with_social", "register_with_social",
+				"system_login", "verify_otp_code"];
+			let successHandler = loginMethods.includes(request) ? "onSuccessLogin" : "onSuccess";
+			contentText += `RestControl.createRequest('POST', BASE_API_URL, doc, ` + paramsOrder + `, ` + successHandler + `, null, optionals, docData, paramTypes);`;
 
 			if (!$Utils.empty(params["#token"]))
 			{

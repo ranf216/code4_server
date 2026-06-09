@@ -48,6 +48,7 @@ app.use("/logtail", initSession);
 app.use("/sql_formatter", initSession);
 app.use("/socket_viewer", initSession);
 app.use("/log_analyzer", initSession);
+app.use("/audit_trail", initSession);
 app.use("/otp_viewer", initSession);
 app.use("/db_exporter", initSession);
 app.use("/db_exporter/structure", initSession);
@@ -205,6 +206,14 @@ app.get('/log_analyzer', function (req, res)
     $HttpContext.get("session").closeDb();
 });
 
+app.get('/audit_trail', function (req, res)
+{
+    const auditTrail = require("./audit_trail.js");
+    auditTrail.run(req, res);
+
+    $HttpContext.get("session").closeDb();
+});
+
 app.get('/otp_viewer', function (req, res)
 {
     const otpViewer = require("./otp_viewer.js");
@@ -349,6 +358,39 @@ app.get('/favicon.ico', function (req, res)
         img.copy(imgIn, 3, 14);
         imgIn = new $Imaging(null, 26, 4, 3, $Config.get("env_text_color"), "png");
         img.copy(imgIn, 3, 22);
+    }
+    else if (req.query.src == "audit_trail")
+    {
+        img.setPixelsToColor($Config.get("env_text_color"), null, [ [], [],
+                                                                    [3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25],
+                                                                    [2, 6, 26],
+                                                                    [2, 3, 4, 5, 6, 26],
+                                                                    [7, 26],
+                                                                    [7, 26],
+                                                                    [7, 26],
+                                                                    [7, 26],
+                                                                    [7, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 26],
+                                                                    [7, 26],
+                                                                    [7, 26],
+                                                                    [7, 26],
+                                                                    [7, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 26],
+                                                                    [7, 26],
+                                                                    [7, 26],
+                                                                    [7, 26],
+                                                                    [7, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 26],
+                                                                    [7, 26],
+                                                                    [7, 26],
+                                                                    [7, 26],
+                                                                    [7, 10, 11, 12, 13, 14, 15, 16, 17, 18, 26],
+                                                                    [7, 26],
+                                                                    [7, 26],
+                                                                    [7, 26],
+                                                                    [7, 26],
+                                                                    [7, 26],
+                                                                    [7, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29],
+                                                                    [7, 13, 29],
+                                                                    [8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28],
+                                                                    [], []]);
     }
     else if (req.query.src == "otp_viewer")
     {

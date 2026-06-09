@@ -373,6 +373,7 @@
 					<select id="selectApiGroup"></select>
 					<select id="selectApi" class="selectLarge"></select>
 					<select id="selectUserTypes"></select>
+					<button id="btnClearUrl">Clear</button>
 					<label>
 						<input type="checkbox" id="wrapContentCheckbox" />
 						Wrap long lines
@@ -456,6 +457,10 @@
 		</div>
 		<script>
 		(function() {
+			document.getElementById('btnClearUrl').addEventListener('click', function() {
+				window.location.href = window.location.pathname;
+			});
+
 			var divider = document.getElementById('columnDivider');
 			var left = document.getElementById('leftColumn');
 			var right = document.getElementById('rightColumn');

@@ -137,12 +137,17 @@ module.exports =
 													"is_rc_error"					: "b",
 												},
 
-			"get_record_change_log"				: {
+			"search_audit_trail"				: {
 													"@acl"							: [$ACL.USER_TYPE_NA],
 													"@mode"							: "unlogged",
 													"token"							: "s",
 													"table"							: "s",
-													"row_id"						: "s",
+													"search_type"					: "s***record_id / date_range / field_value",
+													"row_id"						: "o:s:***For search_type=record_id",
+													"date_from"						: "o:s:***For search_type=date_range",
+													"date_to"						: "o:s:***For search_type=date_range",
+													"field_name"					: "o:s:***For search_type=field_value",
+													"field_value"					: "o:s:***For search_type=field_value",
 												},
 
 			"get_user_by_param"					: {

@@ -269,6 +269,7 @@
                         <h2>Stored Procedures / Functions <span class="count" id="proceduresCount"></span></h2>
                         <span class="select-all" onclick="selectAllProcedures(true)">Select All</span>
                         <span class="select-all" onclick="selectAllProcedures(false)">Deselect All</span>
+                        <label style="margin-left: 20px; font-size: 14px; cursor: pointer;"><input type="checkbox" id="chkRemoveDefinerProcs" checked style="margin-right: 5px;" />Remove definer</label>
                     </div>
                     <table id="proceduresTable">
                         <thead>
@@ -289,6 +290,7 @@
                         <h2>Triggers <span class="count" id="triggersCount"></span></h2>
                         <span class="select-all" onclick="selectAllTriggers(true)">Select All</span>
                         <span class="select-all" onclick="selectAllTriggers(false)">Deselect All</span>
+                        <label style="margin-left: 20px; font-size: 14px; cursor: pointer;"><input type="checkbox" id="chkRemoveDefinerTriggers" checked style="margin-right: 5px;" />Remove definer</label>
                     </div>
                     <table id="triggersTable">
                         <thead>
@@ -472,6 +474,8 @@
                     });
                 });
 
+                exportData.removeDefinerProcs = $('#chkRemoveDefinerProcs').is(':checked');
+
                 $('.chk-procedure').each(function() {
                     const index = $(this).data('index');
                     const proc = dbStructure.procedures[index];
@@ -482,6 +486,8 @@
                         exportProcedure: $(this).is(':checked')
                     });
                 });
+
+                exportData.removeDefinerTriggers = $('#chkRemoveDefinerTriggers').is(':checked');
 
                 $('.chk-trigger').each(function() {
                     const index = $(this).data('index');

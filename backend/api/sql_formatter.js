@@ -8,9 +8,7 @@ exports.run = function (req, res)
 
 	var html = $Utils.fileGetContents(__dirname + "/content/sql_formatter.html");
 
-	html = html.replace("{{getWebClientMessages}}", $Utils.getWebClientMessages())
-				.replace("{{getWebClientEnvironment}}", $Utils.getWebClientEnvironment())
-				.replace("{{environment}}", $Utils.empty($Config.get("env_name")) ? "default" : $Config.get("env_name"))
+	html = html.replace("{{environment}}", $Utils.empty($Config.get("env_name")) ? "default" : $Config.get("env_name"))
 				.replace("{{system}}", $Config.get("SYSTEM_NAME"));
 
 	res.send(html);

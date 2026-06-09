@@ -7,8 +7,15 @@
 		<script type="text/javascript" src="/public/jquery.cookie.js"></script>
 
 		<style type="text/css">
-			html, body, #outer {height: 100%; width: 100%; margin: 0;  padding:0;}
+			html, body {height: 100%; width: 100%; margin: 0; padding: 0; font-family: Arial, sans-serif;}
+			#outer {height: 100%; width: 100%; margin: 0; padding: 0;}
 			
+			/* Header/Controls Styling */
+			#inner_fixed {background: #f5f5f5; border-bottom: 2px solid #ccc; padding: 0;}
+			#header {padding: 10px;}
+			#header table {width: 100%;}
+			
+			/* Content Area - UNCHANGED */
 			#content {position: absolute; bottom: 0; width: 100%; overflow: scroll; font: 16px "courier new";}
 
 			.type_REQUEST {color: #800000;}
@@ -24,17 +31,195 @@
 			.filter_data {cursor: pointer;}
 			.filter_data:hover {text-decoration: underline;}
 			#content tr:hover {background: #f0f0f0; font-weight: bold;}
-			.no_session {cursor: default;}
-			.has_session {cursor: pointer; background: #ffffa0;}
-			.checkTitle {cursor: default;}
+			#content td {outline: none; border: none; box-shadow: none;}
+			#content td:focus, #content td:active, #content td:focus-visible {outline: none; border: none; box-shadow: none;}
+			
+			/* Controls Bar Elements */
+			.no_session {
+				cursor: default;
+				background: #e0e0e0;
+				padding: 5px 12px;
+				border: 1px solid #999;
+				border-radius: 3px;
+				display: inline-block;
+			}
+			.has_session {
+				cursor: pointer;
+				background: #fff3e0;
+				border-color: #ff9800;
+				font-weight: bold;
+			}
+			.has_session:hover {background: #ffe0b2;}
+			
+			.checkTitle {
+				cursor: pointer;
+				user-select: none;
+				margin-left: 4px;
+				margin-right: 8px;
+			}
+			.checkTitle:hover {text-decoration: underline;}
 
-			#REFRESH {font-size: 20px; color: #00aa00; height: 80px;}
-			#RESET {font-size: 20px; color: red; height: 80px;}
-			#lines {width: 60px; text-align: right;}
-			#logout {margin-left: 150px; background-color: #f7ae66; border: #df7002 2px solid; font-weight: bold; cursor: pointer; {{enable_system_login}} }
+			#REFRESH {
+				padding: 8px 20px;
+				background: #4CAF50;
+				color: white;
+				border: none;
+				border-radius: 3px;
+				cursor: pointer;
+				font-size: 16px;
+				font-weight: bold;
+				margin-right: 8px;
+			}
+			#REFRESH:hover {background: #45a049;}
+			
+			#RESET {
+				padding: 8px 20px;
+				background: #f44336;
+				color: white;
+				border: none;
+				border-radius: 3px;
+				cursor: pointer;
+				font-size: 16px;
+				font-weight: bold;
+			}
+			#RESET:hover {background: #da190b;}
+			
+			#RELOAD {
+				padding: 5px 15px;
+				background: #2196F3;
+				color: white;
+				border: none;
+				border-radius: 3px;
+				cursor: pointer;
+				margin-left: 5px;
+			}
+			#RELOAD:hover {background: #0b7dda;}
+			
+			#chks_ALL, #chks_NONE {
+				padding: 5px 12px;
+				background: #e0e0e0;
+				border: 1px solid #999;
+				border-radius: 3px;
+				cursor: pointer;
+				margin-left: 8px;
+			}
+			#chks_ALL:hover, #chks_NONE:hover {background: #d0d0d0;}
+			
+			#lines {
+				width: 80px;
+				text-align: right;
+				padding: 5px;
+				border: 1px solid #ccc;
+				border-radius: 3px;
+			}
+			
+			#logout {
+				background-color: #f7ae66;
+				border: #df7002 2px solid;
+				font-weight: bold;
+				cursor: pointer;
+				padding: 5px 15px;
+				border-radius: 3px;
+				margin-left: 15px;
+			}
+			#logout:hover {background-color: #f59e46;}
+			
+			select {
+				padding: 5px;
+				border: 1px solid #ccc;
+				border-radius: 3px;
+				background: white;
+			}
+			
+			input[type="checkbox"] {
+				cursor: pointer;
+				vertical-align: middle;
+			}
+			
+			input[type="text"] {
+				padding: 5px;
+				border: 1px solid #ccc;
+				border-radius: 3px;
+			}
 
-			.spacer {width: 60px; display: inline;}
-			.vspacer {font-size: 1px; height: 6px;}
+			.spacer {display: inline-block; width: 8px;}
+			.vspacer {height: 8px;}
+			
+			hr {border: none; border-top: 1px solid #ccc; margin: 0;}
+			
+			/* Modal Styles */
+			#logModal {
+				display: none;
+				position: fixed;
+				z-index: 10000;
+				left: 0;
+				top: 0;
+				width: 100%;
+				height: 100%;
+				background-color: rgba(0, 0, 0, 0.6);
+				align-items: center;
+				justify-content: center;
+			}
+			#logModal.show {
+				display: flex;
+			}
+			.modal-content {
+				background-color: #fff;
+				border-radius: 8px;
+				box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+				max-width: 90%;
+				max-height: 90%;
+				display: flex;
+				flex-direction: column;
+				overflow: hidden;
+			}
+			.modal-header {
+				padding: 16px 20px;
+				background: #f5f5f5;
+				border-bottom: 1px solid #ddd;
+				display: flex;
+				justify-content: space-between;
+				align-items: center;
+			}
+			.modal-header h3 {
+				margin: 0;
+				font-size: 18px;
+				color: #333;
+			}
+			.modal-close {
+				background: #f44336;
+				color: white;
+				border: none;
+				padding: 6px 12px;
+				border-radius: 3px;
+				cursor: pointer;
+				font-size: 14px;
+				font-weight: bold;
+			}
+			.modal-close:hover {
+				background: #da190b;
+			}
+			.modal-body {
+				padding: 20px;
+				overflow: auto;
+				flex: 1;
+				min-height: 0;
+			}
+			.modal-body pre {
+				margin: 0;
+				white-space: pre-wrap;
+				word-wrap: break-word;
+				font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+				font-size: 14px;
+				line-height: 1.5;
+			}
+			
+			/* JSON Syntax Highlighting */
+			.modal-body .string { color: #0d904f; }
+			.modal-body .number { color: #1976d2; }
+			.modal-body .boolean { color: #d32f2f; }
+			.modal-body .null { color: #9e9e9e; }
+			.modal-body .key { color: #6f42c1; font-weight: bold; }
 		</style>
 
 		<script type="text/javascript">
@@ -57,6 +242,13 @@
 						// Your callback here
 					}
 				}).observe(element);
+				
+				// Close modal on Escape key
+				$(document).on('keydown', function(e) {
+					if (e.key === 'Escape' || e.keyCode === 27) {
+						closeLogModal();
+					}
+				});
 
 				$("input[type='checkbox']").on("click", function(event)
 				{
@@ -333,8 +525,18 @@
                 });
 			}
 
-			function copyToClipboard(text)
+			function copyToClipboard(text, event)
 			{
+                // Check for Ctrl+Click to show modal (do this first, before selection check)
+                if (event && event.ctrlKey)
+                {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    window.getSelection().removeAllRanges();
+                    showLogModal(text);
+                    return;
+                }
+                
                 if (window.getSelection().toString().length > 0)
                 {
                     return;
@@ -362,6 +564,61 @@
 					document.body.removeChild(textarea);
 					showToast("Copied to clipboard!");
 				}
+			}
+			
+			function syntaxHighlight(json)
+			{
+				if (typeof json == 'undefined' || json == null)
+				{
+					return "";
+				}
+				
+				if (typeof json != 'string')
+				{
+					json = JSON.stringify(json, undefined, 4);
+				}
+				
+				json = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+				return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function (match) {
+					var cls = 'number';
+					if (/^"/.test(match)) {
+						if (/:$/.test(match)) {
+							cls = 'key';
+						} else {
+							cls = 'string';
+						}
+					} else if (/true|false/.test(match)) {
+						cls = 'boolean';
+					} else if (/null/.test(match)) {
+						cls = 'null';
+					}
+					return '<span class="' + cls + '">' + match + '</span>';
+				});
+			}
+			
+			function showLogModal(text)
+			{
+				const modal = document.getElementById('logModal');
+				const modalBody = document.getElementById('logModalBody');
+				
+				// Try to parse as JSON
+				let content = text;
+				try {
+					const parsed = JSON.parse(text);
+					content = syntaxHighlight(parsed);
+				} catch (e) {
+					// Not valid JSON, display as plain text with HTML escaping
+					content = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+				}
+				
+				modalBody.innerHTML = '<pre>' + content + '</pre>';
+				modal.classList.add('show');
+			}
+			
+			function closeLogModal()
+			{
+				const modal = document.getElementById('logModal');
+				modal.classList.remove('show');
 			}
 
 			function showToast(message, isErr = false)
@@ -475,7 +732,17 @@
 	</div>
 </div>
 
-				
+<!-- Log Message Modal -->
+<div id="logModal" onclick="if(event.target === this) closeLogModal();">
+	<div class="modal-content">
+		<div class="modal-header">
+			<h3>Log Message</h3>
+			<button class="modal-close" onclick="closeLogModal()">Close</button>
+		</div>
+		<div class="modal-body" id="logModalBody">
+		</div>
+	</div>
+</div>
 
 	<script type="text/javascript">
 		$(document).ready(function()

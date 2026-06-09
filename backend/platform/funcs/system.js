@@ -483,7 +483,7 @@ module.exports = class
 		return {...rc, ...vals};
 	}
 
-	get_record_change_log()
+	search_audit_trail()
 	{
 		let vals = {};
 		let rc = $ERRS.ERR_SUCCESS;
@@ -506,60 +506,93 @@ module.exports = class
 			return $ERRS.ERR_DB_TABLE_PRIMARY_KEY_NOT_SUPPORTED;
 		}
 
-		const currVals = $Db.executeQuery(`SELECT * FROM \`${this.$table}\` WHERE ${pk[0].COLUMN_NAME}=?`, [this.$row_id]);
-		const changeLog = [];
+		vals.table = this.$table;
 
-		const chls = $Db.executeQuery(`SELECT CHL_OPERATION_TYPE, CHL_OLD_VALUES, CHL_NEW_VALUES, CHL_CREATED_ON
-										FROM \`change_log\`
-										WHERE CHL_TABLE=? AND CHL_RECORD_ID=?
-										ORDER BY CHL_ID DESC`, [this.$table, this.$row_id]);
-
-		chls.forEach(chl =>
+		if (this.$search_type === "record_id")
 		{
-			if (chl.CHL_OPERATION_TYPE == "INSERT")
-			{
-				changeLog.push({operation: "Insert", datetime: chl.CHL_CREATED_ON, values: JSON.parse(chl.CHL_NEW_VALUES)});
-			}
-			else if (chl.CHL_OPERATION_TYPE == "DELETE")
-			{
-				changeLog.push({operation: "Delete", datetime: chl.CHL_CREATED_ON, values: null});
-			}
-			else if (chl.CHL_OPERATION_TYPE == "UPDATE")
-			{
-				const log = {operation: "Update", datetime: chl.CHL_CREATED_ON, values: {}};
-				const oldVals = JSON.parse(chl.CHL_OLD_VALUES);
-				const newVals = JSON.parse(chl.CHL_NEW_VALUES);
+			const currVals = $Db.executeQuery(`SELECT * FROM \`${this.$table}\` WHERE ${pk[0].COLUMN_NAME}=?`, [this.$row_id]);
+			const changeLog = [];
 
-				Object.entries(oldVals).forEach(valsObj =>
+			const chls = $Db.executeQuery(`SELECT CHL_OPERATION_TYPE, CHL_OLD_VALUES, CHL_NEW_VALUES, CHL_CREATED_ON
+											FROM \`change_log\`
+											WHERE CHL_TABLE=? AND CHL_RECORD_ID=?
+											ORDER BY CHL_ID DESC`, [this.$table, this.$row_id]);
+
+			chls.forEach(chl =>
+			{
+				if (chl.CHL_OPERATION_TYPE == "INSERT")
 				{
-					const fieldName = valsObj[0];
-					const fieldOldVal = valsObj[1];
-					const fieldNewVal = newVals[fieldName];
+					changeLog.push({operation: "Insert", datetime: chl.CHL_CREATED_ON, values: chl.CHL_NEW_VALUES});
+				}
+				else if (chl.CHL_OPERATION_TYPE == "DELETE")
+				{
+					changeLog.push({operation: "Delete", datetime: chl.CHL_CREATED_ON, values: null});
+				}
+				else if (chl.CHL_OPERATION_TYPE == "UPDATE")
+				{
+					const log = {operation: "Update", datetime: chl.CHL_CREATED_ON, values: {}};
+					const oldVals = chl.CHL_OLD_VALUES;
+					const newVals = chl.CHL_NEW_VALUES;
 
-					if (fieldOldVal == fieldNewVal)
+					Object.entries(oldVals).forEach(valsObj =>
+					{
+						const fieldName = valsObj[0];
+						const fieldOldVal = valsObj[1];
+						const fieldNewVal = newVals[fieldName];
+
+						if (fieldOldVal == fieldNewVal)
+						{
+							return;
+						}
+
+						log.values[fieldName] = {old: fieldOldVal, new: fieldNewVal};
+					});
+
+					if (Object.keys(log.values).length == 0)
 					{
 						return;
 					}
 
-					log.values[fieldName] = {old: fieldOldVal, new: fieldNewVal};
-				});
-
-				if (Object.keys(log.values).length == 0)
-				{
-					return;
+					changeLog.push(log);
 				}
+			});
 
-				changeLog.push(log);
+			if (currVals.length == 0 && changeLog.length == 0)
+			{
+				return $ERRS.ERR_DB_INVALID_ROW_ID;
 			}
-		});
 
-		if (currVals.length == 0 && changeLog.length == 0)
-		{
-			return $ERRS.ERR_DB_INVALID_ROW_ID;
+			vals.current_values = currVals[0];
+			vals.change_log = changeLog;
 		}
+		else if (this.$search_type === "date_range")
+		{
+			const records = $Db.executeQuery(`SELECT CHL_RECORD_ID record_id, CHL_OPERATION_TYPE operation, CHL_OLD_VALUES old_values, 
+													CHL_NEW_VALUES new_values, CHL_CREATED_ON created_on
+											FROM \`change_log\`
+											WHERE CHL_TABLE=? AND CHL_CREATED_ON >= ? AND CHL_CREATED_ON <= ?
+											ORDER BY CHL_CREATED_ON DESC
+											LIMIT 1000`, [this.$table, this.$date_from, this.$date_to]);
 
-		vals.current_values = currVals[0];
-		vals.change_log = changeLog;
+			vals.records = records;
+		}
+		else if (this.$search_type === "field_value")
+		{
+			const records = $Db.executeQuery(`SELECT CHL_RECORD_ID record_id, CHL_OPERATION_TYPE operation, CHL_OLD_VALUES old_values,
+													CHL_NEW_VALUES new_values, CHL_CREATED_ON created_on
+											FROM \`change_log\`
+											WHERE CHL_TABLE=? 
+												AND (JSON_UNQUOTE(JSON_EXTRACT(CHL_OLD_VALUES, ?)) = ? OR JSON_UNQUOTE(JSON_EXTRACT(CHL_NEW_VALUES, ?)) = ?)
+											ORDER BY CHL_CREATED_ON DESC
+											LIMIT 1000`, 
+											[this.$table, `$.${this.$field_name}`, this.$field_value, `$.${this.$field_name}`, this.$field_value]);
+
+			vals.records = records;
+		}
+		else
+		{
+			return $ERRS.ERR_INVALID_PARAMETER;
+		}
 
 		return {...rc, ...vals};
 	}

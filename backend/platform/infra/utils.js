@@ -584,6 +584,11 @@ module.exports =
 			html += "<div style='" + warningStyles + " " + highStyles + "'>Log analyzer is publicly enabled</div> ";
 		}
 
+		if ($Config.get("enable_audit_trail") && this.empty($Config.get("restrict_audit_trail_to_ip")) && !$Config.get("enable_system_login"))
+		{
+			html += "<div style='" + warningStyles + " " + highStyles + "'>Audit trail is publicly enabled</div> ";
+		}
+
 		if ($Config.get("log_requests") & $Const.LL_DEBUG)
 		{
 			html += "<div style='" + warningStyles + " " + highStyles + "'>Logging of debug messages is enabled</div> ";

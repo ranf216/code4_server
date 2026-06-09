@@ -2,19 +2,7 @@
 const activeExports = {};
 
 // Configuration for export defaults
-const EXPORT_CONFIG = {
-    // Tables to exclude from export entirely
-    excludeTables: [
-        // 'cache_table',
-        // 'temp_logs'
-    ],
-    
-    // Tables to export structure only (no data)
-    excludeDataTables: [
-        'log',
-        'change_log',
-    ]
-};
+const EXPORT_CONFIG = require('../platform/config/db_exporter.config.js');
 
 exports.run = function (req, res)
 {
@@ -264,7 +252,7 @@ exports.exportDb = function (req, res)
             {
                 currentItem++;
                 if (progressCallback('procedure', proc.name, 0, 0) === false) return;
-                if (exportProcedure(res, schema, proc.name, proc.type, safeWrite) === false) return;
+                if (exportProcedure(res, schema, proc.name, proc.type, safeWrite, exportData.removeDefinerProcs) === false) return;
             }
         }
 
@@ -275,7 +263,7 @@ exports.exportDb = function (req, res)
             {
                 currentItem++;
                 if (progressCallback('trigger', trigger.name, 0, 0) === false) return;
-                if (exportTrigger(res, schema, trigger.name, safeWrite) === false) return;
+                if (exportTrigger(res, schema, trigger.name, safeWrite, exportData.removeDefinerTriggers) === false) return;
             }
         }
 
@@ -524,7 +512,7 @@ function exportView(res, schema, viewName, safeWrite)
     return true;
 }
 
-function exportProcedure(res, schema, procName, procType, safeWrite)
+function exportProcedure(res, schema, procName, procType, safeWrite, removeDefiner)
 {
     const type = procType.toUpperCase();
     if (safeWrite(`-- ${type}: ${procName}\n`) === false) return false;
@@ -535,20 +523,26 @@ function exportProcedure(res, schema, procName, procType, safeWrite)
     const createResult = $Db.executeQuery(`${showCmd} \`${procName}\``);
     const createKey = type === 'PROCEDURE' ? 'Create Procedure' : 'Create Function';
     
-    if (safeWrite(createResult[0][createKey] + '$$\n') === false) return false;
+    let sql = createResult[0][createKey];
+    if (removeDefiner) sql = sql.replace(/\s*DEFINER\s*=\s*\S+/i, '');
+    
+    if (safeWrite(sql + '$$\n') === false) return false;
     if (safeWrite(`DELIMITER ;\n\n`) === false) return false;
     
     return true;
 }
 
-function exportTrigger(res, schema, triggerName, safeWrite)
+function exportTrigger(res, schema, triggerName, safeWrite, removeDefiner)
 {
     if (safeWrite(`-- Trigger: ${triggerName}\n`) === false) return false;
     if (safeWrite(`DROP TRIGGER IF EXISTS \`${triggerName}\`;\n`) === false) return false;
     if (safeWrite(`DELIMITER $$\n`) === false) return false;
 
     const createResult = $Db.executeQuery(`SHOW CREATE TRIGGER \`${triggerName}\``);
-    if (safeWrite(createResult[0]['SQL Original Statement'] + '$$\n') === false) return false;
+    let sql = createResult[0]['SQL Original Statement'];
+    if (removeDefiner) sql = sql.replace(/\s*DEFINER\s*=\s*\S+/i, '');
+    
+    if (safeWrite(sql + '$$\n') === false) return false;
     if (safeWrite(`DELIMITER ;\n\n`) === false) return false;
     
     return true;

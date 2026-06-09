@@ -8,16 +8,65 @@
         <script src="{{socket_url}}/socket.io/socket.io.js"></script>
 
 		<style type="text/css">
-			html, body {height: 100%; width: 100%; margin: 0;  padding:0;}
-			#outer {height: 100%; width: 100%; margin: 0;  padding:0;}
-            #header {padding: 5px;}
+			html, body {height: 100%; width: 100%; margin: 0; padding: 0; font-family: Arial, sans-serif;}
+			#outer {height: 100%; width: 100%; margin: 0; padding: 0;}
+			
+			/* Header/Controls Styling */
+			#inner_fixed {background: #f5f5f5; border-bottom: 2px solid #ccc; padding: 0;}
+            #header {padding: 10px;}
 
+			/* Content Area - UNCHANGED */
 			#content {position: absolute; bottom: 0; width: 100%; overflow: scroll; font: 16px "courier new";}
-			#logout {background-color: #f7ae66; border: #df7002 2px solid; font-weight: bold; cursor: pointer; {{enable_system_login}} }
+			
+			#logout {
+				background-color: #f7ae66;
+				border: #df7002 2px solid;
+				font-weight: bold;
+				cursor: pointer;
+				padding: 5px 15px;
+				border-radius: 3px;
+				{{enable_system_login}}
+			}
+			#logout:hover {background-color: #f59e46;}
 
             td {padding-left: 20px;}
-            .alalyze_option {display: inline-block; border: solid 1px black; padding: 5px;}
-            .alalyze_option_title {padding-bottom: 5px; font-weight: bold;}
+            
+            .alalyze_option {
+            	display: inline-block;
+            	border: 1px solid #ddd;
+            	padding: 10px;
+            	background: #fafafa;
+            	border-radius: 5px;
+            	margin-right: 10px;
+            	margin-bottom: 10px;
+            }
+            .alalyze_option_title {
+            	padding-bottom: 8px;
+            	font-weight: bold;
+            	color: #333;
+            }
+            
+            input[type="text"] {
+            	padding: 5px;
+            	border: 1px solid #ccc;
+            	border-radius: 3px;
+            }
+            input[type="checkbox"] {
+            	cursor: pointer;
+            	vertical-align: middle;
+            }
+            
+            button {
+            	padding: 5px 15px;
+            	background: #2196F3;
+            	color: white;
+            	border: none;
+            	border-radius: 3px;
+            	cursor: pointer;
+            	font-weight: bold;
+            }
+            button:hover {background: #0b7dda;}
+            
             .date {width: 130px;}
             .user_param {width: 260px;}
             .log_table {width: 120px;}
@@ -26,7 +75,13 @@
             .substring {width: 400px;}
             .lines {width: 80px;}
             .alalyze_option_title span {font-weight: normal; padding-left: 20px;}
-            .check {padding-right: 5px;}
+            .check {
+            	padding-right: 5px;
+            	cursor: pointer;
+            	user-select: none;
+            }
+            .check:hover {text-decoration: underline;}
+            
             .rc_error {color: red;}
             .current_values {background-color: #ffefd5;}
             .Insert_values {background-color: lightblue;}
@@ -45,8 +100,84 @@
             .spacer50 {width: 50px; display: inline-block;}
 			.spacer90 {width: 90px; display: inline-block;}
 			.inline_spacer {width: 100px; display: inline-block;}
-			.vspacer {font-size: 1px; height: 6px;}
-            .large_vspacer {font-size: 1px; height: 20px;}
+			.vspacer {height: 8px;}
+            .large_vspacer {height: 20px;}
+            
+            hr {border: none; border-top: 1px solid #ccc; margin: 8px 0 0 0;}
+            
+            /* Modal Styles */
+			#logModal {
+				display: none;
+				position: fixed;
+				z-index: 10000;
+				left: 0;
+				top: 0;
+				width: 100%;
+				height: 100%;
+				background-color: rgba(0, 0, 0, 0.6);
+				align-items: center;
+				justify-content: center;
+			}
+			#logModal.show {
+				display: flex;
+			}
+			.modal-content {
+				background-color: #fff;
+				border-radius: 8px;
+				box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+				max-width: 90%;
+				max-height: 90%;
+				display: flex;
+				flex-direction: column;
+				overflow: hidden;
+			}
+			.modal-header {
+				padding: 16px 20px;
+				background: #f5f5f5;
+				border-bottom: 1px solid #ddd;
+				display: flex;
+				justify-content: space-between;
+				align-items: center;
+			}
+			.modal-header h3 {
+				margin: 0;
+				font-size: 18px;
+				color: #333;
+			}
+			.modal-close {
+				background: #f44336;
+				color: white;
+				border: none;
+				padding: 6px 12px;
+				border-radius: 3px;
+				cursor: pointer;
+				font-size: 14px;
+				font-weight: bold;
+			}
+			.modal-close:hover {
+				background: #da190b;
+			}
+			.modal-body {
+				padding: 20px;
+				overflow: auto;
+				flex: 1;
+				min-height: 0;
+			}
+			.modal-body pre {
+				margin: 0;
+				white-space: pre-wrap;
+				word-wrap: break-word;
+				font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+				font-size: 14px;
+				line-height: 1.5;
+			}
+			
+			/* JSON Syntax Highlighting */
+			.modal-body .string { color: #0d904f; }
+			.modal-body .number { color: #1976d2; }
+			.modal-body .boolean { color: #d32f2f; }
+			.modal-body .null { color: #9e9e9e; }
+			.modal-body .key { color: #6f42c1; font-weight: bold; }
 
 			.type_REQUEST {color: #800000;}
 			.type_RESPONSE {color: #004000;}
@@ -59,6 +190,8 @@
 			.simple_data {cursor: default;}
 			.filter_data {cursor: pointer;}
 			.filter_data:hover {text-decoration: underline;}
+			#content td {outline: none; border: none; box-shadow: none;}
+			#content td:focus, #content td:active, #content td:focus-visible {outline: none; border: none; box-shadow: none;}
 		</style>
 
         <script type="text/javascript">
@@ -79,8 +212,13 @@
 						// Your callback here
 					}
 				}).observe(element);
-
-
+				
+				// Close modal on Escape key
+				$(document).on('keydown', function(e) {
+					if (e.key === 'Escape' || e.keyCode === 27) {
+						closeLogModal();
+					}
+				});
 			});
 
             function clearAllMessage()
@@ -167,7 +305,7 @@
                                             <td class="filter_data" onclick='doOnClick(2, "${call.type}")'>${call.type}</td>
                                             <td class="filter_data" onclick='doOnClick(3, "${call.request_name}")'>${call.request_name}</td>
                                             <td class="filter_data" onclick='doOnClick(4, "${call.uid}")'>${call.uid}</td>
-                                            <td class="simple_data ${isErr ? "type_FAILED_RESPONSE" : ""}" onclick="copyToClipboard($(this).html().trim())">${call.text}</td>
+                                            <td class="simple_data ${isErr ? "type_FAILED_RESPONSE" : ""}" onclick="copyToClipboard($(this).html().trim(), event)">${call.text}</td>
                                         </tr>`;
                         });
                     }
@@ -198,85 +336,6 @@
                 $("#request").val("");
 
                 query();
-            }
-
-            function getChangeLog()
-            {
-                clearAllMessage();
-                let lineIndex = 0;
-
-                makeApiCall({"#request": "System/get_record_change_log", "token": jQuery.cookie("system_token"), "table": $("#log_table").val(), "row_id": $("#row_id").val()}, rc =>
-                {
-                    let content = `<table cellpadding="5" cellspacing="0" border="0" width="100%">`;
-
-                    if (rc.rc == 0)
-                    {
-                        if (rc.current_values)
-                        {
-                            content += `<tr class="current_values"><td class="values_title">Current Values</td></tr><tr class="current_values"><td> <table cellpadding="5" cellspacing="0" border="0">`;
-
-                            Object.entries(rc.current_values).forEach(valsObj =>
-                            {
-                                const fieldName = valsObj[0];
-                                const fieldVal = valsObj[1];
-
-                                content += `<tr><td>${fieldName}:</td><td>${fieldVal}</td></tr>`;
-                            });
-
-                            content += `</table></td></tr>`;
-                        }
-
-                        rc.change_log.forEach(log =>
-                        {
-                            let valuesPostfix = "";
-                            if (log.operation == "Update")
-                            {
-                                valuesPostfix = lineIndex;
-                                lineIndex = (lineIndex == 0 ? 1 : 0);
-                            }
-
-                            content += `<tr class="${log.operation}_values${valuesPostfix}"><td class="values_title">${log.datetime} ${log.operation}</td></tr><tr class="${log.operation}_values${valuesPostfix}"><td> <table cellpadding="5" cellspacing="0" border="0">`;
-
-                            if (log.operation == "Insert")
-                            {
-                                Object.entries(log.values).forEach(valsObj =>
-                                {
-                                    const fieldName = valsObj[0];
-                                    const fieldVal = valsObj[1];
-
-                                    content += `<tr><td>${fieldName}:</td><td>${fieldVal}</td></tr>`;
-                                });
-                            }
-                            else if (log.operation == "Update")
-                            {
-                                let propIndex = 0;
-                                const numOfProps = Object.keys(log.values).length;
-
-                                Object.entries(log.values).forEach(valsObj =>
-                                {
-                                    propIndex++;
-                                    const fieldName = valsObj[0];
-                                    const {old: oldVal, new: newVal} = valsObj[1];
-
-                                    const classRowSep = (propIndex == numOfProps ? "" : `class="update_row_sep"`);
-
-                                    content += `<tr><td>${fieldName}:</td><td class="update_val_sep">Old:</td><td class="update_val_sep">${oldVal}</td></tr><tr><td ${classRowSep}></td><td ${classRowSep}>New:</td><td ${classRowSep}>${newVal}</td></tr>`;
-                                });
-                            }
-
-                            content += `</table></td></tr>`;
-                        });
-                    }
-                    else
-                    {
-                        content += `<tr><td class="rc_error">[${rc.rc}] ${rc.message}</td></tr>`;
-                    }
-
-                    content += `</table>`;
-
-                    appendLine(content);
-                    $('#content').scrollTop(0);
-                });
             }
 
             function getUser()
@@ -430,8 +489,18 @@
 				}
 			}
 
-			function copyToClipboard(text)
+			function copyToClipboard(text, event)
 			{
+                // Check for Ctrl+Click to show modal (do this first, before selection check)
+                if (event && event.ctrlKey)
+                {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    window.getSelection().removeAllRanges();
+                    showLogModal(text);
+                    return;
+                }
+                
                 if (window.getSelection().toString().length > 0)
                 {
                     return;
@@ -459,6 +528,61 @@
 					document.body.removeChild(textarea);
 					showToast("Copied to clipboard!");
 				}
+			}
+			
+			function syntaxHighlight(json)
+			{
+				if (typeof json == 'undefined' || json == null)
+				{
+					return "";
+				}
+				
+				if (typeof json != 'string')
+				{
+					json = JSON.stringify(json, undefined, 4);
+				}
+				
+				json = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+				return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function (match) {
+					var cls = 'number';
+					if (/^"/.test(match)) {
+						if (/:$/.test(match)) {
+							cls = 'key';
+						} else {
+							cls = 'string';
+						}
+					} else if (/true|false/.test(match)) {
+						cls = 'boolean';
+					} else if (/null/.test(match)) {
+						cls = 'null';
+					}
+					return '<span class="' + cls + '">' + match + '</span>';
+				});
+			}
+			
+			function showLogModal(text)
+			{
+				const modal = document.getElementById('logModal');
+				const modalBody = document.getElementById('logModalBody');
+				
+				// Try to parse as JSON
+				let content = text;
+				try {
+					const parsed = JSON.parse(text);
+					content = syntaxHighlight(parsed);
+				} catch (e) {
+					// Not valid JSON, display as plain text with HTML escaping
+					content = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+				}
+				
+				modalBody.innerHTML = '<pre>' + content + '</pre>';
+				modal.classList.add('show');
+			}
+			
+			function closeLogModal()
+			{
+				const modal = document.getElementById('logModal');
+				modal.classList.remove('show');
 			}
 
 			function showToast(message, isErr = false)
@@ -533,15 +657,6 @@
                             <input type="checkbox" id="chk_ERR" /><span style="cursor: default; color: red;" onclick="$('#chk_ERR').click()" class="check">ERR</span>
                             <input type="checkbox" id="chk_RCE"/><span style="cursor: default; color: red;" onclick="$('#chk_RCE').click()" class="check">RCE</span>
                         </div>
-                        <div id="change_log_control" class="alalyze_option">
-                            <div class="alalyze_option_title">
-                                Record Change Log
-                                <span>Table: <input type="text" id="log_table" class="log_table" /></span>
-                                <span class="spacer1"></span>
-                                <button id="get_user" onclick="getChangeLog()">get</button>
-                            </div>
-                            Row Id: <input type="text" id="row_id" class="row_id" />
-                        </div>
                         <div id="user_token_control" class="alalyze_option">
                             <div class="alalyze_option_title">
                                 User By Id / Token / Email / Phone
@@ -556,6 +671,18 @@
             </div>
         
             <div id="content">
+            </div>
+        </div>
+        
+        <!-- Log Message Modal -->
+        <div id="logModal" onclick="if(event.target === this) closeLogModal();">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Log Message</h3>
+                    <button class="modal-close" onclick="closeLogModal()">Close</button>
+                </div>
+                <div class="modal-body" id="logModalBody">
+                </div>
             </div>
         </div>
     </body>

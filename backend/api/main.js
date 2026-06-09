@@ -368,6 +368,16 @@ function runAPI(json, reqQuery, session, isRun)
 			return $ERRS.ERR_NOT_IMPLEMENTED;
 		}
 	
+		if (apiModes.includes("acl"))
+		{
+			const acl = apiRequest["@acl"] || [];
+			const aclDecline = apiRequest["@acl_decline"] || [];
+			session.acl = {
+				user_types: acl.filter(v => v < 1000 && !aclDecline.includes(v)),
+				user_roles: acl.filter(v => v >= 1000 && !aclDecline.includes(v)).map(v => v - 1000)
+			};
+		}
+
 		apiModule["$Session"] = session;
 	
 		Object.entries(reqParams).forEach(function(paramObj)

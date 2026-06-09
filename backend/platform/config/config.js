@@ -1,7 +1,7 @@
 module.exports = {
 	// Version
 	"api_version"							: "1",
-	"infra_version"							: "3.10.4",
+	"infra_version"							: "3.11.7",
 
 	// Server online - If set to false, no API is able to run!!!
 	"api_server_active"						: true,
@@ -22,6 +22,7 @@ module.exports = {
 	"enable_logtail"						: true,
 	"enable_socket_viewer"					: true,
 	"enable_log_analyzer"					: true,
+	"enable_audit_trail"					: true,
 	"enable_otp_viewer"						: true,
 	"enable_db_exporter"					: true,
 	"enable_system_login"					: false,
@@ -32,6 +33,7 @@ module.exports = {
 	"restrict_logtail_to_ip"				: [],
 	"restrict_socket_viewer_to_ip"			: [],
 	"restrict_log_analyzer_to_ip"			: [],
+	"restrict_audit_trail_to_ip"			: [],
 	"restrict_otp_viewer_to_ip"				: [],
 	"restrict_db_exporter_to_ip"			: [],
 

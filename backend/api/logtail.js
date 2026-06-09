@@ -146,7 +146,7 @@ function getLines(lines, limit, arrIps, arrReqs)
 		let isErr = (logType == "RESPONSE" && str.indexOf("\"rc\":0") === -1);
 		str = $Utils.escapeHtml(str);
 		let onclickClass = `log_message${index}`;
-		let onclick = `copyToClipboard($(".${onclickClass}").html().trim())`;
+		let onclick = `copyToClipboard($(".${onclickClass}").html().trim(), event)`;
 
 		if (isErr)
 		{

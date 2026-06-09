@@ -168,30 +168,37 @@
 			{
 				input = decodeHTMLEntities(input);
 				
-				var lastBracketIndex = input.lastIndexOf('[');
-				if (lastBracketIndex === -1)
+				var lastCloseIndex = input.lastIndexOf(']');
+				if (lastCloseIndex === -1)
 				{
 					return { sql: input, params: [] };
 				}
 
-				var sqlPart = input.substring(0, lastBracketIndex).trim();
-				var paramsPart = input.substring(lastBracketIndex).trim();
-
-				var params = [];
-				try
+				var searchFrom = lastCloseIndex;
+				while (true)
 				{
-					params = JSON.parse(paramsPart);
-					if (!Array.isArray(params))
+					var openIndex = input.lastIndexOf('[', searchFrom);
+					if (openIndex === -1)
 					{
-						params = [];
+						return { sql: input, params: [] };
 					}
-				}
-				catch (e)
-				{
-					return { sql: input, params: [] };
-				}
 
-				return { sql: sqlPart, params: params };
+					var candidate = input.substring(openIndex, lastCloseIndex + 1);
+					try
+					{
+						var params = JSON.parse(candidate);
+						if (Array.isArray(params))
+						{
+							var sqlPart = input.substring(0, openIndex).trim();
+							return { sql: sqlPart, params: params };
+						}
+					}
+					catch (e)
+					{
+					}
+
+					searchFrom = openIndex - 1;
+				}
 			}
 
 			function formatSQLStatement(sql, params)
@@ -439,9 +446,6 @@
 
     </head>
     <body>
-		{{getWebClientMessages}}
-		{{getWebClientEnvironment}}
-		
 		<div class="container">
 			<h1>SQL Formatter</h1>
 			

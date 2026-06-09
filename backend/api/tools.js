@@ -20,6 +20,12 @@ exports.run = function (req, res)
 			enabled: $Config.get("enable_log_analyzer") === true
 		},
 		{
+			name: "audit_trail",
+			title: "Audit Trail",
+			url: "/audit_trail",
+			enabled: $Config.get("enable_audit_trail") === true
+		},
+		{
 			name: "otp_viewer",
 			title: "OTP Viewer",
 			url: "/otp_viewer",
