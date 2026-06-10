@@ -265,6 +265,11 @@ var RestControl =
 			}
 		});
 
+		$("#btnHelp").unbind().click(function()
+		{
+			RestControl.showHelp();
+		});
+
 		RestControl.resetPage();
 	},
 	
@@ -959,6 +964,71 @@ var RestControl =
 		}
 
 		return html;
+	},
+
+	showHelp: function()
+	{
+		var img = function(n) { return '<img src="/public/help/image' + n + '.png" />'; };
+
+		var html = ''
+			+ '<h2>API Documentation</h2>'
+			+ '<h3>Module Documentation</h3>'
+			+ '<p>When you select a module, the <strong>(?) Module</strong> button becomes enabled if documentation is available.</p>'
+			+ img(1)
+			+ '<p>Click it to open the full module documentation. It covers features and flows beyond just individual endpoints.</p>'
+			+ img(2)
+
+			+ '<h3>Endpoint Documentation</h3>'
+			+ '<p>When you select an endpoint, the <strong>(?) Endpoint</strong> button becomes enabled.</p>'
+			+ img(3)
+			+ '<p>Click it to view the specific endpoint documentation.</p>'
+			+ img(4)
+
+			+ '<h2>Top Bar Tools</h2>'
+			+ '<h3>Clear</h3>'
+			+ '<p>Resets the page to its initial state.</p>'
+			+ img(5)
+
+			+ '<h3>Wrap Long Lines</h3>'
+			+ '<p>When the response contains long content with horizontal scrolling, enable this checkbox to wrap the text.</p>'
+			+ img(6)
+
+			+ '<h2>Side Bar Tools</h2>'
+			+ '<h3>Post JSON Request</h3>'
+			+ '<p>Paste a raw JSON request (e.g. copied from the logtail) and execute it directly.</p>'
+			+ img(7)
+
+			+ '<h3>Parameters</h3>'
+			+ '<p>Store persistent key-value data on the page. Values can be copied to the clipboard for later use.</p>'
+			+ img(8)
+
+			+ '<h3>Saved Calls</h3>'
+			+ '<p>After making a call, you can save it along with its request params and <strong>Run After Response</strong> script.</p>'
+			+ '<p>In <strong>Run After Response</strong> you can write any valid JavaScript. '
+			+ 'Use <code>$$</code> to access the <strong>Parameters</strong> object and <code>json</code> to access the response.</p>'
+
+			+ '<h4>Example</h4>'
+			+ '<p>Add this to <code>User/login</code> Run After Response:</p>'
+			+ '<pre><code>$$.second_factor_key = json.second_factor_key</code></pre>'
+			+ '<p>This saves <code>second_factor_key</code> from the response into the Parameters. '
+			+ 'Then in the <code>TwoFactorAuth/send_otp_code</code> call, set the <code>second_factor_key</code> field to <code>$$.second_factor_key</code> and it will be filled automatically.</p>'
+			+ '<p>You can save as many calls as you want. Using an existing name overwrites it; a new name adds a new entry.</p>'
+
+			+ '<p>At the bottom of the Saved Calls box, use the <strong>Import</strong> / <strong>Export</strong> buttons to manage your call list. '
+			+ 'For example, import this <a href="/public/help/apiclient_import_example.json" download="apiclient_import_example.json">JSON</a> '
+			+ 'file to get 3 pre-configured calls for admin login. '
+			+ 'Then load and run each call in order. '
+			+ 'Notice how the <code>$$</code> object is used in the requests and in Run After Response.</p>'
+			+ img(9)
+
+			+ '<h2>User Context</h2>'
+			+ '<p>Whenever you log in or register and receive a token, it is automatically added to the context list.</p>'
+			+ img(10)
+			+ '<p>When calling an endpoint that requires a token, the selected context token is auto-filled.</p>'
+			+ img(11);
+
+		RestControl.showDocPopup("API Client Help", "");
+		document.getElementById("docPopupBody").innerHTML = html;
 	},
 
 	showToast: function(message, isErr = false)
