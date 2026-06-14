@@ -240,6 +240,8 @@ module.exports = {
 	// Settings (740-749)
 	"ERR_SETTING_NOT_FOUND"								: {"rc" : 740,	"message" : "setting not found"},
 	"ERR_SETTING_NAME_ALREADY_EXISTS"					: {"rc" : 741,	"message" : "a setting with this name already exists"},
+	"ERR_GPS_INTERVAL_NORMAL_OUT_OF_RANGE"				: {"rc" : 742,	"message" : "gps_interval_normal out of range (must be 10-120)"},
+	"ERR_GPS_INTERVAL_EMERGENCY_OUT_OF_RANGE"			: {"rc" : 743,	"message" : "gps_interval_emergency out of range (must be 5-30)"},
 
 	// Asset & Post (750-769)
 	"ERR_ASSET_NOT_FOUND"								: {"rc" : 750,	"message" : "asset not found"},

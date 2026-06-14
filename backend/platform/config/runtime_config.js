@@ -27,6 +27,7 @@ module.exports =
 		},
 		"notification": {
 			notification_methods: "in_app,email,mobile",
+			notification_title: "",
 			sender_name: "",
 			new_call_enabled: true,
 			call_accepted_enabled: true,

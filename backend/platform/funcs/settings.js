@@ -120,12 +120,12 @@ module.exports = class
 
     add_asset_type()
     {
-        return $DataItemsCrud.add("asset_type", this.$name, null);
+        return $DataItemsCrud.add("asset_type", this.$name, { icon: this.$icon, color: this.$color });
     }
 
     update_asset_type()
     {
-        return $DataItemsCrud.update("asset_type", this.$type_id, this.$name, null);
+        return $DataItemsCrud.update("asset_type", this.$type_id, this.$name, { icon: this.$icon, color: this.$color });
     }
 
     delete_asset_type()
@@ -145,12 +145,12 @@ module.exports = class
 
     add_po_section_type()
     {
-        return $DataItemsCrud.add("po_section_type", this.$name, { client_visible: this.$client_visible });
+        return $DataItemsCrud.add("po_section_type", this.$name, { client_visible: this.$client_visible, short_description: this.$short_description, active: this.$active });
     }
 
     update_po_section_type()
     {
-        return $DataItemsCrud.update("po_section_type", this.$type_id, this.$name, { client_visible: this.$client_visible });
+        return $DataItemsCrud.update("po_section_type", this.$type_id, this.$name, { client_visible: this.$client_visible, short_description: this.$short_description, active: this.$active });
     }
 
     delete_po_section_type()
@@ -170,6 +170,17 @@ module.exports = class
 
     update_gps_settings()
     {
+        if (this.$gps_interval_normal !== undefined &&
+            (this.$gps_interval_normal < 10 || this.$gps_interval_normal > 120))
+        {
+            return $ERRS.ERR_GPS_INTERVAL_NORMAL_OUT_OF_RANGE;
+        }
+        if (this.$gps_interval_emergency !== undefined &&
+            (this.$gps_interval_emergency < 5 || this.$gps_interval_emergency > 30))
+        {
+            return $ERRS.ERR_GPS_INTERVAL_EMERGENCY_OUT_OF_RANGE;
+        }
+
         const values = {
             gps_interval_normal: this.$gps_interval_normal,
             gps_interval_emergency: this.$gps_interval_emergency,
@@ -198,6 +209,7 @@ module.exports = class
     {
         const values = {
             notification_methods: this.$notification_methods,
+            notification_title: this.$notification_title,
             sender_name: this.$sender_name,
             new_call_enabled: this.$new_call_enabled,
             call_accepted_enabled: this.$call_accepted_enabled,
