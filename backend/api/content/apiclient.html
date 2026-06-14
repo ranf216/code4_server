@@ -490,6 +490,30 @@
 			.doc-popup-body .md-list-item {
 				margin: 2px 0;
 			}
+			.doc-popup-body img {
+				max-width: 100%;
+				border: 1px solid #d0d7de;
+				border-radius: 6px;
+				margin: 8px 0;
+				box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+			}
+			.doc-popup-body h4 {
+				font-size: 14px;
+				font-weight: 600;
+				margin: 12px 0 6px;
+				color: #57606a;
+			}
+			.doc-popup-body a {
+				color: #0969da;
+				text-decoration: none;
+				font-weight: 500;
+			}
+			.doc-popup-body a:hover {
+				text-decoration: underline;
+			}
+			.btn-help {
+				margin-left: auto;
+			}
 			::-webkit-scrollbar {
 				width: 10px;
 				height: 10px;
@@ -524,6 +548,7 @@
 						<input type="checkbox" id="wrapContentCheckbox" />
 						Wrap long lines
 					</label>
+					<button id="btnHelp" class="btn-doc btn-help" title="Show help"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><circle cx="12" cy="17" r="2" fill="currentColor" stroke="none"/></svg> Help</button>
 				</div>
 				<div class="left-content">
 				<pre id="documentation" class="documentation"></pre>

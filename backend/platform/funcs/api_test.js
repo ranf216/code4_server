@@ -183,7 +183,7 @@ module.exports = class
             }
 
             testResults.push({step: "Test 11: add_asset_type", status: "running"});
-            rv = $executeAPI(this.$Session, "Settings/add_asset_type", { name: testAssetTypeName });
+            rv = $executeAPI(this.$Session, "Settings/add_asset_type", { name: testAssetTypeName, icon: "test_icon.png", color: "#FF5733" });
             if ($Err.isERR(rv))
             {
                 testResults.push({step: "Test 11: add_asset_type", status: "failed", error: rv.message});
@@ -201,7 +201,7 @@ module.exports = class
             }
             else
             {
-                rv = $executeAPI(this.$Session, "Settings/update_asset_type", { type_id: addedAssetTypeId, name: `Updated ${testAssetTypeName}` });
+                rv = $executeAPI(this.$Session, "Settings/update_asset_type", { type_id: addedAssetTypeId, name: `Updated ${testAssetTypeName}`, icon: "updated_icon.png", color: "#00FF00" });
                 if ($Err.isERR(rv))
                 {
                     testResults.push({step: "Test 12: update_asset_type", status: "failed", error: rv.message});
@@ -242,7 +242,7 @@ module.exports = class
             }
 
             testResults.push({step: "Test 15: add_po_section_type", status: "running"});
-            rv = $executeAPI(this.$Session, "Settings/add_po_section_type", { name: testPoSectionName, client_visible: true });
+            rv = $executeAPI(this.$Session, "Settings/add_po_section_type", { name: testPoSectionName, client_visible: true, short_description: "Test section", active: true });
             if ($Err.isERR(rv))
             {
                 testResults.push({step: "Test 15: add_po_section_type", status: "failed", error: rv.message});
@@ -260,7 +260,7 @@ module.exports = class
             }
             else
             {
-                rv = $executeAPI(this.$Session, "Settings/update_po_section_type", { type_id: addedPoSectionTypeId, name: `Updated ${testPoSectionName}`, client_visible: false });
+                rv = $executeAPI(this.$Session, "Settings/update_po_section_type", { type_id: addedPoSectionTypeId, name: `Updated ${testPoSectionName}`, client_visible: false, short_description: "Updated section", active: true });
                 if ($Err.isERR(rv))
                 {
                     testResults.push({step: "Test 16: update_po_section_type", status: "failed", error: rv.message});
@@ -504,7 +504,7 @@ module.exports = class
 
             testResults.push({step: "Test 33: add_asset_type (verify creation)", status: "running"});
             let testAssetTypeName2 = `Test Asset Verify ${uniqueId}`;
-            rv = $executeAPI(this.$Session, "Settings/add_asset_type", { name: testAssetTypeName2 });
+            rv = $executeAPI(this.$Session, "Settings/add_asset_type", { name: testAssetTypeName2, icon: "test_icon.png", color: "#FF5733" });
             if ($Err.isERR(rv))
             {
                 testResults.push({step: "Test 33: add_asset_type (verify creation)", status: "failed", error: rv.message});
@@ -520,9 +520,9 @@ module.exports = class
                 else
                 {
                     let found = rv.items.find(item => item.type_id === verifyAssetTypeId && item.name === testAssetTypeName2);
-                    if (found)
+                    if (found && found.color === "#FF5733")
                     {
-                        testResults.push({step: "Test 33: add_asset_type (verify creation)", status: "passed", verified_created: true});
+                        testResults.push({step: "Test 33: add_asset_type (verify creation)", status: "passed", verified_created: true, verified_color: true});
                         $executeAPI(this.$Session, "Settings/delete_asset_type", { type_id: verifyAssetTypeId });
                     }
                     else
@@ -534,7 +534,7 @@ module.exports = class
 
             testResults.push({step: "Test 34: add_po_section_type (verify client_visible)", status: "running"});
             let testPoSectionName2 = `Test Section Verify ${uniqueId}`;
-            rv = $executeAPI(this.$Session, "Settings/add_po_section_type", { name: testPoSectionName2, client_visible: false });
+            rv = $executeAPI(this.$Session, "Settings/add_po_section_type", { name: testPoSectionName2, client_visible: false, short_description: "Verify section desc", active: true });
             if ($Err.isERR(rv))
             {
                 testResults.push({step: "Test 34: add_po_section_type (verify client_visible)", status: "failed", error: rv.message});
@@ -550,9 +550,9 @@ module.exports = class
                 else
                 {
                     let found = rv.items.find(item => item.type_id === verifyPoSectionId);
-                    if (found && found.client_visible === false)
+                    if (found && found.client_visible === false && found.short_description === "Verify section desc" && found.active === true)
                     {
-                        testResults.push({step: "Test 34: add_po_section_type (verify client_visible)", status: "passed", verified_client_visible: false});
+                        testResults.push({step: "Test 34: add_po_section_type (verify client_visible)", status: "passed", verified_client_visible: false, verified_short_description: true, verified_active: true});
                     }
                     else if (found)
                     {
@@ -639,29 +639,52 @@ module.exports = class
 
             testResults.push({step: "Test 39: update_gps_settings (invalid - below min)", status: "running"});
             rv = $executeAPI(this.$Session, "Settings/update_gps_settings", { gps_interval_normal: 5 });
-            if ($Err.isERR(rv))
+            if ($Err.isERR(rv) && rv.rc === 742)
             {
-                testResults.push({step: "Test 39: update_gps_settings (invalid - below min)", status: "passed", message: "correctly rejected value below minimum"});
+                testResults.push({step: "Test 39: update_gps_settings (invalid - below min)", status: "passed", message: "correctly rejected value below minimum with rc 742"});
             }
             else
             {
-                testResults.push({step: "Test 39: update_gps_settings (invalid - below min)", status: "warning", message: "accepted invalid value below minimum"});
+                testResults.push({step: "Test 39: update_gps_settings (invalid - below min)", status: "warning", message: "expected rc 742 for value below minimum"});
             }
 
             testResults.push({step: "Test 40: update_gps_settings (invalid - above max)", status: "running"});
             rv = $executeAPI(this.$Session, "Settings/update_gps_settings", { gps_interval_normal: 200 });
-            if ($Err.isERR(rv))
+            if ($Err.isERR(rv) && rv.rc === 742)
             {
-                testResults.push({step: "Test 40: update_gps_settings (invalid - above max)", status: "passed", message: "correctly rejected value above maximum"});
+                testResults.push({step: "Test 40: update_gps_settings (invalid - above max)", status: "passed", message: "correctly rejected value above maximum with rc 742"});
             }
             else
             {
-                testResults.push({step: "Test 40: update_gps_settings (invalid - above max)", status: "warning", message: "accepted invalid value above maximum"});
+                testResults.push({step: "Test 40: update_gps_settings (invalid - above max)", status: "warning", message: "expected rc 742 for value above maximum"});
+            }
+
+            testResults.push({step: "Test 40a: update_gps_settings (emergency - below min)", status: "running"});
+            rv = $executeAPI(this.$Session, "Settings/update_gps_settings", { gps_interval_emergency: 3 });
+            if ($Err.isERR(rv) && rv.rc === 743)
+            {
+                testResults.push({step: "Test 40a: update_gps_settings (emergency - below min)", status: "passed", message: "correctly rejected emergency value below minimum with rc 743"});
+            }
+            else
+            {
+                testResults.push({step: "Test 40a: update_gps_settings (emergency - below min)", status: "warning", message: "expected rc 743 for emergency value below minimum"});
+            }
+
+            testResults.push({step: "Test 40b: update_gps_settings (emergency - above max)", status: "running"});
+            rv = $executeAPI(this.$Session, "Settings/update_gps_settings", { gps_interval_emergency: 60 });
+            if ($Err.isERR(rv) && rv.rc === 743)
+            {
+                testResults.push({step: "Test 40b: update_gps_settings (emergency - above max)", status: "passed", message: "correctly rejected emergency value above maximum with rc 743"});
+            }
+            else
+            {
+                testResults.push({step: "Test 40b: update_gps_settings (emergency - above max)", status: "warning", message: "expected rc 743 for emergency value above maximum"});
             }
 
             testResults.push({step: "Test 41: update_notification_settings (multiple parameters)", status: "running"});
             rv = $executeAPI(this.$Session, "Settings/update_notification_settings", {
                 notification_methods: "in_app,email,mobile",
+                notification_title: "Code4 Alert",
                 sender_name: "Code4 Test",
                 new_call_enabled: false,
                 call_accepted_enabled: true,
@@ -688,6 +711,7 @@ module.exports = class
             else
             {
                 let verified = rv.sender_name === "Code4 Test" &&
+                              rv.notification_title === "Code4 Alert" &&
                               rv.new_call_enabled === false &&
                               rv.call_accepted_enabled === true;
                 if (verified)
@@ -769,11 +793,11 @@ module.exports = class
 
             testResults.push({step: "Test 47: update_po_section_type (toggle client_visible)", status: "running"});
             let toggleTestName = `Toggle Test ${uniqueId}`;
-            rv = $executeAPI(this.$Session, "Settings/add_po_section_type", { name: toggleTestName, client_visible: true });
+            rv = $executeAPI(this.$Session, "Settings/add_po_section_type", { name: toggleTestName, client_visible: true, short_description: "Toggle test desc", active: true });
             if (!$Err.isERR(rv))
             {
                 let toggleId = rv.type_id;
-                rv = $executeAPI(this.$Session, "Settings/update_po_section_type", { type_id: toggleId, name: toggleTestName, client_visible: false });
+                rv = $executeAPI(this.$Session, "Settings/update_po_section_type", { type_id: toggleId, name: toggleTestName, client_visible: false, short_description: "Updated toggle desc", active: false });
                 if ($Err.isERR(rv))
                 {
                     testResults.push({step: "Test 47: update_po_section_type (toggle client_visible)", status: "failed", error: rv.message});

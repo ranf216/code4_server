@@ -335,6 +335,8 @@ GPS, Notification, POI, and Working Hours settings are global configurations sto
     |-----------|------|----------|-------------|
     | `#token` | string | Yes | An Admin session token. |
     | `name` | string | Yes | Name of the new asset type. Must be non-empty. |
+    | `icon` | image (file upload) | Yes | Icon image for the asset type. Accepted formats: PNG, JPG, SVG. |
+    | `color` | string | Yes | Display color for the asset type (hex code, e.g. `"#FF5733"`). |
 
 - **Return Values:**
     ```json
@@ -359,7 +361,7 @@ GPS, Notification, POI, and Working Hours settings are global configurations sto
 ---
 
 ### POST Settings/update_asset_type
-*Admin only.* Renames an existing asset type.
+*Admin only.* Updates an existing asset type.
 
 - **API Parameters:**
     | Parameter | Type | Required | Description |
@@ -367,6 +369,8 @@ GPS, Notification, POI, and Working Hours settings are global configurations sto
     | `#token` | string | Yes | An Admin session token. |
     | `type_id` | string | Yes | The type key identifier to update. |
     | `name` | string | Yes | New name for the asset type. |
+    | `icon` | image (file upload) | Yes | Updated icon image for the asset type. Accepted formats: PNG, JPG, SVG. |
+    | `color` | string | Yes | Updated display color for the asset type (hex code, e.g. `"#FF5733"`). |
 
 - **Return Values:**
     ```json
@@ -469,6 +473,8 @@ GPS, Notification, POI, and Working Hours settings are global configurations sto
     | `#token` | string | Yes | An Admin session token. |
     | `name` | string | Yes | Name of the section type. Must be non-empty. |
     | `client_visible` | boolean | Yes | Whether this section is visible to clients. |
+    | `short_description` | string | Yes | A brief description of the section type's purpose. |
+    | `active` | boolean | Yes | Whether the section type is active and available for use. |
 
 - **Return Values:**
     ```json
@@ -493,7 +499,7 @@ GPS, Notification, POI, and Working Hours settings are global configurations sto
 ---
 
 ### POST Settings/update_po_section_type
-*Admin only.* Updates an existing post order section type's name and visibility.
+*Admin only.* Updates an existing post order section type's name, visibility, and status.
 
 - **API Parameters:**
     | Parameter | Type | Required | Description |
@@ -502,6 +508,8 @@ GPS, Notification, POI, and Working Hours settings are global configurations sto
     | `type_id` | string | Yes | The type key identifier to update. |
     | `name` | string | Yes | New name for the section type. |
     | `client_visible` | boolean | Yes | Whether this section is visible to clients. |
+    | `short_description` | string | Yes | Updated brief description of the section type's purpose. |
+    | `active` | boolean | Yes | Whether the section type is active and available for use. |
 
 - **Return Values:**
     ```json
@@ -629,6 +637,8 @@ GPS, Notification, POI, and Working Hours settings are global configurations sto
     |----|---------|----------|
     | 103 | current user does not have privileges | The caller is not an Admin. |
     | 201 | invalid user token | Invalid or expired token. |
+    | 742 | gps_interval_normal out of range (must be 10-120) | `gps_interval_normal` value is outside the permitted 10–120 seconds range. |
+    | 743 | gps_interval_emergency out of range (must be 5-30) | `gps_interval_emergency` value is outside the permitted 5–30 seconds range. |
 
 - **Usage & Flows:**
     Used by the admin to configure GPS behaviour from the Settings page (SDS 5.3). Changes take effect immediately for officer apps and the Live Tracking portal view. Lower `gps_interval_emergency` values improve real-time tracking accuracy during emergencies but increase battery usage on officer devices.
@@ -709,6 +719,7 @@ GPS, Notification, POI, and Working Hours settings are global configurations sto
     |-----------|------|----------|-------------|
     | `#token` | string | Yes | An Admin session token. |
     | `notification_methods` | string | No | Comma-separated delivery channels: `in_app`, `email`, `mobile`. Default: `"in_app,email,mobile"`. |
+    | `notification_title` | string | No | Title text displayed in push notifications. |
     | `sender_name` | string | No | Display name for the notification sender. |
     | `new_call_enabled` | boolean | No | Enable notification for new calls. Default: `true`. |
     | `call_accepted_enabled` | boolean | No | Enable notification for call accepted. Default: `true`. |

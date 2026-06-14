@@ -1,0 +1,45 @@
+{
+  "User/login": {
+    "p": {
+      "post_request_0": "User/login",
+      "post_email_0": "admin@admins.com",
+      "post_password_0": "123321",
+      "post_device_id_0_chk": 0,
+      "post_device_id_0": "",
+      "post_os_type_0_chk": 0,
+      "post_os_type_0": "0",
+      "post_os_version_0_chk": 0,
+      "post_os_version_0": "",
+      "post_device_model_0_chk": 0,
+      "post_device_model_0": "",
+      "post_app_version_0_chk": 0,
+      "post_app_version_0": "",
+      "post_language_0_chk": 0,
+      "post_language_0": "en"
+    },
+    "g": "User",
+    "u": "-ALL-",
+    "s": "$$.second_factor_key=json.second_factor_key"
+  },
+  "TwoFactorAuth/send_otp_code": {
+    "p": {
+      "post_request_0": "TwoFactorAuth/send_otp_code",
+      "post_second_factor_key_0": "$$.second_factor_key",
+      "post_factor_type_0": "EMAIL"
+    },
+    "g": "TwoFactorAuth",
+    "u": "-ALL-",
+    "s": ""
+  },
+  "TwoFactorAuth/verify_otp_code": {
+    "p": {
+      "post_request_0": "TwoFactorAuth/verify_otp_code",
+      "post_second_factor_key_0": "$$.second_factor_key",
+      "post_factor_type_0": "EMAIL",
+      "post_verification_code_0": "123456"
+    },
+    "g": "TwoFactorAuth",
+    "u": "-ALL-",
+    "s": "$$[`${json.first_name}_${json.last_name}_tok`]=json.token; delete $$.second_factor_key"
+  }
+}

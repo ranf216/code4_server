@@ -76,15 +76,19 @@ module.exports =
                                                     "@doc"                          : "Add a new asset type",
                                                     "#token"                        : "s",
                                                     "name"                          : "s***Name of the asset type",
+                                                    "icon"                          : "img***Icon image for the asset type",
+                                                    "color"                         : "s***Display color hex code",
                                                 },
 
 
             "update_asset_type"                 : {
                                                     "@acl"                          : [$ACL.USER_TYPE_ADMIN],
-                                                    "@doc"                          : "Edit an asset type name",
+                                                    "@doc"                          : "Edit an asset type",
                                                     "#token"                        : "s",
                                                     "type_id"                       : "s***The type key identifier",
                                                     "name"                          : "s***New name for the asset type",
+                                                    "icon"                          : "img***Updated icon image for the asset type",
+                                                    "color"                         : "s***Updated display color hex code",
                                                 },
 
 
@@ -109,6 +113,8 @@ module.exports =
                                                     "#token"                        : "s",
                                                     "name"                          : "s***Name of the section type",
                                                     "client_visible"                : "b***Whether this section is visible to clients",
+                                                    "short_description"             : "s***Brief description of the section type",
+                                                    "active"                        : "b***Whether the section type is active",
                                                 },
 
 
@@ -119,6 +125,8 @@ module.exports =
                                                     "type_id"                       : "s***The type key identifier",
                                                     "name"                          : "s***New name for the section type",
                                                     "client_visible"                : "b***Whether this section is visible to clients",
+                                                    "short_description"             : "s***Updated brief description of the section type",
+                                                    "active"                        : "b***Whether the section type is active",
                                                 },
 
 
@@ -164,6 +172,7 @@ module.exports =
                                                     "@doc"                          : "Update push notification settings",
                                                     "#token"                        : "s",
                                                     "notification_methods"          : "o:s:in_app,email,mobile***Comma-separated methods: in_app, email, mobile",
+                                                    "notification_title"            : "o:s:***Title text displayed in push notifications",
                                                     "sender_name"                   : "o:s:***Notification sender name",
                                                     "new_call_enabled"              : "o:b:true***Enable notification for new calls",
                                                     "call_accepted_enabled"         : "o:b:true***Enable notification for call accepted",
