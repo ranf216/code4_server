@@ -76,7 +76,7 @@ module.exports =
                                                     "@doc"                          : "Add a new asset type",
                                                     "#token"                        : "s",
                                                     "name"                          : "s***Name of the asset type",
-                                                    "icon"                          : "img***Icon image for the asset type",
+                                                    "icon"                          : "s***file_id from File/upload_file_base64 or File/end_multipart_file_upload",
                                                     "color"                         : "s***Display color hex code",
                                                 },
 
@@ -87,7 +87,7 @@ module.exports =
                                                     "#token"                        : "s",
                                                     "type_id"                       : "s***The type key identifier",
                                                     "name"                          : "s***New name for the asset type",
-                                                    "icon"                          : "img***Updated icon image for the asset type",
+                                                    "icon"                          : "s***file_id from File/upload_file_base64 or File/end_multipart_file_upload",
                                                     "color"                         : "s***Updated display color hex code",
                                                 },
 
