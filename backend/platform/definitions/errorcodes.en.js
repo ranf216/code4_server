@@ -127,6 +127,12 @@ module.exports = {
 	"ERR_DB_INVALID_ROW_ID"								: {"rc" : 406,	"message" : "DB invalid row id"},
 	"ERR_DB_INVALID_QUERY"								: {"rc" : 407,	"message" : "DB invalid query"},
 
+	// Data Items
+	"ERR_DATA_TABLE_SOURCE_IS_NOT_DB"					: {"rc" : 420,	"message" : "Data table source is not 'db'"},
+	"ERR_DATA_TABLE_KEY_IS_MISSING"						: {"rc" : 421,	"message" : "Data table key is missing"},
+	"ERR_DATA_TABLE_KEY_ALREADY_EXISTS"					: {"rc" : 422,	"message" : "Data table key already exists"},
+	"ERR_DATA_TABLE_KEY_NOT_FOUND"						: {"rc" : 423,	"message" : "Data table key not found"},
+
 	// Cache
 	"ERR_CACHE_GENERAL_ERROR"							: {"rc" : 450,	"message" : "cache general error"},
 	"ERR_CACHE_INVALID_DATA_COUNT"						: {"rc" : 451,	"message" : "cache put error: invalid data count"},

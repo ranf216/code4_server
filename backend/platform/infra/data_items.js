@@ -18,6 +18,9 @@
  *	getString: function(dataId, lang = null)
  *	define: function(dataTable)
  *	clearCache: function(dataTable)
+ *	addItem: function(dataTable, name, extra) - only for DB tables
+ *	updateItem: function(dataTable, typeId, name, extra) - only for DB tables
+ *	deleteItem: function(dataTable, typeId) - only for DB tables
  */
 
  const fs = require('fs');
@@ -473,6 +476,106 @@ module.exports =
 		}
 	},
 
+	addItem: function(dataTable, name, extra)
+	{
+		if (!this._isDataItemTable(dataTable))
+		{
+			return $ERRS.ERR_DATA_TABLE_SOURCE_IS_NOT_DB;
+		}
+
+		const key = this._generateKey(name);
+
+		if ($Utils.empty(key))
+		{
+			return $ERRS.ERR_DATA_TABLE_KEY_IS_MISSING;
+		}
+
+		const extraJson = extra ? JSON.stringify(extra) : null;
+
+		$Db.executeQuery(
+			`INSERT INTO \`data_item\` (DIT_TABLE, DIT_KEY, DIT_NAME, DIT_EXTRA, DIT_CREATED_ON)
+			VALUES (?, ?, ?, ?, ?)`,
+			[dataTable, key, name, extraJson, $Utils.now()]
+		);
+
+		if ($Db.isDuplicateEntryError())
+		{
+			return $ERRS.ERR_DATA_TABLE_KEY_ALREADY_EXISTS;
+		}
+		if ($Db.isError())
+		{
+			return $Err.DBError("ERR_DB_INSERT_ERROR", $Db.lastErrorMsg());
+		}
+
+		this.clearCache(dataTable);
+		return { ...$ERRS.ERR_SUCCESS, type_id: key };
+	},
+
+	updateItem: function(dataTable, typeId, name, extra)
+	{
+		if (!this._isDataItemTable(dataTable))
+		{
+			return $ERRS.ERR_DATA_TABLE_SOURCE_IS_NOT_DB;
+		}
+
+		let updateFields = ["DIT_NAME=?", "DIT_LAST_UPDATE=?"];
+		let updateValues = [name, $Utils.now()];
+
+		if (extra)
+		{
+			updateFields.push("DIT_EXTRA=?");
+			updateValues.push(JSON.stringify(extra));
+		}
+
+		updateValues.push(dataTable, typeId);
+
+		$Db.executeQuery(
+			`UPDATE \`data_item\`
+			SET ${updateFields.join(", ")}
+			WHERE DIT_TABLE=? AND DIT_KEY=? AND DIT_DELETED_ON IS NULL`,
+			updateValues
+		);
+
+		if ($Db.isError())
+		{
+			return $Err.DBError("ERR_DB_UPDATE_ERROR", $Db.lastErrorMsg());
+		}
+		if ($Db.affectedRows() === 0)
+		{
+			return $ERRS.ERR_DATA_TABLE_KEY_NOT_FOUND;
+		}
+
+		this.clearCache(dataTable);
+		return $ERRS.ERR_SUCCESS;
+	},
+
+	deleteItem: function(dataTable, typeId)
+	{
+		if (!this._isDataItemTable(dataTable))
+		{
+			return $ERRS.ERR_DATA_TABLE_SOURCE_IS_NOT_DB;
+		}
+
+		$Db.executeQuery(
+			`UPDATE \`data_item\`
+			SET DIT_DELETED_ON=?
+			WHERE DIT_TABLE=? AND DIT_KEY=? AND DIT_DELETED_ON IS NULL`,
+			[$Utils.now(), dataTable, typeId]
+		);
+
+		if ($Db.isError())
+		{
+			return $Err.DBError("ERR_DB_UPDATE_ERROR", $Db.lastErrorMsg());
+		}
+		if ($Db.affectedRows() === 0)
+		{
+			return $ERRS.ERR_DATA_TABLE_KEY_NOT_FOUND;
+		}
+
+		this.clearCache(dataTable);
+		return $ERRS.ERR_SUCCESS;
+	},
+
 
 	_getDataTable: function(dataTable)
 	{
@@ -496,13 +599,20 @@ module.exports =
 				return null;
 			}
 
-            let json = $Utils.fileGetContents($Const.INFRA_ROOT + "/platform/data/" + dataTable + ".json");
+			let json = $Utils.fileGetContents($Const.INFRA_ROOT + "/platform/data/" + dataTable + ".json");
+			const data = JSON.parse(json);
 
-			data = JSON.parse(json);
-			if (data && $Utils.isset(data.dynamic))
+			if (data && $Utils.isset(data.source) && (data.source == "db" || data.source == "database"))
+			{
+				json = this._loadDbTable(dataTable);
+			}
+			else if (data && $Utils.isset(data.dynamic))
 			{
 				json = $DynamicDataTables[data.dynamic]();
+			}
 
+			if (data && ($Utils.isset(data.dynamic) || $Utils.isset(data.source)))
+			{
 				if (data.cache == false)
 				{
 					return JSON.parse(json);
@@ -522,5 +632,55 @@ module.exports =
 		}
 
 		return JSON.parse(cacheObj._dataTablesData[dataTable]);
-	}
+	},
+
+
+	// =========================================================================
+	// DB-backed data items (source: "db")
+	// =========================================================================
+
+	_generateKey: function(name)
+	{
+		return name
+			.toLowerCase()
+			.trim()
+			.replace(/[^a-z0-9\s]/g, '')
+			.replace(/\s+/g, '_');
+	},
+
+	_loadDbTable: function(dataTable)
+	{
+		let rows = $Db.executeQuery(
+			`SELECT DIT_KEY, DIT_NAME, DIT_EXTRA
+			FROM \`data_item\`
+			WHERE DIT_TABLE=? AND DIT_DELETED_ON IS NULL`,
+			[dataTable]
+		);
+
+		let result = {};
+		for (let row of rows)
+		{
+			let item = { name: { en: row.DIT_NAME } };
+			if (row.DIT_EXTRA)
+			{
+				try { Object.assign(item, JSON.parse(row.DIT_EXTRA)); }
+				catch(e) { /* ignore malformed extra */ }
+			}
+			result[row.DIT_KEY] = item;
+		}
+		return JSON.stringify(result);
+	},
+
+	_isDataItemTable: function(dataTable)
+	{
+		if (!fs.existsSync($Const.INFRA_ROOT + "/platform/data/" + dataTable + ".json"))
+		{
+			return false;
+		}
+
+		const json = $Utils.fileGetContents($Const.INFRA_ROOT + "/platform/data/" + dataTable + ".json");
+		const data = JSON.parse(json);
+
+		return (data && $Utils.isset(data.source) && (data.source == "db" || data.source == "database"))
+	},
 };
