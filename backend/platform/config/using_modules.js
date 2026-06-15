@@ -23,6 +23,5 @@ module.exports =
         // "user_roles",
     ],
     user: [
-        "data_items_crud",
     ]
 };
