@@ -213,7 +213,8 @@ module.exports = class
             emergency_eta_interval: this.$emergency_eta_interval,
             map_provider: this.$map_provider,
         };
-        updateSettings($Const.KVL_SETTINGS_GPS, $Config.get("SETTINGS_DEFAULTS").gps, values);
+        const rv = updateSettings($Const.KVL_SETTINGS_GPS, $Config.get("SETTINGS_DEFAULTS").gps, values);
+        if ($Err.isERR(rv)) return rv;
         return $ERRS.ERR_SUCCESS;
     }
 
@@ -249,7 +250,8 @@ module.exports = class
             report_changes_enabled: this.$report_changes_enabled,
             report_delivered_enabled: this.$report_delivered_enabled,
         };
-        updateSettings($Const.KVL_SETTINGS_NOTIFICATION, $Config.get("SETTINGS_DEFAULTS").notification, values);
+        const rv = updateSettings($Const.KVL_SETTINGS_NOTIFICATION, $Config.get("SETTINGS_DEFAULTS").notification, values);
+        if ($Err.isERR(rv)) return rv;
         return $ERRS.ERR_SUCCESS;
     }
 
@@ -273,7 +275,8 @@ module.exports = class
             default_trespass_guidance: this.$default_trespass_guidance,
             default_red_card_guidance: this.$default_red_card_guidance,
         };
-        updateSettings($Const.KVL_SETTINGS_POI, $Config.get("SETTINGS_DEFAULTS").poi, values);
+        const rv = updateSettings($Const.KVL_SETTINGS_POI, $Config.get("SETTINGS_DEFAULTS").poi, values);
+        if ($Err.isERR(rv)) return rv;
         return $ERRS.ERR_SUCCESS;
     }
 
@@ -292,7 +295,8 @@ module.exports = class
         const values = {
             max_hours_per_day: this.$max_hours_per_day,
         };
-        updateSettings($Const.KVL_SETTINGS_WORKING_HOURS, $Config.get("SETTINGS_DEFAULTS").working_hours, values);
+        const rv = updateSettings($Const.KVL_SETTINGS_WORKING_HOURS, $Config.get("SETTINGS_DEFAULTS").working_hours, values);
+        if ($Err.isERR(rv)) return rv;
         return $ERRS.ERR_SUCCESS;
     }
 }
