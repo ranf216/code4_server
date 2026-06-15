@@ -114,11 +114,25 @@ module.exports = class
 
     get_asset_types()
     {
-        const items = $DataItemsCrud.getList("asset_type").map(item => ({
-            icon: null,
-            color: null,
-            ...item,
-        }));
+        const items = $DataItemsCrud.getList("asset_type").map(item =>
+        {
+            if (!$Utils.empty(item.icon))
+            {
+                item.icon = $Files.getUrl(item.icon);
+            }
+            else
+            {
+                item.icon = null;
+            }
+
+            if (!$Utils.isset(item.color))
+            {
+                item.color = null;
+            }
+
+            return item;
+        });
+
         return { ...$ERRS.ERR_SUCCESS, items };
     }
 

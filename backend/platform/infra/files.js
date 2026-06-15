@@ -536,11 +536,6 @@ module.exports =
 
 		if ($Utils.isString(fileNameOrIdOrObject))
 		{
-			if (!accessLevelEnabled)
-			{
-				return `${$Config.get("files_url")}n/${file_name}`;
-			}
-
 			const fils = $Db.executeQuery(`SELECT FIL_ID file_id, FIL_USR_ID owner_id, FIL_FILE_NAME file_name, FIL_ACCESS_LEVEL access_level
 											FROM \`file\`
 											WHERE FIL_ID=? OR FIL_FILE_NAME=?`, [fileNameOrIdOrObject, fileNameOrIdOrObject]);

@@ -308,13 +308,15 @@ GPS, Notification, POI, and Working Hours settings are global configurations sto
         "items": [
             {
                 "type_id": "asset001",
-                "name": "Camera"
+                "name": "Camera",
+                "icon": "https://domain/n/abc123def456.png",
+                "color": "#FF5733"
             }
         ]
     }
     ```
 
-    The `items` array contains all asset types.
+    The `items` array contains all asset types. Each item includes `type_id`, `name`, `icon` (URL or `null` if not set), and `color` (hex code or `null` if not set).
 
 - **Error Cases:**
     | rc | Message | Scenario |
@@ -335,7 +337,7 @@ GPS, Notification, POI, and Working Hours settings are global configurations sto
     |-----------|------|----------|-------------|
     | `#token` | string | Yes | An Admin session token. |
     | `name` | string | Yes | Name of the new asset type. Must be non-empty. |
-    | `icon` | image (file upload) | Yes | Icon image for the asset type. Accepted formats: PNG, JPG, SVG. |
+    | `icon` | string | Yes | A `file_id` returned from `File/upload_file_base64` or `File/end_multipart_file_upload`. The uploaded file should be an icon image (PNG, JPG, or SVG). |
     | `color` | string | Yes | Display color for the asset type (hex code, e.g. `"#FF5733"`). |
 
 - **Return Values:**
@@ -369,7 +371,7 @@ GPS, Notification, POI, and Working Hours settings are global configurations sto
     | `#token` | string | Yes | An Admin session token. |
     | `type_id` | string | Yes | The type key identifier to update. |
     | `name` | string | Yes | New name for the asset type. |
-    | `icon` | image (file upload) | Yes | Updated icon image for the asset type. Accepted formats: PNG, JPG, SVG. |
+    | `icon` | string | Yes | A `file_id` returned from `File/upload_file_base64` or `File/end_multipart_file_upload`. The uploaded file should be an icon image (PNG, JPG, or SVG). |
     | `color` | string | Yes | Updated display color for the asset type (hex code, e.g. `"#FF5733"`). |
 
 - **Return Values:**
@@ -440,18 +442,22 @@ GPS, Notification, POI, and Working Hours settings are global configurations sto
             {
                 "type_id": "posec001",
                 "name": "General Information",
-                "client_visible": true
+                "client_visible": true,
+                "short_description": "General site information and overview",
+                "active": true
             },
             {
                 "type_id": "posec002",
                 "name": "Patrol Instructions",
-                "client_visible": false
+                "client_visible": false,
+                "short_description": "Detailed patrol route instructions",
+                "active": true
             }
         ]
     }
     ```
 
-    Each item includes `type_id`, `name`, and `client_visible` (whether the section content is shared with clients when viewing post orders).
+    Each item includes `type_id`, `name`, `client_visible` (whether the section content is shared with clients when viewing post orders), `short_description` (brief description or `null` if not set), and `active` (whether the section type is available for use; defaults to `true`).
 
 - **Error Cases:**
     | rc | Message | Scenario |
@@ -661,6 +667,7 @@ GPS, Notification, POI, and Working Hours settings are global configurations sto
         "rc": 0,
         "message": "success",
         "notification_methods": "in_app,email,mobile",
+        "notification_title": "",
         "sender_name": "",
         "new_call_enabled": true,
         "call_accepted_enabled": true,
@@ -683,6 +690,7 @@ GPS, Notification, POI, and Working Hours settings are global configurations sto
     | Field | Type | Description |
     |-------|------|-------------|
     | `notification_methods` | string | Comma-separated delivery channels: `in_app`, `email`, `mobile`. |
+    | `notification_title` | string | Title text displayed in push notifications. |
     | `sender_name` | string | Display name shown as the notification sender. |
     | `new_call_enabled` | boolean | Notify assigned officer when a new call is opened. |
     | `call_accepted_enabled` | boolean | Notify call creator and site manager when a call is accepted. |
