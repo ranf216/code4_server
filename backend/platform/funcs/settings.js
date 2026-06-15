@@ -114,7 +114,11 @@ module.exports = class
 
     get_asset_types()
     {
-        const items = $DataItemsCrud.getList("asset_type");
+        const items = $DataItemsCrud.getList("asset_type").map(item => ({
+            icon: null,
+            color: null,
+            ...item,
+        }));
         return { ...$ERRS.ERR_SUCCESS, items };
     }
 
@@ -139,7 +143,11 @@ module.exports = class
 
     get_po_section_types()
     {
-        const items = $DataItemsCrud.getList("po_section_type");
+        const items = $DataItemsCrud.getList("po_section_type").map(item => ({
+            short_description: null,
+            active: true,
+            ...item,
+        }));
         return { ...$ERRS.ERR_SUCCESS, items };
     }
 
