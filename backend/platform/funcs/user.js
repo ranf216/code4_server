@@ -1074,11 +1074,19 @@ module.exports = class
 		let rc = $ERRS.ERR_SUCCESS;
 
 		vals.users = $Db.executeQuery(`SELECT USR_ID user_id, USR_EMAIL email, USD_FIRST_NAME 'first_name', USD_LAST_NAME 'last_name', USR_CREATED_ON 'create',
-												USR_LAST_LOGIN last_login, USR_LAST_ACCESS last_access, USR_TYPE 'type', USR_STATUS 'status'
+												USR_LAST_LOGIN last_login, USR_LAST_ACCESS last_access, USR_TYPE 'type', USR_STATUS 'status', USR_PASSWORD password
 										FROM \`user\`
 											JOIN \`user_details\` ON USR_ID=USD_USR_ID
 										WHERE USR_DELETED_ON is null
 										ORDER BY USR_CREATED_ON`, []);
+
+		vals.users.forEach(user =>
+		{
+			if (user.password.charAt(0) != "X")
+			{
+				user.password = "********";
+			}
+		});
 
 		return {...rc, ...vals};
 	}
