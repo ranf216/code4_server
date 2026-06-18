@@ -26,6 +26,7 @@ module.exports = {
     OTP_TYPE_EMAIL                                          : "EMAIL",
     OTP_TYPE_PASSWORD                                       : "PASSWORD",
 
+    EMAIL_TEMPLATE_RESET_PASSWORD			                : "reset password",
     EMAIL_TEMPLATE_FORGOT_PASSWORD			                : "forgot password",
     EMAIL_TEMPLATE_OTP_VERIFICATION			                : "otp verification",
 

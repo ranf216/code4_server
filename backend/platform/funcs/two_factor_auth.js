@@ -171,77 +171,12 @@ module.exports = class
 
         rc = new $User(this.$Session)._performLogin(usr, device_id, os_type, os_version, device_model, app_version);
 
-        const pwdTooOld = (!$Utils.empty(usr.USR_PASSWORD_CREATED_ON) &&
-                            $Config.get("password_valid_for_seconds") > 0 &&
-                            new $Date(usr.USR_PASSWORD_CREATED_ON).addSeconds($Config.get("password_valid_for_seconds")).format() < $Utils.now());
-
-        vals.need_change_password = (pwdTooOld || (usr.USR_PASSWORD.charAt(0) == "X"));
-
-        if (vals.need_change_password)
-        {
-            rc.token = "X" + rc.token.substring(1);
-    		const encToken = $Cipher.encryptData(rc.token, "static");
-
-            $Db.executeQuery(`UPDATE \`user\` SET USR_TOKEN=? WHERE USR_ID=?`, [encToken, userId]);
-            if ($Db.isError())
-            {
-                return $Err.DBError("ERR_DB_UPDATE_ERROR", $Db.lastErrorMsg());
-            }
-        }
-
         return {...rc, ...vals};
     }
 
-    mandatory_change_password()
+    mandatory_change_password() // Kept for backward compatibility
     {
-        let vals = {};
-        let rc = $ERRS.ERR_SUCCESS;
-
-        let usrs = $Db.executeQuery(`SELECT USR_PASSWORD FROM \`user\` WHERE USR_ID=? AND USR_STATUS=? AND USR_DELETED_ON is null AND USR_LOGIN_AUTHORITY=?`,
-                                [this.$Session.userId, $Const.USER_STATUS_ACTIVE, $Const.USER_LOGIN_AUTHORITY_EMAIL]);
-        if (usrs.length == 0)
-        {
-            return $ERRS.ERR_USER_NOT_FOUND;
-        }
-        
-        if (!$Utils.isCorrectPwd(this.$Session.userId, this.$curr_password, usrs[0].USR_PASSWORD))
-        {
-            return $ERRS.ERR_INVALID_PASSWORD;
-        }
-
-        if (!$Utils.isValidPassword(this.$new_password))
-        {
-            return $ERRS.ERR_PASSWORD_NOT_MEET_CRITERIA;
-        }
-
-        if (this.$new_password == this.$curr_password)
-        {
-            return $ERRS.ERR_NEW_PASSWORD_CANNOT_BE_SAME_AS_CURRENT;
-        }
-
-        const newPwd = $Utils.hash(this.$Session.userId + this.$new_password);
-
-        $Db.executeQuery(`UPDATE \`user\` SET USR_PASSWORD=?, USR_PASSWORD_CREATED_ON=?, USR_TOKEN='' WHERE USR_ID=?`, [newPwd, $Utils.now(), this.$Session.userId]);
-        if ($Db.isError())
-        {
-            return $Err.DBError("ERR_DB_UPDATE_ERROR", $Db.lastErrorMsg());
-        }
-
-        const device_id = "";
-        const os_type = 0;
-        const os_version = "";
-        const device_model = "";
-        const app_version = "";
-    
-		const usr = $Db.executeQuery(`SELECT *
-									FROM \`user\`
-										JOIN \`user_details\` ON USR_ID=USD_USR_ID
-									WHERE USR_ID=?`, [this.$Session.userId])[0];
-
-        rc = new $User(this.$Session)._performLogin(usr, device_id, os_type, os_version, device_model, app_version);
-        vals.need_change_password = false;
-
-        return {...rc, ...vals};
+		return $executeAPI(this.$Session, "User/mandatory_change_password", {curr_password: this.$curr_password, new_password: this.$new_password});
     }
 
     change_factor()

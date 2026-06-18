@@ -64,23 +64,23 @@ module.exports = class
 
     get_service_types()
     {
-        const items = $DataItemsCrud.getList("service_type");
+        const items = $DataItems.getAttributedList("service_type", ["name"], [], true, null, "type_id");
         return { ...$ERRS.ERR_SUCCESS, items };
     }
 
     add_service_type()
     {
-        return $DataItemsCrud.add("service_type", this.$name, null);
+        return $DataItems.addItem("service_type", this.$name, null);
     }
 
     update_service_type()
     {
-        return $DataItemsCrud.update("service_type", this.$type_id, this.$name, null);
+        return $DataItems.updateItem("service_type", this.$type_id, this.$name, null);
     }
 
     delete_service_type()
     {
-        return $DataItemsCrud.delete("service_type", this.$type_id);
+        return $DataItems.deleteItem("service_type", this.$type_id);
     }
 
     // =========================================================================
@@ -89,23 +89,23 @@ module.exports = class
 
     get_task_types()
     {
-        const items = $DataItemsCrud.getList("task_type");
+        const items = $DataItems.getAttributedList("task_type", ["name"], [], true, null, "type_id");
         return { ...$ERRS.ERR_SUCCESS, items };
     }
 
     add_task_type()
     {
-        return $DataItemsCrud.add("task_type", this.$name, null);
+        return $DataItems.addItem("task_type", this.$name, null);
     }
 
     update_task_type()
     {
-        return $DataItemsCrud.update("task_type", this.$type_id, this.$name, null);
+        return $DataItems.updateItem("task_type", this.$type_id, this.$name, null);
     }
 
     delete_task_type()
     {
-        return $DataItemsCrud.delete("task_type", this.$type_id);
+        return $DataItems.deleteItem("task_type", this.$type_id);
     }
 
     // =========================================================================
@@ -114,7 +114,7 @@ module.exports = class
 
     get_asset_types()
     {
-        const items = $DataItemsCrud.getList("asset_type").map(item =>
+        const items = $DataItems.getAttributedList("asset_type", ["name", "icon", "color"], [], true, null, "type_id").map(item =>
         {
             if (!$Utils.empty(item.icon))
             {
@@ -138,17 +138,17 @@ module.exports = class
 
     add_asset_type()
     {
-        return $DataItemsCrud.add("asset_type", this.$name, { icon: this.$icon, color: this.$color });
+        return $DataItems.addItem("asset_type", this.$name, { icon: this.$icon, color: this.$color });
     }
 
     update_asset_type()
     {
-        return $DataItemsCrud.update("asset_type", this.$type_id, this.$name, { icon: this.$icon, color: this.$color });
+        return $DataItems.updateItem("asset_type", this.$type_id, this.$name, { icon: this.$icon, color: this.$color });
     }
 
     delete_asset_type()
     {
-        return $DataItemsCrud.delete("asset_type", this.$type_id);
+        return $DataItems.deleteItem("asset_type", this.$type_id);
     }
 
     // =========================================================================
@@ -157,7 +157,7 @@ module.exports = class
 
     get_po_section_types()
     {
-        const items = $DataItemsCrud.getList("po_section_type").map(item => ({
+        const items = $DataItems.getAttributedList("po_section_type", ["name", "short_description", "active", "client_visible"], [], true, null, "type_id").map(item => ({
             short_description: null,
             active: true,
             ...item,
@@ -167,17 +167,17 @@ module.exports = class
 
     add_po_section_type()
     {
-        return $DataItemsCrud.add("po_section_type", this.$name, { client_visible: this.$client_visible, short_description: this.$short_description, active: this.$active });
+        return $DataItems.addItem("po_section_type", this.$name, { client_visible: this.$client_visible, short_description: this.$short_description, active: this.$active });
     }
 
     update_po_section_type()
     {
-        return $DataItemsCrud.update("po_section_type", this.$type_id, this.$name, { client_visible: this.$client_visible, short_description: this.$short_description, active: this.$active });
+        return $DataItems.updateItem("po_section_type", this.$type_id, this.$name, { client_visible: this.$client_visible, short_description: this.$short_description, active: this.$active });
     }
 
     delete_po_section_type()
     {
-        return $DataItemsCrud.delete("po_section_type", this.$type_id);
+        return $DataItems.deleteItem("po_section_type", this.$type_id);
     }
 
     // =========================================================================
@@ -213,7 +213,8 @@ module.exports = class
             emergency_eta_interval: this.$emergency_eta_interval,
             map_provider: this.$map_provider,
         };
-        updateSettings($Const.KVL_SETTINGS_GPS, $Config.get("SETTINGS_DEFAULTS").gps, values);
+        const rv = updateSettings($Const.KVL_SETTINGS_GPS, $Config.get("SETTINGS_DEFAULTS").gps, values);
+        if ($Err.isERR(rv)) return rv;
         return $ERRS.ERR_SUCCESS;
     }
 
@@ -249,7 +250,8 @@ module.exports = class
             report_changes_enabled: this.$report_changes_enabled,
             report_delivered_enabled: this.$report_delivered_enabled,
         };
-        updateSettings($Const.KVL_SETTINGS_NOTIFICATION, $Config.get("SETTINGS_DEFAULTS").notification, values);
+        const rv = updateSettings($Const.KVL_SETTINGS_NOTIFICATION, $Config.get("SETTINGS_DEFAULTS").notification, values);
+        if ($Err.isERR(rv)) return rv;
         return $ERRS.ERR_SUCCESS;
     }
 
@@ -273,7 +275,8 @@ module.exports = class
             default_trespass_guidance: this.$default_trespass_guidance,
             default_red_card_guidance: this.$default_red_card_guidance,
         };
-        updateSettings($Const.KVL_SETTINGS_POI, $Config.get("SETTINGS_DEFAULTS").poi, values);
+        const rv = updateSettings($Const.KVL_SETTINGS_POI, $Config.get("SETTINGS_DEFAULTS").poi, values);
+        if ($Err.isERR(rv)) return rv;
         return $ERRS.ERR_SUCCESS;
     }
 
@@ -292,7 +295,8 @@ module.exports = class
         const values = {
             max_hours_per_day: this.$max_hours_per_day,
         };
-        updateSettings($Const.KVL_SETTINGS_WORKING_HOURS, $Config.get("SETTINGS_DEFAULTS").working_hours, values);
+        const rv = updateSettings($Const.KVL_SETTINGS_WORKING_HOURS, $Config.get("SETTINGS_DEFAULTS").working_hours, values);
+        if ($Err.isERR(rv)) return rv;
         return $ERRS.ERR_SUCCESS;
     }
 }

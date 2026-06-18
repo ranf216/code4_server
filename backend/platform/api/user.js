@@ -155,6 +155,15 @@ module.exports =
 													"language"						: "o:s:"+$Config.get("default_language")+"***the user's app selected language in two characters code",
 												},
 
+			"mandatory_change_password"			: {
+													"@acl"							: $Utils.allAuthedUserTypes(),
+													"@accept_x_token"				: "only",
+													"@protected"					: "curr_password, new_password",
+                                                    "#token"						: "s",
+													"curr_password"					: "s",
+													"new_password"					: "s",
+												},
+
 			"logout"							: {
 													"@acl"							: $Utils.allAuthedUserTypes(),
 													"@accept_x_token"				: "yes",
@@ -181,6 +190,12 @@ module.exports =
 													"email"							: "s",
 													"type"							: "i",
 													"status"						: "i"
+												},
+
+			"reset_user_password"				: {
+													"@acl"							: [$ACL.USER_TYPE_ADMIN],
+													"#token"						: "s",
+													"user_id"						: "s",
 												},
 
 			"delete_user"						: {
