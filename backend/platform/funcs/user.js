@@ -701,6 +701,58 @@ module.exports = class
 		return {...rc, ...vals};
 	}
 
+	mandatory_change_password()
+	{
+        let vals = {};
+        let rc = $ERRS.ERR_SUCCESS;
+
+        let usrs = $Db.executeQuery(`SELECT USR_PASSWORD FROM \`user\` WHERE USR_ID=? AND USR_STATUS=? AND USR_DELETED_ON is null AND USR_LOGIN_AUTHORITY=?`,
+                                [this.$Session.userId, $Const.USER_STATUS_ACTIVE, $Const.USER_LOGIN_AUTHORITY_EMAIL]);
+        if (usrs.length == 0)
+        {
+            return $ERRS.ERR_USER_NOT_FOUND;
+        }
+        
+        if (!$Utils.isCorrectPwd(this.$Session.userId, this.$curr_password, usrs[0].USR_PASSWORD))
+        {
+            return $ERRS.ERR_INVALID_PASSWORD;
+        }
+
+        if (!$Utils.isValidPassword(this.$new_password))
+        {
+            return $ERRS.ERR_PASSWORD_NOT_MEET_CRITERIA;
+        }
+
+        if (this.$new_password == this.$curr_password)
+        {
+            return $ERRS.ERR_NEW_PASSWORD_CANNOT_BE_SAME_AS_CURRENT;
+        }
+
+        const newPwd = $Utils.hash(this.$Session.userId + this.$new_password);
+
+        $Db.executeQuery(`UPDATE \`user\` SET USR_PASSWORD=?, USR_PASSWORD_CREATED_ON=?, USR_TOKEN='' WHERE USR_ID=?`, [newPwd, $Utils.now(), this.$Session.userId]);
+        if ($Db.isError())
+        {
+            return $Err.DBError("ERR_DB_UPDATE_ERROR", $Db.lastErrorMsg());
+        }
+
+        const device_id = "";
+        const os_type = 0;
+        const os_version = "";
+        const device_model = "";
+        const app_version = "";
+    
+		const usr = $Db.executeQuery(`SELECT *
+									FROM \`user\`
+										JOIN \`user_details\` ON USR_ID=USD_USR_ID
+									WHERE USR_ID=?`, [this.$Session.userId])[0];
+
+        rc = new $User(this.$Session)._performLogin(usr, device_id, os_type, os_version, device_model, app_version);
+        vals.need_change_password = false;
+
+        return {...rc, ...vals};
+	}
+
 	logout()
 	{
 		let vals = {};
@@ -784,6 +836,24 @@ module.exports = class
 		vals.type = user.USR_TYPE;
 		vals.first_name = user.USD_FIRST_NAME;
 		vals.last_name = user.USD_LAST_NAME;
+
+        const pwdTooOld = (!$Utils.empty(user.USR_PASSWORD_CREATED_ON) &&
+                            $Config.get("password_valid_for_seconds") > 0 &&
+                            new $Date(user.USR_PASSWORD_CREATED_ON).addSeconds($Config.get("password_valid_for_seconds")).format() < $Utils.now());
+
+        vals.need_change_password = (pwdTooOld || (user.USR_PASSWORD.charAt(0) == "X"));
+
+        if (vals.need_change_password)
+        {
+            vals.token = "X" + vals.token.substring(1);
+    		const encToken = $Cipher.encryptData(vals.token, "static");
+
+            $Db.executeQuery(`UPDATE \`user\` SET USR_TOKEN=? WHERE USR_ID=?`, [encToken, userId]);
+            if ($Db.isError())
+            {
+                return $Err.DBError("ERR_DB_UPDATE_ERROR", $Db.lastErrorMsg());
+            }
+        }
 
 		return {...rc, ...vals};
 	}
@@ -934,6 +1004,30 @@ module.exports = class
 		}
 
 		this.$Session.tokenValidator.deleteFromUserCache(this.$user_id);
+
+		return {...rc, ...vals};
+	}
+
+	reset_user_password()
+	{
+		let vals = {};
+		let rc = $ERRS.ERR_SUCCESS;
+
+		let usrs = $Db.executeQuery(`SELECT USD_EMAIL, USD_FIRST_NAME FROM \`user_details\` WHERE USD_USR_ID=? AND USD_DELETED_ON IS NULL`, [this.$user_id]);
+		if (usrs.length == 0)
+		{
+			return $ERRS.ERR_USER_NOT_EXISTS;
+		}
+
+		const password = "X" + $Utils.getRandomCode(7, "ABCDEFGHJKLMNPQRSTWXYZ");
+
+		$Db.executeQuery(`UPDATE \`user\` SET USR_PASSWORD=? WHERE USR_ID=?`, [password, this.$user_id]);
+		if ($Db.isError())
+		{
+			return $Err.DBError("ERR_DB_UPDATE_ERROR", $Db.lastErrorMsg());
+		}
+
+		$Mailer.sendMailFromTemplate(usrs[0].USR_EMAIL, $Const.EMAIL_TEMPLATE_RESET_PASSWORD, {"#NAME#": `${usrs[0].USD_FIRST_NAME}`, "#PASSWORD#": password});
 
 		return {...rc, ...vals};
 	}

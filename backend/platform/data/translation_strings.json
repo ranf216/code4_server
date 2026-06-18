@@ -1,6 +1,9 @@
 {
     "app_name"                                          :   {"name" : {"en" : "infra.js",      "other language" : "translated string"}      },
 
+    "email - reset password"	                        :	{"name" : {"en" : "Your password was reset"}                                    },
+    "email template - reset password"			        :	{"name" : {"en" : "reset_password.html"}                                        },
+
     "email - forgot password"	                        :	{"name" : {"en" : "Reset password for Infra"}                                   },
     "email template - forgot password"			        :	{"name" : {"en" : "forgot_password.html"}                                       },
 
