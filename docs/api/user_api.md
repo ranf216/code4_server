@@ -18,6 +18,8 @@ A non-zero `rc` indicates an error. Additional data fields are merged into this 
 
 ## Authentication - Email/Password
 
+> **Note:** All login endpoints may return `need_change_password: true` when the user's password has expired (based on the `password_valid_for_seconds` config) or was reset by an admin. In this case, the token is an X-token and the client must call `User/mandatory_change_password` before accessing other authenticated APIs.
+
 ### POST User/login
 Authenticates a user with email and password. Returns a session token on success. If two-factor authentication is enabled, returns a second-factor key instead, requiring additional verification before a token is issued.
 
@@ -43,7 +45,8 @@ Authenticates a user with email and password. Returns a session token on success
         "token": "<session_token>",
         "type": 1,
         "first_name": "John",
-        "last_name": "Doe"
+        "last_name": "Doe",
+        "need_change_password": false
     }
     ```
 
@@ -58,6 +61,8 @@ Authenticates a user with email and password. Returns a session token on success
     }
     ```
 
+    When `need_change_password` is `true`, the returned `token` is an X-token (starts with `"X"`). The client must call `mandatory_change_password` before using any other authenticated API.
+
 - **Error Cases:**
     | rc | Message | Scenario |
     |----|---------|----------|
@@ -65,7 +70,7 @@ Authenticates a user with email and password. Returns a session token on success
     | 218 | account is temporarily locked | Too many failed login attempts within the cooldown window. |
 
 - **Usage & Flows:**
-    This is the primary email/password login endpoint. On success without 2FA, use the returned `token` for all subsequent authenticated API calls. When 2FA is enabled, use the `second_factor_key` with the two-factor auth verification flow before a session token is granted.
+    This is the primary email/password login endpoint. On success without 2FA, use the returned `token` for all subsequent authenticated API calls. If `need_change_password` is `true`, redirect the user to change their password first using the `mandatory_change_password` endpoint. When 2FA is enabled, use the `second_factor_key` with the two-factor auth verification flow before a session token is granted.
 
 ---
 
@@ -118,6 +123,43 @@ Registers a new user with email and password. Returns a session token on success
 
 - **Usage & Flows:**
     Use this endpoint for new user self-registration via email/password. The user is immediately active upon registration. Without 2FA, the returned `token` can be used right away. With 2FA enabled, complete the second-factor verification flow before a token is issued.
+
+---
+
+### POST User/mandatory_change_password
+*Authenticated (X-token only).* Changes the user's password when `need_change_password` is `true`. This endpoint only accepts X-tokens (`@accept_x_token: "only"`), meaning it can only be called when the server has flagged the password as needing change.
+
+- **API Parameters:**
+    | Parameter | Type | Required | Description |
+    |-----------|------|----------|-------------|
+    | `#token` | string | Yes | The current X-token (starts with `"X"`). |
+    | `curr_password` | string | Yes | The user's current password. |
+    | `new_password` | string | Yes | The new password. Must meet password criteria and differ from the current password. |
+
+- **Return Values:**
+    ```json
+    {
+        "rc": 0,
+        "message": "success",
+        "token": "<new_session_token>",
+        "type": 1,
+        "first_name": "John",
+        "last_name": "Doe",
+        "need_change_password": false
+    }
+    ```
+
+- **Error Cases:**
+    | rc | Message | Scenario |
+    |----|---------|----------|
+    | 201 | invalid user token | The token is invalid. |
+    | 202 | invalid user or password | The current password is incorrect. |
+    | 203 | user does not exist | The user account is not found or inactive. |
+    | 242 | password must have ... | The new password does not meet criteria. |
+    | 243 | new password cannot be same as current | The new password is the same as the current one. |
+
+- **Usage & Flows:**
+    Call this when a login response returns `need_change_password: true`. The user must provide their current password and choose a new one. On success, the old X-token is invalidated and a new regular token is returned. Use the new token for all subsequent API calls.
 
 ---
 
@@ -766,6 +808,35 @@ Authenticates a user using an encrypted auth grant obtained from `get_login_auth
 
 - **Usage & Flows:**
     Use from an admin panel to modify a user's details. All fields are required and fully replace the existing values.
+
+---
+
+### POST User/reset_user_password
+*Admin only.* Resets a user's password by generating a random temporary password and sending it to the user's email.
+
+- **API Parameters:**
+    | Parameter | Type | Required | Description |
+    |-----------|------|----------|-------------|
+    | `#token` | string | Yes | An Admin session token. |
+    | `user_id` | string | Yes | The ID of the user whose password should be reset. |
+
+- **Return Values:**
+    ```json
+    {
+        "rc": 0,
+        "message": "success"
+    }
+    ```
+
+- **Error Cases:**
+    | rc | Message | Scenario |
+    |----|---------|----------|
+    | 103 | current user does not have privileges | The caller is not an Admin. |
+    | 201 | invalid user token | Invalid token. |
+    | 203 | user does not exist | No active user found with the given `user_id`. |
+
+- **Usage & Flows:**
+    Use from an admin panel to reset a user's password. A temporary password starting with `"X"` is generated and emailed to the user via the `reset_password` email template. On the user's next login, the response will include `need_change_password: true` and an X-token, requiring them to set a new password via `mandatory_change_password`.
 
 ---
 
