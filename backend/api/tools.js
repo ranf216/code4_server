@@ -41,13 +41,19 @@ exports.run = function (req, res)
 			name: "sql_formatter",
 			title: "SQL Formatter",
 			url: "/sql_formatter",
-			enabled: true
+			enabled: $Config.get("enable_sql_formatter") === true
 		},
 		{
 			name: "db_exporter",
 			title: "DB Exporter",
 			url: "/db_exporter",
 			enabled: $Config.get("enable_db_exporter") === true
+		},
+		{
+			name: "doc_library",
+			title: "Doc Library",
+			url: "/doc_library",
+			enabled: $Config.get("enable_doc_library") === true
 		}
 	];
 

@@ -54,6 +54,8 @@ app.use("/db_exporter", initSession);
 app.use("/db_exporter/structure", initSession);
 app.use("/db_exporter/export", initSession);
 app.use("/db_exporter/stop", initSession);
+app.use("/doc_library", initSession);
+app.use("/doc_library/file", initSession);
 app.use("/restore_password", initSession);
 app.use("/public/jsapi.js", initSession);
 app.use("/files/a/:filedata", initSession);
@@ -280,6 +282,22 @@ app.post('/db_exporter/stop', function (req, res)
     $HttpContext.get("session").closeDb();
 });
 
+app.get('/doc_library', function (req, res)
+{
+    const DocLibrary = require("./doc_library.js");
+    DocLibrary.run(req, res);
+
+    $HttpContext.get("session").closeDb();
+});
+
+app.get('/doc_library/file', function (req, res)
+{
+    const DocLibrary = require("./doc_library.js");
+    DocLibrary.getFile(req, res);
+
+    $HttpContext.get("session").closeDb();
+});
+
 app.get('/public/jsapi.js', function (req, res)
 {
     const jsapi = require(path.join(infraRoot, req.path));
@@ -464,6 +482,39 @@ app.get('/favicon.ico', function (req, res)
                                                                     [2, 3, 16, 17],
                                                                     [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17],
                                                                     [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17],
+                                                                    [], []]);
+    }
+    else if (req.query.src == "doc_library")
+    {
+        img.setPixelsToColor($Config.get("env_text_color"), null, [ [], [],
+                                                                    [2, 3, 4, 5, 6, 25, 26, 27],
+                                                                    [2, 6, 25, 27],
+                                                                    [2, 6, 14, 15, 16, 17, 18, 25, 27],
+                                                                    [2, 4, 6, 14, 18, 25, 27, 28, 29],
+                                                                    [2, 4, 6, 7, 8, 9, 10, 11, 12, 13, 14, 18, 25, 27, 29],
+                                                                    [2, 6, 7, 13, 14, 18, 25, 27, 29],
+                                                                    [2, 6, 7, 13, 14, 16, 18, 25, 27, 29],
+                                                                    [2, 4, 6, 7, 13, 14, 16, 18, 25, 27, 29],
+                                                                    [2, 4, 6, 7, 9, 11, 13, 14, 16, 18, 19, 20, 21, 22, 23, 24, 25, 27, 29],
+                                                                    [2, 4, 6, 7, 9, 11, 13, 14, 16, 18, 19, 24, 25, 27, 29],
+                                                                    [2, 4, 6, 7, 9, 11, 13, 14, 18, 19, 24, 25, 27, 29],
+                                                                    [2, 4, 6, 7, 11, 13, 14, 16, 18, 19, 24, 25, 27, 29],
+                                                                    [2, 6, 7, 13, 14, 18, 19, 22, 24, 25, 27, 29],
+                                                                    [2, 4, 6, 7, 9, 13, 14, 16, 18, 19, 22, 24, 25, 27, 29],
+                                                                    [2, 4, 6, 7, 9, 11, 13, 14, 16, 18, 19, 22, 24, 25, 27, 29],
+                                                                    [2, 4, 6, 7, 9, 11, 13, 14, 16, 18, 19, 22, 24, 25, 27, 29],
+                                                                    [2, 6, 7, 9, 13, 14, 16, 18, 19, 24, 25, 27, 29],
+                                                                    [2, 6, 7, 13, 14, 16, 18, 19, 24, 25, 27, 29],
+                                                                    [2, 6, 7, 11, 13, 14, 18, 19, 22, 24, 25, 27, 29],
+                                                                    [2, 6, 7, 11, 13, 14, 18, 19, 22, 24, 25, 27, 29],
+                                                                    [2, 6, 7, 11, 13, 14, 18, 19, 24, 25, 27, 29],
+                                                                    [2, 6, 7, 11, 13, 14, 18, 19, 24, 25, 27, 29],
+                                                                    [2, 6, 7, 13, 14, 18, 19, 22, 24, 25, 27, 29],
+                                                                    [2, 6, 7, 11, 13, 14, 18, 19, 22, 24, 25, 27, 29],
+                                                                    [2, 6, 7, 13, 14, 18, 19, 22, 24, 25, 27, 29],
+                                                                    [2, 6, 7, 13, 14, 18, 19, 24, 25, 27, 29],
+                                                                    [2, 6, 7, 13, 14, 18, 19, 24, 25, 27, 29],
+                                                                    [3, 4, 5, 8, 9, 10, 11, 12, 15, 16, 17, 20, 21, 22, 23, 26, 28],
                                                                     [], []]);
     }
     else if (req.query.src == "tools")
