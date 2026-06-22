@@ -1,7 +1,7 @@
 module.exports = {
 	// Version
 	"api_version"							: "1",
-	"infra_version"							: "3.11.13",
+	"infra_version"							: "3.11.14",
 
 	// Server online - If set to false, no API is able to run!!!
 	"api_server_active"						: true,
@@ -25,6 +25,8 @@ module.exports = {
 	"enable_audit_trail"					: true,
 	"enable_otp_viewer"						: true,
 	"enable_db_exporter"					: true,
+	"enable_sql_formatter"					: true,
+	"enable_doc_library"					: true,
 	"enable_system_login"					: false,
 	"restrict_superuser_api_to_ip"			: [],
 	"restrict_upgrade_api_to_ip"			: [],

@@ -1,6 +1,6 @@
 exports.run = function (req, res)
 {
-	if ($Config.get("enable_api_client") != true)
+	if ($Config.get("enable_sql_formatter") != true)
 	{
 		$Utils.unauthorize();
 		return;
