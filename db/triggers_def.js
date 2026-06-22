@@ -84,8 +84,8 @@ module.exports =
     {
         name: "user_details",
         id: "USD_USR_ID",
-        insert_fields: ["USD_TYPE", "USD_EMAIL", "USD_PHONE_NUM", "USD_DELETED_ON", "USD_STATUS", "USD_ROLE_ALLOW", "USD_ROLE_DENY", "USD_FIRST_NAME", "USD_LAST_NAME", "USD_IMAGE"],
-        update_fields: ["USD_TYPE", "USD_EMAIL", "USD_PHONE_NUM", "USD_DELETED_ON", "USD_STATUS", "USD_ROLE_ALLOW", "USD_ROLE_DENY", "USD_FIRST_NAME", "USD_LAST_NAME", "USD_IMAGE"],
+        insert_fields: ["USD_TYPE", "USD_EMAIL", "USD_PHONE_NUM", "USD_DELETED_ON", "USD_STATUS", "USD_ROLE_ALLOW", "USD_ROLE_DENY", "USD_FIRST_NAME", "USD_LAST_NAME", "USD_IMAGE", "USD_COM_ID"],
+        update_fields: ["USD_TYPE", "USD_EMAIL", "USD_PHONE_NUM", "USD_DELETED_ON", "USD_STATUS", "USD_ROLE_ALLOW", "USD_ROLE_DENY", "USD_FIRST_NAME", "USD_LAST_NAME", "USD_IMAGE", "USD_COM_ID"],
         insert_custom: null, // Optional code to run after the insertion to change_log
         update_custom: null, // Optional code to run after the insertion to change_log
         log_delete: false,
@@ -112,8 +112,8 @@ module.exports =
     {
         name: "featured_officer",
         id: "FTO_ID",
-        insert_fields: ["FTO_IMAGE", "FTO_DESCRIPTION", "FTO_LAST_UPDATE"],
-        update_fields: ["FTO_IMAGE", "FTO_DESCRIPTION", "FTO_LAST_UPDATE"],
+        insert_fields: ["FTO_COM_ID", "FTO_IMAGE", "FTO_DESCRIPTION", "FTO_CREATED_ON", "FTO_LAST_UPDATE", "FTO_DELETED_ON"],
+        update_fields: ["FTO_IMAGE", "FTO_DESCRIPTION", "FTO_LAST_UPDATE", "FTO_DELETED_ON"],
         insert_custom: null, // Optional code to run after the insertion to change_log
         update_custom: null, // Optional code to run after the insertion to change_log
         log_delete: false,
