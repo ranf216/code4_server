@@ -1,6 +1,7 @@
 module.exports =
 [
 	"api_test",
+	"community",
 	"file",
 	"settings",
 	//"social_login",

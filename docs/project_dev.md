@@ -1,7 +1,7 @@
 # Server Implementation Documentation
 
-**Document Version:** 1.2  
-**Last Updated:** 2026-06-02
+**Document Version:** 1.3  
+**Last Updated:** 2026-06-16
 **Purpose:** Comprehensive documentation of the project server business logic implementation
 
 ---
@@ -142,6 +142,57 @@ Configuration settings are persisted in the `key_value` DB table (multi-instance
 | Parameter | Default | Description |
 |---|---|---|
 | `max_hours_per_day` | 8 | Maximum officer working hours per day |
+
+### 1.2 Community (`platform/api/community.js`, `platform/funcs/community.js`)
+
+Manages communities (sites) and featured officer banners. Full CRUD for communities with soft deletion, and upsert/delete for the 1:1 featured officer banner per community.
+
+#### Community CRUD
+
+Communities are stored in the `community` table. Each community has a name, area, GPS coordinates, timezone, map image, map boundaries polygon, and active status. Soft deletion via `COM_DELETED_ON`.
+
+- **get_communities** — Lists all non-deleted communities. Optional `include_inactive` flag to include deactivated communities (default: active only). Optional `search_text` for server-side free-text search across community names, officer names, and resident names.
+- **get_community** — Returns full community details by ID, including map image URL.
+- **add_community** — Creates a new community. `name` and `area` are mandatory. Validates unique name among non-deleted communities. Handles map image upload via `$Utils.saveNewImageOrKeepOld()`. Defaults `is_active` to true. Optional `officers` and `residents` arrays to associate users at creation.
+- **update_community** — Dynamic partial update. Only provided fields are modified. Validates unique name if changed. Handles map image replacement. Optional `officers` and `residents` arrays to reassign user associations (replaces current list).
+- **delete_community** — Soft deletes (`COM_DELETED_ON`). Server-side association checks block deletion if active officers (rc 502), residents (rc 503), or open calls (rc 504) exist. Deleted community names can be reused.
+
+| API | ACL | Description |
+|---|---|---|
+| `Community/get_communities` | ADMIN | List all communities |
+| `Community/get_community` | ADMIN, OFFICER, RESIDENT | Get a single community by ID |
+| `Community/add_community` | ADMIN | Create a new community |
+| `Community/update_community` | ADMIN | Update community fields |
+| `Community/delete_community` | ADMIN | Soft-delete a community |
+
+#### Featured Officer Banner
+
+Each community can have at most one featured officer banner (1:1, enforced by `UNIQUE KEY UQ_FTO_COM_ID`). The `set_featured_officer` endpoint performs an upsert: inserts if none exists, updates if one already exists, or restores a soft-deleted record. Both `image` and `description` are mandatory per SDS. Soft deletion via `FTO_DELETED_ON`.
+
+| API | ACL | Description |
+|---|---|---|
+| `Community/get_featured_officer` | ADMIN, OFFICER, RESIDENT | Get featured officer banner for a community |
+| `Community/set_featured_officer` | ADMIN | Create or update the featured officer banner |
+| `Community/delete_featured_officer` | ADMIN | Remove the featured officer banner |
+
+#### Community Error Codes (500–519)
+| Code | Constant | Message |
+|---|---|---|
+| 500 | `ERR_COMMUNITY_NOT_FOUND` | community not found |
+| 501 | `ERR_COMMUNITY_NAME_ALREADY_EXISTS` | a community with this name already exists |
+| 502 | `ERR_COMMUNITY_HAS_ACTIVE_OFFICERS` | cannot delete community with active officers |
+| 503 | `ERR_COMMUNITY_HAS_ACTIVE_RESIDENTS` | cannot delete community with active residents |
+| 504 | `ERR_COMMUNITY_HAS_ACTIVE_CALLS` | cannot delete community with active calls |
+| 505 | `ERR_COMMUNITY_IS_NOT_ACTIVE` | community is not active |
+| 506 | `ERR_FEATURED_OFFICER_NOT_FOUND` | featured officer not found |
+
+#### Design Notes
+- **Helper function:** `fetchCommunityRecord(communityId)` — module-level helper to avoid duplicating the existence check query across 6 methods.
+- **Audit trail:** `featured_officer` trigger definition uses `log_delete: false` with `FTO_DELETED_ON` in both `insert_fields` and `update_fields` since soft deletion is used.
+- **File handling:** `COM_MAP_IMAGE` and `FTO_IMAGE` use `$Files.SQL` for URL resolution in read operations and `$Utils.saveNewImageOrKeepOld()` for uploads.
+- **Active filtering:** `get_communities` defaults to active-only; pass `include_inactive: true` to see deactivated communities.
+- **Free-text search:** `get_communities` supports `search_text` parameter for server-side filtering across community names, officer names, and resident names via EXISTS subqueries.
+- **Community association:** `user_details.USD_COM_ID` links officers and residents to communities. Managed via `add_community` and `update_community` endpoints.
 
 ---
 
