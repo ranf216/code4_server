@@ -1,11 +1,4 @@
 {
-    "camera":               {"name": {"en": "Camera"},              "define": "ASSET_TYPE_CAMERA"                   },
-    "door":                 {"name": {"en": "Door"},                "define": "ASSET_TYPE_DOOR"                     },
-    "gate":                 {"name": {"en": "Gate"},                "define": "ASSET_TYPE_GATE"                     },
-    "fence":                {"name": {"en": "Fence"},               "define": "ASSET_TYPE_FENCE"                    },
-    "light":                {"name": {"en": "Light"},               "define": "ASSET_TYPE_LIGHT"                    },
-    "alarm":                {"name": {"en": "Alarm"},               "define": "ASSET_TYPE_ALARM"                    },
-    "fire_extinguisher":    {"name": {"en": "Fire Extinguisher"},   "define": "ASSET_TYPE_FIRE_EXTINGUISHER"        },
-    "aed":                  {"name": {"en": "AED"},                 "define": "ASSET_TYPE_AED"                      },
-    "other":                {"name": {"en": "Other"},               "define": "ASSET_TYPE_OTHER"                    }
+    "source": "db",
+    "cache": true
 }
