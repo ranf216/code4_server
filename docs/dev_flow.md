@@ -1,7 +1,7 @@
 # Code4 - Development Flow
 
 **Document Version:** 1.0
-**Last Updated:** 2026-06-02
+**Last Updated:** 2026-07-02
 **Purpose:** Recommended order of implementation for the Code4 Security Operations Platform server modules
 
 ---
@@ -25,14 +25,15 @@ The project infrastructure is set up with the following **built-in platform modu
 - `USER_TYPE_OFFICER` (2) - Mobile app users: security officers / patrol team
 - `USER_TYPE_RESIDENT` (3) - Mobile app users: community residents / clients
 
-**Admin roles** are not yet defined (only `USER_ROLE_ACCOUNT_IMPERSONATION` exists). The following roles need to be added to `platform/definitions/user_roles.js` (sequential numbering; `$UserRoles` converts to bitmasks internally):
+**Admin roles** defined in `platform/definitions/user_roles.js`:
+- `USER_ROLE_ACCOUNT_IMPERSONATION` = 1
 - `USER_ROLE_SUPER_ADMIN` = 2
 - `USER_ROLE_MANAGER` = 3
 - `USER_ROLE_PLANNING` = 4
 - `USER_ROLE_LOGISTICS` = 5
 - `USER_ROLE_FINANCE` = 6
 
-**Implemented project-specific API modules:** `settings` (Phase 1.1)
+**Implemented project-specific API modules:** `settings` (Phase 1.1), `community` (Phase 1.2)
 
 ---
 
@@ -66,11 +67,12 @@ These are the foundational CRUD modules that all other features depend on. They 
 - **Why early:** Other modules reference these lookup types (calls use `service_type`, tasks use `task_type`, assets use `asset_type`, post orders use `po_section_type`)
 - **Implementation:** 24 API endpoints (4 CRUD groups × 4 operations + 4 config groups × get/update). Data item CRUD uses the `data_item` table (multi-instance safe). Config settings use the `key_value` table with namespaced keys (e.g., `settings:gps`).
 
-#### 1.2 Community (`platform/api/community.js`)
-- Full CRUD for communities + featured officer banner
+#### ~~1.2 Community (`platform/api/community.js`)~~ ✅ Done
+- ~~Full CRUD for communities + featured officer banner~~
 - **DB tables:** `community`, `featured_officer`
 - **Depends on:** Phase 0
 - **Why early:** Nearly every entity in the system is scoped to a community
+- **Implementation:** 7 API endpoints — `get_communities`, `get_community`, `add_community`, `update_community`, `delete_community`, `get_featured_officer`, `set_featured_officer`, `delete_featured_officer`. Supports free-text search, inactive filtering, map image upload, officer/resident association, and timezone per community.
 
 #### 1.3 Admin User (`platform/api/admin_user.js`)
 - Management system user CRUD (Super Admin only), password reset, change password

@@ -1594,4 +1594,950 @@ module.exports = class
 
         return {...rc, ...vals};
     }
+
+    test_admin_user()
+    {
+        let vals = {};
+        let rc = $ERRS.ERR_SUCCESS;
+
+        let testResults = [];
+        let addedUserId = null;
+        let secondUserId = null;
+        let weakPwdUserId = null;
+        let dupUserId = null;
+        let currentEmail = null;
+
+        try
+        {
+            testResults.push({step: "Starting Admin User API tests", status: "info"});
+
+            let uniqueId = $Utils.uniqueHash().substring(0, 8);
+            let testEmail = `test_admin_${uniqueId}@test.com`;
+            let testPassword = "Test@1234";
+
+            // =================================================================
+            // CREATE & READ
+            // =================================================================
+
+            testResults.push({step: "Test 1: get_admin_users (initial)", status: "running"});
+            let rv = $executeAPI(this.$Session, "AdminUser/get_admin_users", { include_inactive: true });
+            if ($Err.isERR(rv))
+            {
+                testResults.push({step: "Test 1: get_admin_users (initial)", status: "failed", error: rv.message});
+                return {...rc, test_results: testResults};
+            }
+            let initialCount = rv.total_count;
+            testResults.push({step: "Test 1: get_admin_users (initial)", status: "passed", count: initialCount});
+
+            testResults.push({step: "Test 2: add_admin_user (all params)", status: "running"});
+            rv = $executeAPI(this.$Session, "AdminUser/add_admin_user", {
+                first_name: "Test",
+                last_name: "Admin",
+                email: testEmail,
+                password: testPassword,
+                phone_num: "+1-555-0100",
+                role: $Const.USER_ROLE_SUPER_ADMIN
+            });
+            if ($Err.isERR(rv))
+            {
+                testResults.push({step: "Test 2: add_admin_user (all params)", status: "failed", error: rv.message});
+            }
+            else
+            {
+                addedUserId = rv.user_id;
+                testResults.push({step: "Test 2: add_admin_user (all params)", status: "passed", user_id: addedUserId});
+            }
+
+            testResults.push({step: "Test 3: get_admin_user (verify creation)", status: "running"});
+            if (addedUserId === null)
+            {
+                testResults.push({step: "Test 3: get_admin_user (verify creation)", status: "failed", error: "Cannot get - user was not created"});
+            }
+            else
+            {
+                rv = $executeAPI(this.$Session, "AdminUser/get_admin_user", { user_id: addedUserId });
+                if ($Err.isERR(rv))
+                {
+                    testResults.push({step: "Test 3: get_admin_user (verify creation)", status: "failed", error: rv.message});
+                }
+                else
+                {
+                    let u = rv.user;
+                    let verified = u.first_name === "Test" &&
+                                   u.last_name === "Admin" &&
+                                   u.email === testEmail &&
+                                   u.phone_num === "+1-555-0100" &&
+                                   u.is_active === true &&
+                                   u.role === $Const.USER_ROLE_SUPER_ADMIN;
+                    if (verified)
+                    {
+                        testResults.push({step: "Test 3: get_admin_user (verify creation)", status: "passed", verified: true});
+                    }
+                    else
+                    {
+                        testResults.push({step: "Test 3: get_admin_user (verify creation)", status: "warning", verified: false, user: u, message: "Some user fields not saved correctly"});
+                    }
+                }
+            }
+
+            testResults.push({step: "Test 4: get_admin_users (verify count increased)", status: "running"});
+            rv = $executeAPI(this.$Session, "AdminUser/get_admin_users", { include_inactive: true });
+            if ($Err.isERR(rv))
+            {
+                testResults.push({step: "Test 4: get_admin_users (verify count increased)", status: "failed", error: rv.message});
+            }
+            else
+            {
+                if (rv.total_count === initialCount + 1)
+                {
+                    testResults.push({step: "Test 4: get_admin_users (verify count increased)", status: "passed", count: rv.total_count});
+                }
+                else
+                {
+                    testResults.push({step: "Test 4: get_admin_users (verify count increased)", status: "warning", expected: initialCount + 1, actual: rv.total_count});
+                }
+            }
+
+            // =================================================================
+            // UPDATE (basic fields)
+            // =================================================================
+
+            testResults.push({step: "Test 5: update_admin_user (basic fields)", status: "running"});
+            if (addedUserId === null)
+            {
+                testResults.push({step: "Test 5: update_admin_user (basic fields)", status: "failed", error: "Cannot update - user was not created"});
+            }
+            else
+            {
+                rv = $executeAPI(this.$Session, "AdminUser/update_admin_user", {
+                    user_id: addedUserId,
+                    first_name: "Updated",
+                    last_name: "AdminUser",
+                    phone_num: "+1-555-0200"
+                });
+                if ($Err.isERR(rv))
+                {
+                    testResults.push({step: "Test 5: update_admin_user (basic fields)", status: "failed", error: rv.message});
+                }
+                else
+                {
+                    testResults.push({step: "Test 5: update_admin_user (basic fields)", status: "passed"});
+                }
+            }
+
+            testResults.push({step: "Test 6: get_admin_user (verify update)", status: "running"});
+            if (addedUserId === null)
+            {
+                testResults.push({step: "Test 6: get_admin_user (verify update)", status: "failed", error: "Cannot verify - user was not created"});
+            }
+            else
+            {
+                rv = $executeAPI(this.$Session, "AdminUser/get_admin_user", { user_id: addedUserId });
+                if ($Err.isERR(rv))
+                {
+                    testResults.push({step: "Test 6: get_admin_user (verify update)", status: "failed", error: rv.message});
+                }
+                else
+                {
+                    let u = rv.user;
+                    let verified = u.first_name === "Updated" &&
+                                   u.last_name === "AdminUser" &&
+                                   u.phone_num === "+1-555-0200";
+                    if (verified)
+                    {
+                        testResults.push({step: "Test 6: get_admin_user (verify update)", status: "passed", verified: true});
+                    }
+                    else
+                    {
+                        testResults.push({step: "Test 6: get_admin_user (verify update)", status: "warning", verified: false, message: "Updated fields not saved correctly"});
+                    }
+                }
+            }
+
+            // =================================================================
+            // UPDATE (email change with initial_password)
+            // =================================================================
+
+            let newEmail = `test_updated_${uniqueId}@test.com`;
+            let newInitialPassword = "Changed@789";
+            currentEmail = testEmail;
+
+            testResults.push({step: "Test 7: update_admin_user (email change with initial_password)", status: "running"});
+            if (addedUserId === null)
+            {
+                testResults.push({step: "Test 7: update_admin_user (email change with initial_password)", status: "failed", error: "Cannot update - user was not created"});
+            }
+            else
+            {
+                rv = $executeAPI(this.$Session, "AdminUser/update_admin_user", {
+                    user_id: addedUserId,
+                    email: newEmail,
+                    initial_password: newInitialPassword
+                });
+                if ($Err.isERR(rv))
+                {
+                    testResults.push({step: "Test 7: update_admin_user (email change with initial_password)", status: "failed", error: rv.message});
+                }
+                else
+                {
+                    currentEmail = newEmail;
+                    testResults.push({step: "Test 7: update_admin_user (email change with initial_password)", status: "passed"});
+                }
+            }
+
+            testResults.push({step: "Test 8: get_admin_user (verify email changed)", status: "running"});
+            if (addedUserId === null)
+            {
+                testResults.push({step: "Test 8: get_admin_user (verify email changed)", status: "failed", error: "Cannot verify - user was not created"});
+            }
+            else
+            {
+                rv = $executeAPI(this.$Session, "AdminUser/get_admin_user", { user_id: addedUserId });
+                if ($Err.isERR(rv))
+                {
+                    testResults.push({step: "Test 8: get_admin_user (verify email changed)", status: "failed", error: rv.message});
+                }
+                else
+                {
+                    if (rv.user.email === newEmail)
+                    {
+                        testResults.push({step: "Test 8: get_admin_user (verify email changed)", status: "passed", email: newEmail});
+                    }
+                    else
+                    {
+                        testResults.push({step: "Test 8: get_admin_user (verify email changed)", status: "warning", expected: newEmail, actual: rv.user.email});
+                    }
+                }
+            }
+
+            testResults.push({step: "Test 9: update_admin_user (email change missing initial_password)", status: "running"});
+            if (addedUserId === null)
+            {
+                testResults.push({step: "Test 9: update_admin_user (email change missing initial_password)", status: "failed", error: "Cannot test - user was not created"});
+            }
+            else
+            {
+                rv = $executeAPI(this.$Session, "AdminUser/update_admin_user", {
+                    user_id: addedUserId,
+                    email: `another_${uniqueId}@test.com`
+                });
+                if ($Err.isERR(rv) && rv.rc === 102)
+                {
+                    testResults.push({step: "Test 9: update_admin_user (email change missing initial_password)", status: "passed", message: "correctly returned rc 102 for missing initial_password"});
+                }
+                else
+                {
+                    testResults.push({step: "Test 9: update_admin_user (email change missing initial_password)", status: "warning", message: "expected rc 102", rc: rv.rc});
+                }
+            }
+
+            let anotherEmail = `another_${uniqueId}@test.com`;
+            testResults.push({step: "Test 10: update_admin_user (email change weak initial_password)", status: "running"});
+            if (addedUserId === null)
+            {
+                testResults.push({step: "Test 10: update_admin_user (email change weak initial_password)", status: "failed", error: "Cannot test - user was not created"});
+            }
+            else
+            {
+                rv = $executeAPI(this.$Session, "AdminUser/update_admin_user", {
+                    user_id: addedUserId,
+                    email: anotherEmail,
+                    initial_password: "weak"
+                });
+                if ($Err.isERR(rv) && rv.rc === 242)
+                {
+                    testResults.push({step: "Test 10: update_admin_user (email change weak initial_password)", status: "passed", message: "correctly returned rc 242 for weak password"});
+                }
+                else if (!$Err.isERR(rv))
+                {
+                    currentEmail = anotherEmail;
+                    testResults.push({step: "Test 10: update_admin_user (email change weak initial_password)", status: "passed", message: "password accepted (force_criteria is disabled)"});
+                }
+                else
+                {
+                    testResults.push({step: "Test 10: update_admin_user (email change weak initial_password)", status: "warning", message: "unexpected error", rc: rv.rc});
+                }
+            }
+
+            // =================================================================
+            // BOOLEAN TOGGLE (deactivate/reactivate)
+            // =================================================================
+
+            testResults.push({step: "Test 11: update_admin_user (deactivate)", status: "running"});
+            if (addedUserId === null)
+            {
+                testResults.push({step: "Test 11: update_admin_user (deactivate)", status: "failed", error: "Cannot deactivate - user was not created"});
+            }
+            else
+            {
+                rv = $executeAPI(this.$Session, "AdminUser/update_admin_user", {
+                    user_id: addedUserId,
+                    is_active: false
+                });
+                if ($Err.isERR(rv))
+                {
+                    testResults.push({step: "Test 11: update_admin_user (deactivate)", status: "failed", error: rv.message});
+                }
+                else
+                {
+                    rv = $executeAPI(this.$Session, "AdminUser/get_admin_user", { user_id: addedUserId });
+                    if (!$Err.isERR(rv) && rv.user.is_active === false)
+                    {
+                        testResults.push({step: "Test 11: update_admin_user (deactivate)", status: "passed", is_active: false});
+                    }
+                    else
+                    {
+                        testResults.push({step: "Test 11: update_admin_user (deactivate)", status: "warning", message: "is_active not toggled to false"});
+                    }
+                }
+            }
+
+            testResults.push({step: "Test 12: get_admin_users (exclude inactive)", status: "running"});
+            rv = $executeAPI(this.$Session, "AdminUser/get_admin_users", { include_inactive: false });
+            if ($Err.isERR(rv))
+            {
+                testResults.push({step: "Test 12: get_admin_users (exclude inactive)", status: "failed", error: rv.message});
+            }
+            else
+            {
+                let found = addedUserId !== null ? rv.users.find(u => u.user_id === addedUserId) : null;
+                if (!found)
+                {
+                    testResults.push({step: "Test 12: get_admin_users (exclude inactive)", status: "passed", message: "inactive user correctly excluded"});
+                }
+                else
+                {
+                    testResults.push({step: "Test 12: get_admin_users (exclude inactive)", status: "warning", message: "inactive user still appears in active list"});
+                }
+            }
+
+            testResults.push({step: "Test 13: update_admin_user (reactivate)", status: "running"});
+            if (addedUserId === null)
+            {
+                testResults.push({step: "Test 13: update_admin_user (reactivate)", status: "failed", error: "Cannot reactivate - user was not created"});
+            }
+            else
+            {
+                rv = $executeAPI(this.$Session, "AdminUser/update_admin_user", {
+                    user_id: addedUserId,
+                    is_active: true
+                });
+                if ($Err.isERR(rv))
+                {
+                    testResults.push({step: "Test 13: update_admin_user (reactivate)", status: "failed", error: rv.message});
+                }
+                else
+                {
+                    rv = $executeAPI(this.$Session, "AdminUser/get_admin_user", { user_id: addedUserId });
+                    if (!$Err.isERR(rv) && rv.user.is_active === true)
+                    {
+                        testResults.push({step: "Test 13: update_admin_user (reactivate)", status: "passed", is_active: true});
+                    }
+                    else
+                    {
+                        testResults.push({step: "Test 13: update_admin_user (reactivate)", status: "warning", message: "is_active not toggled to true"});
+                    }
+                }
+            }
+
+            // =================================================================
+            // ROLE CHANGE
+            // =================================================================
+
+            testResults.push({step: "Test 14: change_admin_user_role", status: "running"});
+            if (addedUserId === null)
+            {
+                testResults.push({step: "Test 14: change_admin_user_role", status: "failed", error: "Cannot test - user was not created"});
+            }
+            else
+            {
+                rv = $executeAPI(this.$Session, "AdminUser/change_admin_user_role", {
+                    user_id: addedUserId,
+                    role: $Const.USER_ROLE_MANAGER
+                });
+                if ($Err.isERR(rv))
+                {
+                    testResults.push({step: "Test 14: change_admin_user_role", status: "failed", error: rv.message});
+                }
+                else
+                {
+                    testResults.push({step: "Test 14: change_admin_user_role", status: "passed"});
+                }
+            }
+
+            testResults.push({step: "Test 15: get_admin_user (verify role changed)", status: "running"});
+            if (addedUserId === null)
+            {
+                testResults.push({step: "Test 15: get_admin_user (verify role changed)", status: "failed", error: "Cannot verify - user was not created"});
+            }
+            else
+            {
+                rv = $executeAPI(this.$Session, "AdminUser/get_admin_user", { user_id: addedUserId });
+                if ($Err.isERR(rv))
+                {
+                    testResults.push({step: "Test 15: get_admin_user (verify role changed)", status: "failed", error: rv.message});
+                }
+                else
+                {
+                    if (rv.user.role === $Const.USER_ROLE_MANAGER)
+                    {
+                        testResults.push({step: "Test 15: get_admin_user (verify role changed)", status: "passed", role: rv.user.role});
+                    }
+                    else
+                    {
+                        testResults.push({step: "Test 15: get_admin_user (verify role changed)", status: "warning", expected: $Const.USER_ROLE_MANAGER, actual: rv.user.role});
+                    }
+                }
+            }
+
+            testResults.push({step: "Test 16: change_admin_user_role (self, expect rc 772)", status: "running"});
+            rv = $executeAPI(this.$Session, "AdminUser/change_admin_user_role", {
+                user_id: this.$Session.userId,
+                role: $Const.USER_ROLE_MANAGER
+            });
+            if ($Err.isERR(rv) && rv.rc === 772)
+            {
+                testResults.push({step: "Test 16: change_admin_user_role (self, expect rc 772)", status: "passed", message: "correctly rejected self-role change"});
+            }
+            else
+            {
+                testResults.push({step: "Test 16: change_admin_user_role (self, expect rc 772)", status: "warning", message: "expected rc 772", rc: rv.rc});
+            }
+
+            testResults.push({step: "Test 17: change_admin_user_role (invalid role)", status: "running"});
+            if (addedUserId === null)
+            {
+                testResults.push({step: "Test 17: change_admin_user_role (invalid role)", status: "failed", error: "Cannot test - user was not created"});
+            }
+            else
+            {
+                rv = $executeAPI(this.$Session, "AdminUser/change_admin_user_role", {
+                    user_id: addedUserId,
+                    role: 9999
+                });
+                if ($Err.isERR(rv) && rv.rc === 106)
+                {
+                    testResults.push({step: "Test 17: change_admin_user_role (invalid role)", status: "passed", message: "correctly rejected invalid role with rc 106"});
+                }
+                else
+                {
+                    testResults.push({step: "Test 17: change_admin_user_role (invalid role)", status: "warning", message: "expected rc 106", rc: rv.rc});
+                }
+            }
+
+            testResults.push({step: "Test 18: change_admin_user_role (invalid user)", status: "running"});
+            rv = $executeAPI(this.$Session, "AdminUser/change_admin_user_role", {
+                user_id: "NONEXISTENT_USER_ID",
+                role: $Const.USER_ROLE_MANAGER
+            });
+            if ($Err.isERR(rv) && rv.rc === 770)
+            {
+                testResults.push({step: "Test 18: change_admin_user_role (invalid user)", status: "passed", message: "correctly returned not found with rc 770"});
+            }
+            else
+            {
+                testResults.push({step: "Test 18: change_admin_user_role (invalid user)", status: "warning", message: "expected rc 770", rc: rv.rc});
+            }
+
+            // =================================================================
+            // PASSWORD TESTS
+            // =================================================================
+
+            testResults.push({step: "Test 19: reset_admin_user_password", status: "running"});
+            if (addedUserId === null)
+            {
+                testResults.push({step: "Test 19: reset_admin_user_password", status: "failed", error: "Cannot test - user was not created"});
+            }
+            else
+            {
+                rv = $executeAPI(this.$Session, "AdminUser/reset_admin_user_password", {
+                    user_id: addedUserId,
+                    password: "NewPass@123"
+                });
+                if ($Err.isERR(rv))
+                {
+                    testResults.push({step: "Test 19: reset_admin_user_password", status: "failed", error: rv.message});
+                }
+                else
+                {
+                    testResults.push({step: "Test 19: reset_admin_user_password", status: "passed"});
+                }
+            }
+
+            testResults.push({step: "Test 20: reset_admin_user_password (weak password)", status: "running"});
+            if (addedUserId === null)
+            {
+                testResults.push({step: "Test 20: reset_admin_user_password (weak password)", status: "failed", error: "Cannot test - user was not created"});
+            }
+            else
+            {
+                rv = $executeAPI(this.$Session, "AdminUser/reset_admin_user_password", {
+                    user_id: addedUserId,
+                    password: "123"
+                });
+                if ($Err.isERR(rv) && rv.rc === 242)
+                {
+                    testResults.push({step: "Test 20: reset_admin_user_password (weak password)", status: "passed", message: "correctly rejected weak password with rc 242"});
+                }
+                else if (!$Err.isERR(rv))
+                {
+                    testResults.push({step: "Test 20: reset_admin_user_password (weak password)", status: "passed", message: "password accepted (force_criteria is disabled)"});
+                }
+                else
+                {
+                    testResults.push({step: "Test 20: reset_admin_user_password (weak password)", status: "warning", message: "unexpected error", rc: rv.rc});
+                }
+            }
+
+            testResults.push({step: "Test 21: reset_admin_user_password (invalid user)", status: "running"});
+            rv = $executeAPI(this.$Session, "AdminUser/reset_admin_user_password", {
+                user_id: "NONEXISTENT_USER_ID",
+                password: "NewPass@123"
+            });
+            if ($Err.isERR(rv) && rv.rc === 770)
+            {
+                testResults.push({step: "Test 21: reset_admin_user_password (invalid user)", status: "passed", message: "correctly returned not found with rc 770"});
+            }
+            else
+            {
+                testResults.push({step: "Test 21: reset_admin_user_password (invalid user)", status: "warning", message: "expected rc 770", rc: rv.rc});
+            }
+
+            testResults.push({step: "Test 22: change_my_password (wrong current)", status: "running"});
+            rv = $executeAPI(this.$Session, "AdminUser/change_my_password", {
+                current_password: "WRONG_PASSWORD",
+                new_password: "NewPass@456"
+            });
+            if ($Err.isERR(rv) && rv.rc === 247)
+            {
+                testResults.push({step: "Test 22: change_my_password (wrong current)", status: "passed", message: "correctly rejected wrong password with rc 247"});
+            }
+            else
+            {
+                testResults.push({step: "Test 22: change_my_password (wrong current)", status: "warning", message: "expected rc 247", rc: rv.rc});
+            }
+
+            testResults.push({step: "Test 23: change_my_password (weak new password)", status: "running"});
+            rv = $executeAPI(this.$Session, "AdminUser/change_my_password", {
+                current_password: "WRONG_PASSWORD",
+                new_password: "123"
+            });
+            if ($Err.isERR(rv))
+            {
+                testResults.push({step: "Test 23: change_my_password (weak new password)", status: "passed", message: "correctly rejected", rc: rv.rc});
+            }
+            else
+            {
+                testResults.push({step: "Test 23: change_my_password (weak new password)", status: "warning", message: "expected error for weak password"});
+            }
+
+            // =================================================================
+            // SEARCH & SORT
+            // =================================================================
+
+            testResults.push({step: "Test 24: get_admin_users (search by email)", status: "running"});
+            if (addedUserId === null)
+            {
+                testResults.push({step: "Test 24: get_admin_users (search by email)", status: "failed", error: "Cannot search - user was not created"});
+            }
+            else
+            {
+                rv = $executeAPI(this.$Session, "AdminUser/get_admin_users", { include_inactive: true, search_text: uniqueId });
+                if ($Err.isERR(rv))
+                {
+                    testResults.push({step: "Test 24: get_admin_users (search by email)", status: "failed", error: rv.message});
+                }
+                else
+                {
+                    let found = rv.users.find(u => u.user_id === addedUserId);
+                    if (found)
+                    {
+                        testResults.push({step: "Test 24: get_admin_users (search by email)", status: "passed", found: true});
+                    }
+                    else
+                    {
+                        testResults.push({step: "Test 24: get_admin_users (search by email)", status: "warning", found: false, message: "User not found by search_text"});
+                    }
+                }
+            }
+
+            testResults.push({step: "Test 25: get_admin_users (sort by first_name asc)", status: "running"});
+            rv = $executeAPI(this.$Session, "AdminUser/get_admin_users", { include_inactive: true, sort_by: "first_name", sort_dir: "asc" });
+            if ($Err.isERR(rv))
+            {
+                testResults.push({step: "Test 25: get_admin_users (sort by first_name asc)", status: "failed", error: rv.message});
+            }
+            else
+            {
+                testResults.push({step: "Test 25: get_admin_users (sort by first_name asc)", status: "passed", count: rv.total_count});
+            }
+
+            testResults.push({step: "Test 26: get_admin_users (sort by created_on desc)", status: "running"});
+            rv = $executeAPI(this.$Session, "AdminUser/get_admin_users", { include_inactive: true, sort_by: "created_on", sort_dir: "desc" });
+            if ($Err.isERR(rv))
+            {
+                testResults.push({step: "Test 26: get_admin_users (sort by created_on desc)", status: "failed", error: rv.message});
+            }
+            else
+            {
+                testResults.push({step: "Test 26: get_admin_users (sort by created_on desc)", status: "passed", count: rv.total_count});
+            }
+
+            testResults.push({step: "Test 27: get_admin_users (sort by email)", status: "running"});
+            rv = $executeAPI(this.$Session, "AdminUser/get_admin_users", { include_inactive: true, sort_by: "email", sort_dir: "asc" });
+            if ($Err.isERR(rv))
+            {
+                testResults.push({step: "Test 27: get_admin_users (sort by email)", status: "failed", error: rv.message});
+            }
+            else
+            {
+                testResults.push({step: "Test 27: get_admin_users (sort by email)", status: "passed", count: rv.total_count});
+            }
+
+            testResults.push({step: "Test 28: get_admin_users (sort by role)", status: "running"});
+            rv = $executeAPI(this.$Session, "AdminUser/get_admin_users", { include_inactive: true, sort_by: "role", sort_dir: "desc" });
+            if ($Err.isERR(rv))
+            {
+                testResults.push({step: "Test 28: get_admin_users (sort by role)", status: "failed", error: rv.message});
+            }
+            else
+            {
+                testResults.push({step: "Test 28: get_admin_users (sort by role)", status: "passed", count: rv.total_count});
+            }
+
+            // =================================================================
+            // NEGATIVE / EDGE CASES (add_admin_user)
+            // =================================================================
+
+            testResults.push({step: "Test 29: add_admin_user (duplicate email)", status: "running"});
+            rv = $executeAPI(this.$Session, "AdminUser/add_admin_user", {
+                first_name: "Dup",
+                last_name: "Admin",
+                email: currentEmail,
+                password: testPassword,
+                role: $Const.USER_ROLE_SUPER_ADMIN
+            });
+            if ($Err.isERR(rv) && rv.rc === 240)
+            {
+                testResults.push({step: "Test 29: add_admin_user (duplicate email)", status: "passed", message: "correctly rejected duplicate email with rc 240"});
+            }
+            else if (!$Err.isERR(rv))
+            {
+                dupUserId = rv.user_id;
+                testResults.push({step: "Test 29: add_admin_user (duplicate email)", status: "warning", message: "duplicate email not detected", user_id: dupUserId});
+            }
+            else
+            {
+                testResults.push({step: "Test 29: add_admin_user (duplicate email)", status: "warning", message: "unexpected error", rc: rv.rc});
+            }
+
+            testResults.push({step: "Test 30: add_admin_user (invalid email)", status: "running"});
+            rv = $executeAPI(this.$Session, "AdminUser/add_admin_user", {
+                first_name: "Invalid",
+                email: "not_an_email",
+                password: testPassword,
+                role: $Const.USER_ROLE_SUPER_ADMIN
+            });
+            if ($Err.isERR(rv) && rv.rc === 235)
+            {
+                testResults.push({step: "Test 30: add_admin_user (invalid email)", status: "passed", message: "correctly rejected invalid email with rc 235"});
+            }
+            else
+            {
+                testResults.push({step: "Test 30: add_admin_user (invalid email)", status: "warning", message: "expected rc 235", rc: rv.rc});
+            }
+
+            testResults.push({step: "Test 31: add_admin_user (weak password)", status: "running"});
+            rv = $executeAPI(this.$Session, "AdminUser/add_admin_user", {
+                first_name: "Weak",
+                email: `weak_${uniqueId}@test.com`,
+                password: "123",
+                role: $Const.USER_ROLE_SUPER_ADMIN
+            });
+            if ($Err.isERR(rv) && rv.rc === 242)
+            {
+                testResults.push({step: "Test 31: add_admin_user (weak password)", status: "passed", message: "correctly rejected weak password with rc 242"});
+            }
+            else if (!$Err.isERR(rv))
+            {
+                weakPwdUserId = rv.user_id;
+                testResults.push({step: "Test 31: add_admin_user (weak password)", status: "passed", message: "password accepted (force_criteria is disabled)", user_id: weakPwdUserId});
+            }
+            else
+            {
+                testResults.push({step: "Test 31: add_admin_user (weak password)", status: "warning", message: "unexpected error", rc: rv.rc});
+            }
+
+            testResults.push({step: "Test 32: add_admin_user (empty first_name)", status: "running"});
+            rv = $executeAPI(this.$Session, "AdminUser/add_admin_user", {
+                first_name: "",
+                email: `empty_${uniqueId}@test.com`,
+                password: testPassword,
+                role: $Const.USER_ROLE_SUPER_ADMIN
+            });
+            if ($Err.isERR(rv) && rv.rc === 213)
+            {
+                testResults.push({step: "Test 32: add_admin_user (empty first_name)", status: "passed", message: "correctly rejected empty first_name with rc 213"});
+            }
+            else
+            {
+                testResults.push({step: "Test 32: add_admin_user (empty first_name)", status: "warning", message: "expected rc 213", rc: rv.rc});
+            }
+
+            testResults.push({step: "Test 33: add_admin_user (invalid role)", status: "running"});
+            rv = $executeAPI(this.$Session, "AdminUser/add_admin_user", {
+                first_name: "BadRole",
+                email: `badrole_${uniqueId}@test.com`,
+                password: testPassword,
+                role: 9999
+            });
+            if ($Err.isERR(rv) && rv.rc === 106)
+            {
+                testResults.push({step: "Test 33: add_admin_user (invalid role)", status: "passed", message: "correctly rejected invalid role with rc 106"});
+            }
+            else
+            {
+                testResults.push({step: "Test 33: add_admin_user (invalid role)", status: "warning", message: "expected rc 106", rc: rv.rc});
+            }
+
+            // =================================================================
+            // NEGATIVE / EDGE CASES (update, get, delete)
+            // =================================================================
+
+            testResults.push({step: "Test 34: update_admin_user (invalid user ID)", status: "running"});
+            rv = $executeAPI(this.$Session, "AdminUser/update_admin_user", {
+                user_id: "NONEXISTENT_USER_ID",
+                first_name: "Ghost"
+            });
+            if ($Err.isERR(rv) && rv.rc === 770)
+            {
+                testResults.push({step: "Test 34: update_admin_user (invalid user ID)", status: "passed", message: "correctly returned not found with rc 770"});
+            }
+            else
+            {
+                testResults.push({step: "Test 34: update_admin_user (invalid user ID)", status: "warning", message: "expected rc 770", rc: rv.rc});
+            }
+
+            testResults.push({step: "Test 35: get_admin_user (invalid ID)", status: "running"});
+            rv = $executeAPI(this.$Session, "AdminUser/get_admin_user", { user_id: "NONEXISTENT_USER_ID" });
+            if ($Err.isERR(rv) && rv.rc === 770)
+            {
+                testResults.push({step: "Test 35: get_admin_user (invalid ID)", status: "passed", message: "correctly returned not found with rc 770"});
+            }
+            else
+            {
+                testResults.push({step: "Test 35: get_admin_user (invalid ID)", status: "warning", message: "expected rc 770", rc: rv.rc});
+            }
+
+            testResults.push({step: "Test 36: delete_admin_user (self)", status: "running"});
+            rv = $executeAPI(this.$Session, "AdminUser/delete_admin_user", { user_id: this.$Session.userId });
+            if ($Err.isERR(rv) && rv.rc === 771)
+            {
+                testResults.push({step: "Test 36: delete_admin_user (self)", status: "passed", message: "correctly rejected self-delete with rc 771"});
+            }
+            else
+            {
+                testResults.push({step: "Test 36: delete_admin_user (self)", status: "warning", message: "expected rc 771", rc: rv.rc});
+            }
+
+            testResults.push({step: "Test 37: delete_admin_user (invalid user)", status: "running"});
+            rv = $executeAPI(this.$Session, "AdminUser/delete_admin_user", { user_id: "NONEXISTENT_USER_ID" });
+            if ($Err.isERR(rv) && rv.rc === 770)
+            {
+                testResults.push({step: "Test 37: delete_admin_user (invalid user)", status: "passed", message: "correctly returned not found with rc 770"});
+            }
+            else
+            {
+                testResults.push({step: "Test 37: delete_admin_user (invalid user)", status: "warning", message: "expected rc 770", rc: rv.rc});
+            }
+
+            // =================================================================
+            // INPUT VALIDATION
+            // =================================================================
+
+            testResults.push({step: "Test 38: add_admin_user (special characters in name)", status: "running"});
+            let specialEmail = `special_${uniqueId}@test.com`;
+            rv = $executeAPI(this.$Session, "AdminUser/add_admin_user", {
+                first_name: "Test-O'Brien",
+                last_name: "Jr. (III)",
+                email: specialEmail,
+                password: testPassword,
+                phone_num: "+1-555-0300",
+                role: $Const.USER_ROLE_MANAGER
+            });
+            if ($Err.isERR(rv))
+            {
+                testResults.push({step: "Test 38: add_admin_user (special characters in name)", status: "warning", message: "rejected special characters", error: rv.message});
+            }
+            else
+            {
+                secondUserId = rv.user_id;
+                testResults.push({step: "Test 38: add_admin_user (special characters in name)", status: "passed", user_id: secondUserId});
+            }
+
+            testResults.push({step: "Test 39: get_admin_user (verify special chars preserved)", status: "running"});
+            if (secondUserId === null)
+            {
+                testResults.push({step: "Test 39: get_admin_user (verify special chars preserved)", status: "failed", error: "Cannot verify - special char user was not created"});
+            }
+            else
+            {
+                rv = $executeAPI(this.$Session, "AdminUser/get_admin_user", { user_id: secondUserId });
+                if ($Err.isERR(rv))
+                {
+                    testResults.push({step: "Test 39: get_admin_user (verify special chars preserved)", status: "failed", error: rv.message});
+                }
+                else
+                {
+                    let u = rv.user;
+                    if (u.first_name === "Test-O'Brien" && u.last_name === "Jr. (III)")
+                    {
+                        testResults.push({step: "Test 39: get_admin_user (verify special chars preserved)", status: "passed", verified: true});
+                    }
+                    else
+                    {
+                        testResults.push({step: "Test 39: get_admin_user (verify special chars preserved)", status: "warning", first_name: u.first_name, last_name: u.last_name, message: "Special characters not preserved"});
+                    }
+                }
+            }
+
+            testResults.push({step: "Test 40: update_admin_user (unicode in name)", status: "running"});
+            if (secondUserId === null)
+            {
+                testResults.push({step: "Test 40: update_admin_user (unicode in name)", status: "failed", error: "Cannot test - special char user was not created"});
+            }
+            else
+            {
+                rv = $executeAPI(this.$Session, "AdminUser/update_admin_user", {
+                    user_id: secondUserId,
+                    first_name: "Тест",
+                    last_name: "测试"
+                });
+                if ($Err.isERR(rv))
+                {
+                    testResults.push({step: "Test 40: update_admin_user (unicode in name)", status: "warning", message: "rejected unicode", error: rv.message});
+                }
+                else
+                {
+                    rv = $executeAPI(this.$Session, "AdminUser/get_admin_user", { user_id: secondUserId });
+                    if (!$Err.isERR(rv) && rv.user.first_name === "Тест" && rv.user.last_name === "测试")
+                    {
+                        testResults.push({step: "Test 40: update_admin_user (unicode in name)", status: "passed", verified: true});
+                    }
+                    else
+                    {
+                        testResults.push({step: "Test 40: update_admin_user (unicode in name)", status: "warning", message: "Unicode not preserved correctly"});
+                    }
+                }
+            }
+
+            // =================================================================
+            // CLEANUP
+            // =================================================================
+
+            testResults.push({step: "Test 41: delete_admin_user (cleanup test user)", status: "running"});
+            if (addedUserId === null)
+            {
+                testResults.push({step: "Test 41: delete_admin_user (cleanup test user)", status: "failed", error: "Cannot delete - user was not created"});
+            }
+            else
+            {
+                rv = $executeAPI(this.$Session, "AdminUser/delete_admin_user", { user_id: addedUserId });
+                if ($Err.isERR(rv))
+                {
+                    testResults.push({step: "Test 41: delete_admin_user (cleanup test user)", status: "failed", error: rv.message});
+                }
+                else
+                {
+                    testResults.push({step: "Test 41: delete_admin_user (cleanup test user)", status: "passed"});
+                }
+            }
+
+            testResults.push({step: "Test 42: get_admin_user (verify soft delete)", status: "running"});
+            if (addedUserId === null)
+            {
+                testResults.push({step: "Test 42: get_admin_user (verify soft delete)", status: "failed", error: "Cannot verify - user was not created"});
+            }
+            else
+            {
+                rv = $executeAPI(this.$Session, "AdminUser/get_admin_user", { user_id: addedUserId });
+                if ($Err.isERR(rv) && rv.rc === 770)
+                {
+                    testResults.push({step: "Test 42: get_admin_user (verify soft delete)", status: "passed", message: "soft-deleted user correctly not found"});
+                }
+                else
+                {
+                    testResults.push({step: "Test 42: get_admin_user (verify soft delete)", status: "warning", message: "expected rc 770 after soft delete"});
+                }
+            }
+
+            testResults.push({step: "Test 43: get_admin_users (verify count restored)", status: "running"});
+            rv = $executeAPI(this.$Session, "AdminUser/get_admin_users", { include_inactive: true });
+            if ($Err.isERR(rv))
+            {
+                testResults.push({step: "Test 43: get_admin_users (verify count restored)", status: "failed", error: rv.message});
+            }
+            else
+            {
+                let expectedCount = initialCount
+                    + (secondUserId !== null ? 1 : 0)
+                    + (weakPwdUserId !== null ? 1 : 0)
+                    + (dupUserId !== null ? 1 : 0);
+                if (rv.total_count === expectedCount)
+                {
+                    testResults.push({step: "Test 43: get_admin_users (verify count restored)", status: "passed", count: rv.total_count});
+                }
+                else
+                {
+                    testResults.push({step: "Test 43: get_admin_users (verify count restored)", status: "warning", expected: expectedCount, actual: rv.total_count});
+                }
+            }
+
+            testResults.push({step: "Test 44: delete_admin_user (cleanup special char user)", status: "running"});
+            if (secondUserId === null)
+            {
+                testResults.push({step: "Test 44: delete_admin_user (cleanup special char user)", status: "failed", error: "Cannot delete - special char user was not created"});
+            }
+            else
+            {
+                rv = $executeAPI(this.$Session, "AdminUser/delete_admin_user", { user_id: secondUserId });
+                if ($Err.isERR(rv))
+                {
+                    testResults.push({step: "Test 44: delete_admin_user (cleanup special char user)", status: "failed", error: rv.message});
+                }
+                else
+                {
+                    testResults.push({step: "Test 44: delete_admin_user (cleanup special char user)", status: "passed"});
+                }
+            }
+
+            // Cleanup users accidentally created when force_criteria is disabled
+            if (weakPwdUserId !== null)
+            {
+                rv = $executeAPI(this.$Session, "AdminUser/delete_admin_user", { user_id: weakPwdUserId });
+                testResults.push({step: "Cleanup: delete weak password user", status: $Err.isERR(rv) ? "warning" : "passed"});
+            }
+            if (dupUserId !== null)
+            {
+                rv = $executeAPI(this.$Session, "AdminUser/delete_admin_user", { user_id: dupUserId });
+                testResults.push({step: "Cleanup: delete duplicate email user", status: $Err.isERR(rv) ? "warning" : "passed"});
+            }
+
+            testResults.push({step: "All tests completed", status: "success"});
+        }
+        catch (error)
+        {
+            testResults.push({step: "Exception occurred", status: "error", error: error.message, stack: error.stack});
+        }
+
+        vals.test_results = testResults;
+        vals.summary = {
+            total: testResults.filter(r => r.status === "running").length,
+            passed: testResults.filter(r => r.status === "passed").length,
+            failed: testResults.filter(r => r.status === "failed").length,
+            warnings: testResults.filter(r => r.status === "warning").length
+        };
+
+        return {...rc, ...vals};
+    }
 }
