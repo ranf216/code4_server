@@ -20,7 +20,7 @@ module.exports =
         // "spreadsheet_reader",
         // "test",
         // "timed_messages",
-        // "user_roles",
+        "user_roles",
     ],
     user: [
     ]

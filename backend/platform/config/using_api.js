@@ -1,5 +1,6 @@
 module.exports =
 [
+	"admin_user",
 	"api_test",
 	"community",
 	"file",

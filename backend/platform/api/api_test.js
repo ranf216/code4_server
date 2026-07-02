@@ -14,4 +14,11 @@ module.exports =
                                                 "#token"                        : "s",
                                             },
 
+    "test_admin_user"                       : {
+                                                "@acl"                          : [$ACL.USER_TYPE_ADMIN],
+                                                "@doc"                          : "Test all Admin User module APIs (CRUD, password reset, search & sort)",
+                                                "@mode"                         : "test",
+                                                "#token"                        : "s",
+                                            },
+
 };
