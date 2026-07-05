@@ -67,6 +67,7 @@ const SQL = class
 			delete record[`${this.prefix}owner_id`];
 			delete record[`${this.prefix}file_name`];
 			delete record[`${this.prefix}access_level`];
+			delete record[`${this.prefix}orig_file_name`];
 		}
 
 		return obj;

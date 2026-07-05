@@ -841,7 +841,8 @@ module.exports = class
                             $Config.get("password_valid_for_seconds") > 0 &&
                             new $Date(user.USR_PASSWORD_CREATED_ON).addSeconds($Config.get("password_valid_for_seconds")).format() < $Utils.now());
 
-        vals.need_change_password = (pwdTooOld || (user.USR_PASSWORD.charAt(0) == "X"));
+		const isHashed = /^[a-fA-F0-9]{64}$/.test(user.USR_PASSWORD);
+        vals.need_change_password = (pwdTooOld || !isHashed);
 
         if (vals.need_change_password)
         {
@@ -1019,7 +1020,7 @@ module.exports = class
 			return $ERRS.ERR_USER_NOT_EXISTS;
 		}
 
-		const password = "X" + $Utils.getRandomCode(7, "ABCDEFGHJKLMNPQRSTWXYZ");
+		const password = $Utils.getRandomCode(8, "ABCDEFGHJKLMNPQRSTWXYZ");
 
 		$Db.executeQuery(`UPDATE \`user\` SET USR_PASSWORD=? WHERE USR_ID=?`, [password, this.$user_id]);
 		if ($Db.isError())
@@ -1082,7 +1083,7 @@ module.exports = class
 
 		vals.users.forEach(user =>
 		{
-			if (user.password.charAt(0) != "X")
+			if (/^[a-fA-F0-9]{64}$/.test(user.password))
 			{
 				user.password = "********";
 			}

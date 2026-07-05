@@ -34,7 +34,7 @@ These enhancements were identified during implementation of the `admin_user` mod
 **What to do:**
 - In `backend/platform/funcs/admin_user.js` → `reset_admin_user_password()`, after storing the new password, send an email using `$Mailer.sendMailFromTemplate()`.
 - Use an appropriate email template (e.g., `$Const.EMAIL_TEMPLATE_RESET_PASSWORD`). Check `backend/platform/definitions/constants.js` for available template constants.
-- The email should contain the full password (including the "X" prefix — it is an integral part of the password).
+- The email should contain the full temporary password as-is (it is stored as plain text and is exactly what the user must enter at login).
 - Same applies to `add_admin_user()` — consider emailing the initial password to the new user.
 
 ---

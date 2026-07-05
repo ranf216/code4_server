@@ -1927,7 +1927,8 @@ module.exports =
 
     isCorrectPwd(userId, inputPwd, dbPwd)
     {
-        return ((dbPwd.charAt(0) == "X" && dbPwd == inputPwd) || (dbPwd.charAt(0) != "X" && dbPwd == $Utils.hash(userId + inputPwd)));
+		const isHashed = /^[a-fA-F0-9]{64}$/.test(dbPwd);
+        return ((!isHashed && dbPwd == inputPwd) || dbPwd == $Utils.hash(userId + inputPwd));
     },
 
 	calculateCentroid(polygon)

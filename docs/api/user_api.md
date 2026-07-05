@@ -836,7 +836,7 @@ Authenticates a user using an encrypted auth grant obtained from `get_login_auth
     | 203 | user does not exist | No active user found with the given `user_id`. |
 
 - **Usage & Flows:**
-    Use from an admin panel to reset a user's password. A temporary password starting with `"X"` is generated and emailed to the user via the `reset_password` email template. On the user's next login, the response will include `need_change_password: true` and an X-token, requiring them to set a new password via `mandatory_change_password`.
+    Use from an admin panel to reset a user's password. A temporary plain-text password is generated and emailed to the user via the `reset_password` email template. Because the password is not a 64-character hex hash, the server detects it as temporary. On the user's next login, the response will include `need_change_password: true` and an X-token, requiring them to set a new password via `mandatory_change_password`.
 
 ---
 
