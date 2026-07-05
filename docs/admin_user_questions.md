@@ -14,9 +14,9 @@ This document lists questions, assumptions, and design decisions made during imp
 - A user cannot change their own role (`ERR_ADMIN_CANNOT_EDIT_SELF_ROLE`).
 - Role changes are kept separate from `update_admin_user` for security isolation.
 
-### Q2: Password "X" Prefix UX Implication — RESOLVED
+### Q2: Temporary Password Detection — RESOLVED
 
-The "X" is an integral part of the password. It should be viewed and sent as such — no special UI handling needed. The stored value (e.g., `"XMyPass@123"`) is the actual password the user enters at login.
+Temporary (initial) passwords are stored as plain text and detected by checking whether the stored value is a 64-character hex string (a SHA-256 hash). If it is not (`!/^[a-fA-F0-9]{64}$/.test(password)`), the password is considered temporary and the user must change it on first login. No special UI handling needed — the password the admin sets is exactly what the user enters at login.
 
 ### Q3: Soft Deletion and Email/Phone Uniqueness
 
@@ -28,7 +28,7 @@ This utility exists in `infra/utils.js` and generates an HTML string for API doc
 
 ### Q5: `$Utils.isCorrectPwd()` — VERIFIED
 
-Signature: `isCorrectPwd(userId, inputPwd, dbPwd)`. When password starts with "X", it does direct string comparison. Otherwise, it hashes `userId + inputPwd` and compares. ✅ No action needed.
+Signature: `isCorrectPwd(userId, inputPwd, dbPwd)`. When the stored password is not a 64-character hex string (i.e., it's a plain-text temporary password), it does direct string comparison. Otherwise, it hashes `userId + inputPwd` and compares. ✅ No action needed.
 
 ### Q6: `$UserRoles` Module — RESOLVED
 

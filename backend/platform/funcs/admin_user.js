@@ -196,11 +196,9 @@ module.exports = class
             return roleResult;
         }
 
-        // Override password with X-prefixed plain text to force change on first login
-        let storedPassword = "X" + this.$password;
         $Db.executeQuery(
             `UPDATE \`user\` SET USR_PASSWORD=?, USR_PASSWORD_CREATED_ON=? WHERE USR_ID=?`,
-            [storedPassword, $Utils.now(), newUserId]);
+            [this.$password, $Utils.now(), newUserId]);
         if ($Db.isError())
         {
             return $Err.DBError("ERR_DB_UPDATE_ERROR", $Db.lastErrorMsg());
@@ -315,10 +313,9 @@ module.exports = class
             // Email change: store X-prefixed password and clear session (atomic)
             if (emailChanged)
             {
-                let storedPassword = "X" + this.$initial_password;
                 $Db.executeQuery(
                     `UPDATE \`user\` SET USR_EMAIL=?, USR_PASSWORD=?, USR_TOKEN='', USR_DEVICE_ID=NULL, USR_PASSWORD_CREATED_ON=? WHERE USR_ID=?`,
-                    [this.$email, storedPassword, $Utils.now(), this.$user_id]);
+                    [this.$email, this.$initial_password, $Utils.now(), this.$user_id]);
                 if ($Db.isError())
                 {
                     $Db.rollbackTransaction();
@@ -366,13 +363,10 @@ module.exports = class
             return $ERRS.ERR_PASSWORD_NOT_MEET_CRITERIA;
         }
 
-        // Store password with X prefix (plain text) to force change on next login
-        let storedPassword = "X" + this.$password;
-
         $Db.executeQuery(
             `UPDATE \`user\` SET USR_PASSWORD=?, USR_TOKEN='', USR_DEVICE_ID=NULL, USR_PASSWORD_CREATED_ON=?
              WHERE USR_ID=?`,
-            [storedPassword, $Utils.now(), this.$user_id]);
+            [this.$password, $Utils.now(), this.$user_id]);
         if ($Db.isError())
         {
             return $Err.DBError("ERR_DB_UPDATE_ERROR", $Db.lastErrorMsg());

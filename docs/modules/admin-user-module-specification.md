@@ -79,7 +79,7 @@ Stores core authentication data. Uses the `USR_` column prefix.
 |---|---|---|
 | `USR_ID` | varchar(64) | Primary key — unique user identifier (hash) |
 | `USR_EMAIL` | varchar(200) | Login email address |
-| `USR_PASSWORD` | varchar(200) | Password — hashed for normal, "X"-prefixed plain text for initial |
+| `USR_PASSWORD` | varchar(200) | Password — 64-char hex hash for normal, plain text for initial/temporary |
 | `USR_TYPE` | tinyint | Always `1` (`USER_TYPE_ADMIN`) for this module |
 | `USR_STATUS` | tinyint | `1` = active, `0` = inactive |
 | `USR_TOKEN` | varchar(200) | Session token — cleared on deactivation/deletion/password reset |
@@ -290,7 +290,7 @@ ORDER BY USD_FIRST_NAME ASC
    - Transaction management
 7. **Set phone number:** If `phone_num` is non-empty, `UPDATE user_details SET USD_PHONE_NUM=? WHERE USD_USR_ID=?`. Check `$Db.isError()`.
 8. **Set role:** `$UserRoles.setUserRoles(newUserId, [this.$role], [], [], [])`. This sets the role bitmask in `USD_ROLE_ALLOW` and clears the user cache. Check `$Err.isERR()`.
-9. **Override password with X-prefix:** `UPDATE user SET USR_PASSWORD=?, USR_PASSWORD_CREATED_ON=? WHERE USR_ID=?` with stored value `"X" + this.$password`. Check `$Db.isError()`. This is the **mandatory password change mechanism** (see Section 5.1).
+9. **Store plain-text initial password:** `UPDATE user SET USR_PASSWORD=?, USR_PASSWORD_CREATED_ON=? WHERE USR_ID=?` with `this.$password` (plain text, not hashed). Check `$Db.isError()`. Because the plain-text value does not match the 64-char hex hash pattern, the login handler detects it as temporary — this is the **mandatory password change mechanism** (see Section 5.1).
 10. **Return:** `{ rc: 0, user_id: <new_id> }`.
 
 **Convention compliance:**
@@ -344,8 +344,8 @@ ORDER BY USD_FIRST_NAME ASC
 6. **Begin transaction:** `$Db.beginTransaction()` — wraps all writes atomically.
 7. **Execute UPDATE on `user_details`:** If any fields changed, execute `UPDATE user_details SET ... WHERE USD_USR_ID=? AND USD_DELETED_ON IS NULL`. Check `$Db.isError()` — rollback on failure.
 8. **Email change side effects (atomic):** If the email was changed:
-   - Store X-prefixed password: `UPDATE user SET USR_PASSWORD=?, USR_TOKEN='', USR_DEVICE_ID=NULL, USR_PASSWORD_CREATED_ON=? WHERE USR_ID=?` with value `"X" + this.$initial_password`. Check `$Db.isError()` — rollback on failure.
-   - This triggers the mandatory first-login password change flow on the user's next login (see Section 5.1).
+   - Store plain-text password: `UPDATE user SET USR_PASSWORD=?, USR_TOKEN='', USR_DEVICE_ID=NULL, USR_PASSWORD_CREATED_ON=? WHERE USR_ID=?` with `this.$initial_password` (plain text, not hashed). Check `$Db.isError()` — rollback on failure.
+   - Because the plain-text value does not match the 64-char hex hash pattern, this triggers the mandatory first-login password change flow on the user's next login (see Section 5.1).
 9. **Deactivation side effects:** If `is_active` was set to `false` (and email was NOT changed — otherwise token is already cleared in step 8):
    - Clear the user's session: `UPDATE user SET USR_TOKEN='', USR_DEVICE_ID=NULL WHERE USR_ID=?`. Check `$Db.isError()` — rollback on failure.
 10. **Commit transaction:** `$Db.commitTransaction()`.
@@ -356,7 +356,7 @@ ORDER BY USD_FIRST_NAME ASC
 
 - **Role via `update_user`:** This is a **formal deviation from SDS Section 5.2.3** (see Section 6). The `role` parameter is optional. When omitted, the user's role is unchanged. When provided, the endpoint leverages its existing Super Admin ACL to enforce that only Super Admins can change roles. The server additionally prevents self-role changes.
 
-- **Email change requires `initial_password` (SDS 5.2.3 compliance):** Per SDS Section 5.2.3: *"if [email] is changed, an initial password must be given as well and the user must login again to the system."* The `initial_password` parameter is conditionally mandatory — required only when `email` differs from the current value. The server stores it with the "X" prefix to trigger the mandatory password change flow, and immediately terminates the user's session. This ensures a single atomic API call handles the email change, password reset, and session termination — no two-step workaround required.
+- **Email change requires `initial_password` (SDS 5.2.3 compliance):** Per SDS Section 5.2.3: *"if [email] is changed, an initial password must be given as well and the user must login again to the system."* The `initial_password` parameter is conditionally mandatory — required only when `email` differs from the current value. The server stores it as plain text (which does not match the 64-char hex hash pattern), triggering the mandatory password change flow, and immediately terminates the user's session. This ensures a single atomic API call handles the email change, password reset, and session termination — no two-step workaround required.
 
 - **Transaction wrapping:** All database writes (email update in `user_details`, password/token update in `user`) are wrapped in a single `$Db.beginTransaction()` / `$Db.commitTransaction()` block. If any write fails, all changes are rolled back, preventing partial state (e.g., email changed but password not reset).
 
@@ -420,15 +420,15 @@ ORDER BY USD_FIRST_NAME ASC
 
 1. **Fetch user:** `fetchAdminUserRecord(this.$user_id)` — return `ERR_ADMIN_USER_NOT_FOUND` (RC 770) if not found.
 2. **Validate password criteria:** `$Utils.isValidPassword(this.$password)` — return `ERR_PASSWORD_NOT_MEET_CRITERIA` (RC 242) if invalid.
-3. **Store X-prefixed password:** Compute `storedPassword = "X" + this.$password`.
+3. **Store plain-text password:** The password is stored as-is (`this.$password`), without hashing.
 4. **Update user record:** `UPDATE user SET USR_PASSWORD=?, USR_TOKEN='', USR_DEVICE_ID=NULL, USR_PASSWORD_CREATED_ON=? WHERE USR_ID=?`. Check `$Db.isError()`.
 5. **Invalidate token cache:** `this.$Session.tokenValidator.deleteFromUserCache(this.$user_id)`.
 6. **Return:** `{ rc: 0 }`.
 
 **Key behaviour:**
-- The password is stored as `"X" + plainTextPassword` (e.g., `"XMyPass@123"`). The "X" prefix is an integral part of the stored password.
+- The password is stored as plain text (e.g., `"MyPass@123"`). Because this does not match the 64-character hex hash pattern (`/^[a-fA-F0-9]{64}$/`), the server identifies it as a temporary password.
 - The user's current session is immediately terminated (token cleared).
-- On next login, the infrastructure's login handler detects the "X" prefix and issues an **X-token** instead of a normal token. This X-token can only be used with the `User/mandatory_change_password` endpoint, forcing the user to set a new password before accessing any other functionality.
+- On next login, the infrastructure's login handler detects that the stored password is not a 64-char hex hash and issues an **X-token** instead of a normal token. This X-token can only be used with the `User/mandatory_change_password` endpoint, forcing the user to set a new password before accessing any other functionality.
 - See **Section 5.1** for the full mandatory password change flow.
 
 ---
@@ -460,9 +460,9 @@ ORDER BY USD_FIRST_NAME ASC
 **Key differences from `reset_password`:**
 - **ACL:** Available to any admin user (`USER_TYPE_ADMIN`), not just Super Admins.
 - **Authentication:** Requires `current_password` for verification — prevents unauthorized changes even with a valid session token.
-- **No X-prefix:** The new password is hashed normally (`$Utils.hash(userId + password)`), not stored as X-prefixed plain text. The user does not need to change it again.
+- **Hashed storage:** The new password is hashed normally (`$Utils.hash(userId + password)`), producing a 64-char hex string. Since it matches the hash pattern, the server does not treat it as temporary. The user does not need to change it again.
 - **Session preserved:** The user's token is NOT cleared — they remain logged in after changing their password.
-- **No X-token acceptance:** This endpoint does not accept X-tokens. It is for voluntary password changes only. Mandatory password changes use the infrastructure's `User/mandatory_change_password` endpoint.
+- **No X-token acceptance:** This endpoint does not accept X-tokens. It is for voluntary password changes only. Mandatory password changes (triggered when the stored password is not a 64-char hex hash) use the infrastructure's `User/mandatory_change_password` endpoint.
 
 ---
 
@@ -472,52 +472,53 @@ ORDER BY USD_FIRST_NAME ASC
 
 **SDS Requirement (Section 5.2.2):** *"Password — only initial password. The user will have to change it during the first login."*
 
-**Implementation — The "X" Prefix Mechanism:**
+**Implementation — The Hash-Pattern Detection Mechanism:**
 
-The platform implements mandatory password change through a password storage convention:
+The platform implements mandatory password change by distinguishing between hashed passwords (permanent) and plain-text passwords (temporary) based on format:
 
-1. **User Creation (`add_user`):** The initial password is stored as `"X" + plainTextPassword` in the `USR_PASSWORD` column. For example, if the admin sets the initial password to `"MyPass@123"`, the stored value is `"XMyPass@123"`.
+1. **User Creation (`add_user`):** The initial password is stored as **plain text** in the `USR_PASSWORD` column. For example, if the admin sets the initial password to `"MyPass@123"`, the stored value is `"MyPass@123"`.
 
 2. **Login Attempt:** When the user logs in via the infrastructure's `User/login` endpoint:
    - The server loads `USR_PASSWORD` from the database.
-   - If the password starts with `"X"`, the server performs a **direct string comparison**: it checks if `"X" + inputPassword === storedPassword`.
-   - If the password does NOT start with `"X"`, the server performs a **hash comparison**: it checks if `$Utils.hash(userId + inputPassword) === storedPassword`.
+   - It tests whether the stored password matches the 64-character hex pattern: `/^[a-fA-F0-9]{64}$/`.
+   - If it does **not** match (plain-text temporary password), the server performs a **direct string comparison**: it checks if `inputPassword === storedPassword`.
+   - If it **does** match (hashed permanent password), the server performs a **hash comparison**: it checks if `$Utils.hash(userId + inputPassword) === storedPassword`.
 
-3. **X-Token Issuance:** If login succeeds AND the stored password starts with `"X"`, the server issues an **X-token** instead of a normal session token. This X-token has restricted capabilities — it can ONLY be used with the `User/mandatory_change_password` endpoint.
+3. **X-Token Issuance:** If login succeeds AND the stored password is not a 64-char hex hash, the server issues an **X-token** instead of a normal session token. This X-token has restricted capabilities — it can ONLY be used with the `User/mandatory_change_password` endpoint.
 
 4. **Mandatory Password Change:** The `User/mandatory_change_password` endpoint (infrastructure-provided):
    - Accepts **only** X-tokens (`@accept_x_token: "only"`).
    - Validates the new password meets criteria (minimum 8 characters, uppercase, lowercase, number, special character).
    - Hashes the new password normally: `$Utils.hash(userId + newPassword)`.
-   - Stores the hashed password in `USR_PASSWORD`, replacing the X-prefixed value.
+   - Stores the hashed password (64-char hex string) in `USR_PASSWORD`, replacing the plain-text value.
    - Issues a normal session token, granting full access.
 
-5. **Post-Change State:** After the mandatory change, the password is stored as a standard hash. Subsequent logins proceed normally without the X-prefix detection triggering.
+5. **Post-Change State:** After the mandatory change, the password is stored as a 64-character hex hash. Subsequent logins proceed normally — the hash-pattern test passes, so no mandatory change is triggered.
 
 **Flow diagram:**
 ```
 Admin creates user with password "MyPass@123"
     │
     ▼
-DB stores: USR_PASSWORD = "XMyPass@123"
+DB stores: USR_PASSWORD = "MyPass@123" (plain text, not a 64-char hex hash)
     │
     ▼
 User logs in with "MyPass@123"
     │
     ▼
-Server: "X" + "MyPass@123" === "XMyPass@123" ✓ → issues X-token
+Server: /^[a-fA-F0-9]{64}$/ fails → direct compare → "MyPass@123" === "MyPass@123" ✓ → issues X-token
     │
     ▼
 User calls User/mandatory_change_password with X-token
     │  new_password: "NewSecure@456"
     ▼
-DB stores: USR_PASSWORD = hash(userId + "NewSecure@456")
+DB stores: USR_PASSWORD = hash(userId + "NewSecure@456") (64-char hex hash)
     │
     ▼
 Server issues normal token → full access granted
 ```
 
-**SDS compliance status:** ✅ Fully compliant. The mandatory password change is enforced at the infrastructure level through the X-token mechanism. The `AdminUser/add_user` and `AdminUser/reset_password` endpoints both store passwords with the "X" prefix, triggering this flow.
+**SDS compliance status:** ✅ Fully compliant. The mandatory password change is enforced at the infrastructure level through the X-token mechanism. The `AdminUser/add_user` and `AdminUser/reset_password` endpoints both store passwords as plain text (not matching the 64-char hex hash pattern), triggering this flow.
 
 ---
 
@@ -529,7 +530,7 @@ Server issues normal token → full access granted
 
 The `AdminUser/reset_password` endpoint:
 
-1. **Stores X-prefixed password:** `"X" + newPassword` — this reverts the password to an "initial" state, triggering the mandatory change flow on next login (Section 5.1).
+1. **Stores plain-text password:** The new password is stored as-is (not hashed) — because it does not match the 64-char hex hash pattern, this reverts the password to a "temporary" state, triggering the mandatory change flow on next login (Section 5.1).
 2. **Terminates session:** Clears `USR_TOKEN` and `USR_DEVICE_ID`, forcing the user to log in again.
 3. **Invalidates cache:** Calls `tokenValidator.deleteFromUserCache()` for immediate effect.
 
@@ -538,7 +539,7 @@ The `AdminUser/reset_password` endpoint:
 - Complete the mandatory password change flow.
 - Only then gain full access to the system.
 
-**SDS compliance status:** ✅ Fully compliant. The reset mechanism leverages the same X-prefix convention as user creation. The user's session is immediately terminated and they must complete the full first-login flow again.
+**SDS compliance status:** ✅ Fully compliant. The reset mechanism leverages the same plain-text password convention as user creation. The user's session is immediately terminated and they must complete the full first-login flow again.
 
 ---
 
@@ -652,13 +653,13 @@ Super Admin → POST AdminUser/add_user
     [4] $executeAPI("User/add_user") → creates user + user_details
     [5] UPDATE user_details SET USD_PHONE_NUM (if provided)
     [6] $UserRoles.setUserRoles(userId, [role], [], [], [])
-    [7] UPDATE user SET USR_PASSWORD="XMyPass@123"
+    [7] UPDATE user SET USR_PASSWORD="MyPass@123" (plain text)
          │
          ▼
     Response: { rc: 0, user_id: "<hash>" }
          │
          ▼
-    New user logs in → receives X-token → must change password
+    New user logs in → not a 64-char hex hash → receives X-token → must change password
 ```
 
 ### 8.2 Delete User with Constraint Checks
@@ -691,7 +692,7 @@ Super Admin → POST AdminUser/reset_password
          ▼
     [1] Fetch user → ERR 770 if not found
     [2] Validate password criteria → ERR 242 if weak
-    [3] Store: USR_PASSWORD = "XNewInit@789", clear token
+    [3] Store: USR_PASSWORD = "NewInit@789" (plain text), clear token
     [4] Invalidate token cache
          │
          ▼
@@ -701,5 +702,5 @@ Super Admin → POST AdminUser/reset_password
     Target user's session immediately terminated
          │
          ▼
-    Target user logs in with "NewInit@789" → X-token → must change password
+    Target user logs in with "NewInit@789" → not a 64-char hex hash → X-token → must change password
 ```
