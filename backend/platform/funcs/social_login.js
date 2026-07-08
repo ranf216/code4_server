@@ -229,7 +229,7 @@ module.exports = class
 		$Db.executeQuery(`INSERT INTO \`user\` (USR_ID, USR_EMAIL, USR_PASSWORD, USR_TOKEN, USR_CREATED_ON, USR_TYPE, USR_STATUS,
 												USR_LOGIN_AUTHORITY, USR_PHONE_NUM, USR_LANG)
 												VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, 
-				[userId, '', sca.SCA_USER_ID_HASH, encToken, $Utils.now(), $Const.USER_TYPE_REGULAR, $Const.USER_STATUS_ACTIVE,
+				[userId, '', sca.SCA_USER_ID_HASH, encToken, $Utils.now(), $Const.USER_TYPE_RESIDENT, $Const.USER_STATUS_ACTIVE,
 												sca.SCA_LOGIN_AUTHORITY, "", this.$language]);
 
 		if ($Db.isError())
@@ -239,7 +239,7 @@ module.exports = class
 		}
 
 		$Db.executeQuery(`INSERT INTO \`user_details\` (USD_USR_ID, USD_EMAIL, USD_TYPE, USD_STATUS, USD_FIRST_NAME, USD_LAST_NAME)
-								VALUES (?, ?, ?, ?, ?, ?)`, [userId, '', $Const.USER_TYPE_REGULAR, $Const.USER_STATUS_ACTIVE, this.$first_name, this.$last_name]);
+								VALUES (?, ?, ?, ?, ?, ?)`, [userId, '', $Const.USER_TYPE_RESIDENT, $Const.USER_STATUS_ACTIVE, this.$first_name, this.$last_name]);
 		if ($Db.isError())
 		{
 			$Db.rollbackTransaction();

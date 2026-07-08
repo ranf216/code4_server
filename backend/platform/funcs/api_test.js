@@ -2540,4 +2540,928 @@ module.exports = class
 
         return {...rc, ...vals};
     }
+
+    test_officer_apis()
+    {
+        let vals = {};
+        let rc = $ERRS.ERR_SUCCESS;
+
+        let testResults = [];
+        let addedOfficerId = null;
+        let addedCommunityId = null;
+        let addedEvaluationId = null;
+        let addedEvaluation2Id = null;
+        let adminUserId = this.$Session.userId;
+
+        try
+        {
+            testResults.push({step: "Starting Officer API tests", status: "info"});
+
+            let uniqueId = $Utils.uniqueHash().substring(0, 8);
+            let testFirstName = `TestOfficer ${uniqueId}`;
+            let testLastName = `LastName ${uniqueId}`;
+            let testPhone = "+1555" + Math.floor(Math.random() * 10000000).toString().padStart(7, "0");
+            let testEmail = `officer_${uniqueId}@test.com`;
+            let testTitle = `Security Officer ${uniqueId}`;
+
+            // -----------------------------------------------------------------
+            // Setup: Create a test community
+            // -----------------------------------------------------------------
+
+            testResults.push({step: "Setup: create test community", status: "running"});
+            let rv = $executeAPI(this.$Session, "Community/add_community", {
+                name: `Officer Test Community ${uniqueId}`,
+                area: "Test Area",
+                latitude: 25.276987,
+                longitude: 55.296249,
+                location_name: "Test Location",
+                timezone: "Asia/Dubai",
+                is_active: true
+            });
+            if ($Err.isERR(rv))
+            {
+                testResults.push({step: "Setup: create test community", status: "failed", error: rv.message});
+                vals.test_results = testResults;
+                vals.summary = { total: 0, passed: 0, failed: 1, warnings: 0 };
+                return {...rc, ...vals};
+            }
+            addedCommunityId = rv.community_id;
+            testResults.push({step: "Setup: create test community", status: "passed", community_id: addedCommunityId});
+
+            // -----------------------------------------------------------------
+            // Officer CRUD
+            // -----------------------------------------------------------------
+
+            testResults.push({step: "Test 1: get_officers (initial)", status: "running"});
+            rv = $executeAPI(this.$Session, "Officer/get_officers", { include_inactive: true });
+            let initialCount = 0;
+            if ($Err.isERR(rv))
+            {
+                testResults.push({step: "Test 1: get_officers (initial)", status: "failed", error: rv.message});
+            }
+            else
+            {
+                initialCount = rv.total_count;
+                testResults.push({step: "Test 1: get_officers (initial)", status: "passed", count: initialCount});
+            }
+
+            testResults.push({step: "Test 2: add_officer", status: "running"});
+            rv = $executeAPI(this.$Session, "Officer/add_officer", {
+                first_name: testFirstName,
+                last_name: testLastName,
+                phone_num: testPhone,
+                email: testEmail,
+                community_id: addedCommunityId,
+                title: testTitle,
+                address: "123 Test Street",
+                description: "Test officer description",
+                roles: ["patrol", "supervisor"],
+                certification_badges: ["first_aid", "firearms"]
+            });
+            if ($Err.isERR(rv))
+            {
+                testResults.push({step: "Test 2: add_officer", status: "failed", error: rv.message});
+                vals.test_results = testResults;
+                vals.summary = { total: 0, passed: testResults.filter(r => r.status === "passed").length, failed: testResults.filter(r => r.status === "failed").length, warnings: 0 };
+                return {...rc, ...vals};
+            }
+            addedOfficerId = rv.user_id;
+            testResults.push({step: "Test 2: add_officer", status: "passed", user_id: addedOfficerId});
+
+            testResults.push({step: "Test 3: get_officer (verify creation)", status: "running"});
+            rv = $executeAPI(this.$Session, "Officer/get_officer", { user_id: addedOfficerId });
+            if ($Err.isERR(rv))
+            {
+                testResults.push({step: "Test 3: get_officer (verify creation)", status: "failed", error: rv.message});
+            }
+            else
+            {
+                let o = rv.officer;
+                let verified = o.first_name === testFirstName &&
+                               o.last_name === testLastName &&
+                               o.email === testEmail &&
+                               o.phone_num === testPhone &&
+                               o.title === testTitle &&
+                               o.address === "123 Test Street" &&
+                               o.description === "Test officer description" &&
+                               o.community_id === addedCommunityId &&
+                               o.is_active === true &&
+                               Array.isArray(o.roles) && o.roles.length === 2 &&
+                               Array.isArray(o.certification_badges) && o.certification_badges.length === 2 &&
+                               Array.isArray(o.evaluations);
+                if (verified)
+                {
+                    testResults.push({step: "Test 3: get_officer (verify creation)", status: "passed", verified: true});
+                }
+                else
+                {
+                    testResults.push({step: "Test 3: get_officer (verify creation)", status: "warning", verified: false, message: "Some officer fields not saved correctly"});
+                }
+            }
+
+            testResults.push({step: "Test 4: get_officers (verify in list)", status: "running"});
+            rv = $executeAPI(this.$Session, "Officer/get_officers", { include_inactive: true });
+            if ($Err.isERR(rv))
+            {
+                testResults.push({step: "Test 4: get_officers (verify in list)", status: "failed", error: rv.message});
+            }
+            else
+            {
+                let found = rv.officers.find(o => o.user_id === addedOfficerId);
+                if (found && rv.total_count === initialCount + 1)
+                {
+                    testResults.push({step: "Test 4: get_officers (verify in list)", status: "passed", total_count: rv.total_count});
+                }
+                else
+                {
+                    testResults.push({step: "Test 4: get_officers (verify in list)", status: "warning", message: "Officer not found in list or count mismatch"});
+                }
+            }
+
+            let updatedFirstName = `Updated ${testFirstName}`;
+            let updatedTitle = `Senior ${testTitle}`;
+
+            testResults.push({step: "Test 5: update_officer (multiple fields)", status: "running"});
+            rv = $executeAPI(this.$Session, "Officer/update_officer", {
+                user_id: addedOfficerId,
+                first_name: updatedFirstName,
+                title: updatedTitle,
+                description: "Updated description",
+                address: "456 Updated Street"
+            });
+            if ($Err.isERR(rv))
+            {
+                testResults.push({step: "Test 5: update_officer (multiple fields)", status: "failed", error: rv.message});
+            }
+            else
+            {
+                testResults.push({step: "Test 5: update_officer (multiple fields)", status: "passed"});
+            }
+
+            testResults.push({step: "Test 6: get_officer (verify update)", status: "running"});
+            rv = $executeAPI(this.$Session, "Officer/get_officer", { user_id: addedOfficerId });
+            if ($Err.isERR(rv))
+            {
+                testResults.push({step: "Test 6: get_officer (verify update)", status: "failed", error: rv.message});
+            }
+            else
+            {
+                let o = rv.officer;
+                let verified = o.first_name === updatedFirstName &&
+                               o.title === updatedTitle &&
+                               o.description === "Updated description" &&
+                               o.address === "456 Updated Street";
+                if (verified)
+                {
+                    testResults.push({step: "Test 6: get_officer (verify update)", status: "passed", verified: true});
+                }
+                else
+                {
+                    testResults.push({step: "Test 6: get_officer (verify update)", status: "warning", verified: false, message: "Updated fields not saved correctly"});
+                }
+            }
+
+            // -----------------------------------------------------------------
+            // Active/Inactive Toggle
+            // -----------------------------------------------------------------
+
+            testResults.push({step: "Test 7: update_officer (deactivate)", status: "running"});
+            rv = $executeAPI(this.$Session, "Officer/update_officer", { user_id: addedOfficerId, is_active: false });
+            if ($Err.isERR(rv))
+            {
+                testResults.push({step: "Test 7: update_officer (deactivate)", status: "failed", error: rv.message});
+            }
+            else
+            {
+                testResults.push({step: "Test 7: update_officer (deactivate)", status: "passed"});
+            }
+
+            testResults.push({step: "Test 8: get_officers (include_inactive=true)", status: "running"});
+            rv = $executeAPI(this.$Session, "Officer/get_officers", { include_inactive: true });
+            if ($Err.isERR(rv))
+            {
+                testResults.push({step: "Test 8: get_officers (include_inactive=true)", status: "failed", error: rv.message});
+            }
+            else
+            {
+                let found = rv.officers.find(o => o.user_id === addedOfficerId);
+                if (found)
+                {
+                    testResults.push({step: "Test 8: get_officers (include_inactive=true)", status: "passed", found: true});
+                }
+                else
+                {
+                    testResults.push({step: "Test 8: get_officers (include_inactive=true)", status: "warning", message: "Inactive officer not found with include_inactive=true"});
+                }
+            }
+
+            testResults.push({step: "Test 9: get_officers (include_inactive=false)", status: "running"});
+            rv = $executeAPI(this.$Session, "Officer/get_officers", { include_inactive: false });
+            if ($Err.isERR(rv))
+            {
+                testResults.push({step: "Test 9: get_officers (include_inactive=false)", status: "failed", error: rv.message});
+            }
+            else
+            {
+                let found = rv.officers.find(o => o.user_id === addedOfficerId);
+                if (!found)
+                {
+                    testResults.push({step: "Test 9: get_officers (include_inactive=false)", status: "passed", message: "inactive officer correctly excluded"});
+                }
+                else
+                {
+                    testResults.push({step: "Test 9: get_officers (include_inactive=false)", status: "warning", message: "inactive officer still appears in active list"});
+                }
+            }
+
+            testResults.push({step: "Test 10: update_officer (reactivate)", status: "running"});
+            rv = $executeAPI(this.$Session, "Officer/update_officer", { user_id: addedOfficerId, is_active: true });
+            if ($Err.isERR(rv))
+            {
+                testResults.push({step: "Test 10: update_officer (reactivate)", status: "failed", error: rv.message});
+            }
+            else
+            {
+                rv = $executeAPI(this.$Session, "Officer/get_officer", { user_id: addedOfficerId });
+                if (!$Err.isERR(rv) && rv.officer.is_active === true)
+                {
+                    testResults.push({step: "Test 10: update_officer (reactivate)", status: "passed", is_active: true});
+                }
+                else
+                {
+                    testResults.push({step: "Test 10: update_officer (reactivate)", status: "warning", message: "is_active not toggled correctly"});
+                }
+            }
+
+            // -----------------------------------------------------------------
+            // Search, Sort, Filter
+            // -----------------------------------------------------------------
+
+            testResults.push({step: "Test 11: get_officers (search_text)", status: "running"});
+            rv = $executeAPI(this.$Session, "Officer/get_officers", { search_text: uniqueId, include_inactive: true });
+            if ($Err.isERR(rv))
+            {
+                testResults.push({step: "Test 11: get_officers (search_text)", status: "failed", error: rv.message});
+            }
+            else
+            {
+                let found = rv.officers.find(o => o.user_id === addedOfficerId);
+                if (found)
+                {
+                    testResults.push({step: "Test 11: get_officers (search_text)", status: "passed", result_count: rv.total_count});
+                }
+                else
+                {
+                    testResults.push({step: "Test 11: get_officers (search_text)", status: "warning", message: "Officer not found via search"});
+                }
+            }
+
+            testResults.push({step: "Test 12: get_officers (sort)", status: "running"});
+            rv = $executeAPI(this.$Session, "Officer/get_officers", { sort_by: "first_name", sort_dir: "desc", include_inactive: true });
+            if ($Err.isERR(rv))
+            {
+                testResults.push({step: "Test 12: get_officers (sort)", status: "failed", error: rv.message});
+            }
+            else
+            {
+                testResults.push({step: "Test 12: get_officers (sort)", status: "passed", count: rv.total_count});
+            }
+
+            testResults.push({step: "Test 13: get_officers (community filter)", status: "running"});
+            rv = $executeAPI(this.$Session, "Officer/get_officers", { community_id: addedCommunityId, include_inactive: true });
+            if ($Err.isERR(rv))
+            {
+                testResults.push({step: "Test 13: get_officers (community filter)", status: "failed", error: rv.message});
+            }
+            else
+            {
+                let found = rv.officers.find(o => o.user_id === addedOfficerId);
+                if (found && rv.officers.every(o => o.community_id === addedCommunityId))
+                {
+                    testResults.push({step: "Test 13: get_officers (community filter)", status: "passed", count: rv.total_count});
+                }
+                else
+                {
+                    testResults.push({step: "Test 13: get_officers (community filter)", status: "warning", message: "Community filter not applied correctly"});
+                }
+            }
+
+            // -----------------------------------------------------------------
+            // Roles & Certification Badges
+            // -----------------------------------------------------------------
+
+            testResults.push({step: "Test 14: update_officer (roles & badges)", status: "running"});
+            rv = $executeAPI(this.$Session, "Officer/update_officer", {
+                user_id: addedOfficerId,
+                roles: ["patrol", "supervisor", "investigator"],
+                certification_badges: ["first_aid", "firearms", "cpr"]
+            });
+            if ($Err.isERR(rv))
+            {
+                testResults.push({step: "Test 14: update_officer (roles & badges)", status: "failed", error: rv.message});
+            }
+            else
+            {
+                testResults.push({step: "Test 14: update_officer (roles & badges)", status: "passed"});
+            }
+
+            testResults.push({step: "Test 15: get_officer (verify roles & badges)", status: "running"});
+            rv = $executeAPI(this.$Session, "Officer/get_officer", { user_id: addedOfficerId });
+            if ($Err.isERR(rv))
+            {
+                testResults.push({step: "Test 15: get_officer (verify roles & badges)", status: "failed", error: rv.message});
+            }
+            else
+            {
+                let o = rv.officer;
+                if (o.roles.length === 3 && o.certification_badges.length === 3)
+                {
+                    testResults.push({step: "Test 15: get_officer (verify roles & badges)", status: "passed", roles_count: 3, badges_count: 3});
+                }
+                else
+                {
+                    testResults.push({step: "Test 15: get_officer (verify roles & badges)", status: "warning", message: "Roles or badges not updated correctly"});
+                }
+            }
+
+            testResults.push({step: "Test 16: update_officer (clear roles & badges)", status: "running"});
+            rv = $executeAPI(this.$Session, "Officer/update_officer", {
+                user_id: addedOfficerId,
+                roles: [],
+                certification_badges: []
+            });
+            if ($Err.isERR(rv))
+            {
+                testResults.push({step: "Test 16: update_officer (clear roles & badges)", status: "failed", error: rv.message});
+            }
+            else
+            {
+                rv = $executeAPI(this.$Session, "Officer/get_officer", { user_id: addedOfficerId });
+                if (!$Err.isERR(rv) && rv.officer.roles.length === 0 && rv.officer.certification_badges.length === 0)
+                {
+                    testResults.push({step: "Test 16: update_officer (clear roles & badges)", status: "passed", roles_cleared: true, badges_cleared: true});
+                }
+                else
+                {
+                    testResults.push({step: "Test 16: update_officer (clear roles & badges)", status: "warning", message: "Roles or badges not cleared correctly"});
+                }
+            }
+
+            // -----------------------------------------------------------------
+            // Officer Evaluations
+            // -----------------------------------------------------------------
+
+            testResults.push({step: "Test 17: add_officer_evaluation", status: "running"});
+            rv = $executeAPI(this.$Session, "Officer/add_officer_evaluation", {
+                user_id: addedOfficerId,
+                text: "Excellent performance during night shift",
+                date: "2025-01-15"
+            });
+            if ($Err.isERR(rv))
+            {
+                testResults.push({step: "Test 17: add_officer_evaluation", status: "failed", error: rv.message});
+            }
+            else
+            {
+                addedEvaluationId = rv.evaluation_id;
+                testResults.push({step: "Test 17: add_officer_evaluation", status: "passed", evaluation_id: addedEvaluationId});
+            }
+
+            testResults.push({step: "Test 18: get_officer_evaluations (verify)", status: "running"});
+            rv = $executeAPI(this.$Session, "Officer/get_officer_evaluations", { user_id: addedOfficerId });
+            if ($Err.isERR(rv))
+            {
+                testResults.push({step: "Test 18: get_officer_evaluations (verify)", status: "failed", error: rv.message});
+            }
+            else
+            {
+                let found = rv.evaluations.find(e => e.evaluation_id === addedEvaluationId);
+                if (found && found.text === "Excellent performance during night shift")
+                {
+                    testResults.push({step: "Test 18: get_officer_evaluations (verify)", status: "passed", verified: true, count: rv.evaluations.length});
+                }
+                else
+                {
+                    testResults.push({step: "Test 18: get_officer_evaluations (verify)", status: "warning", message: "Evaluation not found or fields mismatch"});
+                }
+            }
+
+            testResults.push({step: "Test 19: add_officer_evaluation (second)", status: "running"});
+            rv = $executeAPI(this.$Session, "Officer/add_officer_evaluation", {
+                user_id: addedOfficerId,
+                text: "Good teamwork skills",
+                date: "2025-02-20"
+            });
+            if ($Err.isERR(rv))
+            {
+                testResults.push({step: "Test 19: add_officer_evaluation (second)", status: "failed", error: rv.message});
+            }
+            else
+            {
+                addedEvaluation2Id = rv.evaluation_id;
+                testResults.push({step: "Test 19: add_officer_evaluation (second)", status: "passed", evaluation_id: addedEvaluation2Id});
+            }
+
+            testResults.push({step: "Test 20: get_officer_evaluations (verify count)", status: "running"});
+            rv = $executeAPI(this.$Session, "Officer/get_officer_evaluations", { user_id: addedOfficerId });
+            if ($Err.isERR(rv))
+            {
+                testResults.push({step: "Test 20: get_officer_evaluations (verify count)", status: "failed", error: rv.message});
+            }
+            else
+            {
+                if (rv.evaluations.length === 2)
+                {
+                    testResults.push({step: "Test 20: get_officer_evaluations (verify count)", status: "passed", count: 2});
+                }
+                else
+                {
+                    testResults.push({step: "Test 20: get_officer_evaluations (verify count)", status: "warning", expected: 2, actual: rv.evaluations.length});
+                }
+            }
+
+            testResults.push({step: "Test 21: delete_officer_evaluation", status: "running"});
+            if (addedEvaluationId === null)
+            {
+                testResults.push({step: "Test 21: delete_officer_evaluation", status: "failed", error: "Cannot delete - evaluation was not created"});
+            }
+            else
+            {
+                rv = $executeAPI(this.$Session, "Officer/delete_officer_evaluation", { evaluation_id: addedEvaluationId });
+                if ($Err.isERR(rv))
+                {
+                    testResults.push({step: "Test 21: delete_officer_evaluation", status: "failed", error: rv.message});
+                }
+                else
+                {
+                    testResults.push({step: "Test 21: delete_officer_evaluation", status: "passed"});
+                }
+            }
+
+            testResults.push({step: "Test 22: get_officer_evaluations (verify deletion)", status: "running"});
+            rv = $executeAPI(this.$Session, "Officer/get_officer_evaluations", { user_id: addedOfficerId });
+            if ($Err.isERR(rv))
+            {
+                testResults.push({step: "Test 22: get_officer_evaluations (verify deletion)", status: "failed", error: rv.message});
+            }
+            else
+            {
+                let stillExists = rv.evaluations.find(e => e.evaluation_id === addedEvaluationId);
+                if (!stillExists && rv.evaluations.length === 1)
+                {
+                    testResults.push({step: "Test 22: get_officer_evaluations (verify deletion)", status: "passed", remaining: 1});
+                }
+                else
+                {
+                    testResults.push({step: "Test 22: get_officer_evaluations (verify deletion)", status: "warning", message: "Deleted evaluation still present or count mismatch"});
+                }
+            }
+
+            testResults.push({step: "Test 23: get_officer (verify evaluations embedded)", status: "running"});
+            rv = $executeAPI(this.$Session, "Officer/get_officer", { user_id: addedOfficerId });
+            if ($Err.isERR(rv))
+            {
+                testResults.push({step: "Test 23: get_officer (verify evaluations embedded)", status: "failed", error: rv.message});
+            }
+            else
+            {
+                if (Array.isArray(rv.officer.evaluations) && rv.officer.evaluations.length === 1)
+                {
+                    testResults.push({step: "Test 23: get_officer (verify evaluations embedded)", status: "passed", evaluations_count: 1});
+                }
+                else
+                {
+                    testResults.push({step: "Test 23: get_officer (verify evaluations embedded)", status: "warning", message: "Evaluations not embedded correctly in get_officer"});
+                }
+            }
+
+            // -----------------------------------------------------------------
+            // Negative Tests
+            // -----------------------------------------------------------------
+
+            testResults.push({step: "Test 24: get_officer (invalid ID)", status: "running"});
+            rv = $executeAPI(this.$Session, "Officer/get_officer", { user_id: "invalid_id_999" });
+            if ($Err.isERR(rv))
+            {
+                testResults.push({step: "Test 24: get_officer (invalid ID)", status: "passed", message: "correctly rejected invalid ID"});
+            }
+            else
+            {
+                testResults.push({step: "Test 24: get_officer (invalid ID)", status: "warning", message: "accepted invalid ID unexpectedly"});
+            }
+
+            testResults.push({step: "Test 25: update_officer (invalid ID)", status: "running"});
+            rv = $executeAPI(this.$Session, "Officer/update_officer", { user_id: "invalid_id_999", first_name: "Should Fail" });
+            if ($Err.isERR(rv))
+            {
+                testResults.push({step: "Test 25: update_officer (invalid ID)", status: "passed", message: "correctly rejected invalid ID"});
+            }
+            else
+            {
+                testResults.push({step: "Test 25: update_officer (invalid ID)", status: "warning", message: "accepted invalid ID unexpectedly"});
+            }
+
+            testResults.push({step: "Test 26: delete_officer (invalid ID)", status: "running"});
+            rv = $executeAPI(this.$Session, "Officer/delete_officer", { user_id: "invalid_id_999" });
+            if ($Err.isERR(rv))
+            {
+                testResults.push({step: "Test 26: delete_officer (invalid ID)", status: "passed", message: "correctly rejected invalid ID"});
+            }
+            else
+            {
+                testResults.push({step: "Test 26: delete_officer (invalid ID)", status: "warning", message: "accepted invalid ID unexpectedly"});
+            }
+
+            testResults.push({step: "Test 27: add_officer (empty phone)", status: "running"});
+            rv = $executeAPI(this.$Session, "Officer/add_officer", {
+                first_name: "NoPhone", phone_num: "", community_id: addedCommunityId, title: "Test"
+            });
+            if ($Err.isERR(rv))
+            {
+                testResults.push({step: "Test 27: add_officer (empty phone)", status: "passed", message: "correctly rejected empty phone"});
+            }
+            else
+            {
+                testResults.push({step: "Test 27: add_officer (empty phone)", status: "warning", message: "accepted empty phone unexpectedly"});
+                $executeAPI(this.$Session, "Officer/delete_officer", { user_id: rv.user_id });
+            }
+
+            testResults.push({step: "Test 28: add_officer (invalid community)", status: "running"});
+            let testPhone2 = "+1555" + Math.floor(Math.random() * 10000000).toString().padStart(7, "0");
+            rv = $executeAPI(this.$Session, "Officer/add_officer", {
+                first_name: "BadCommunity", phone_num: testPhone2, community_id: 999999999, title: "Test"
+            });
+            if ($Err.isERR(rv))
+            {
+                testResults.push({step: "Test 28: add_officer (invalid community)", status: "passed", message: "correctly rejected invalid community"});
+            }
+            else
+            {
+                testResults.push({step: "Test 28: add_officer (invalid community)", status: "warning", message: "accepted invalid community unexpectedly"});
+                $executeAPI(this.$Session, "Officer/delete_officer", { user_id: rv.user_id });
+            }
+
+            testResults.push({step: "Test 29: add_officer (invalid email)", status: "running"});
+            let testPhone3 = "+1555" + Math.floor(Math.random() * 10000000).toString().padStart(7, "0");
+            rv = $executeAPI(this.$Session, "Officer/add_officer", {
+                first_name: "BadEmail", phone_num: testPhone3, community_id: addedCommunityId,
+                title: "Test", email: "not_an_email"
+            });
+            if ($Err.isERR(rv))
+            {
+                testResults.push({step: "Test 29: add_officer (invalid email)", status: "passed", message: "correctly rejected invalid email"});
+            }
+            else
+            {
+                testResults.push({step: "Test 29: add_officer (invalid email)", status: "warning", message: "accepted invalid email unexpectedly"});
+                $executeAPI(this.$Session, "Officer/delete_officer", { user_id: rv.user_id });
+            }
+
+            testResults.push({step: "Test 30: add_officer (duplicate phone)", status: "running"});
+            rv = $executeAPI(this.$Session, "Officer/add_officer", {
+                first_name: "DupPhone", phone_num: testPhone, community_id: addedCommunityId, title: "Test"
+            });
+            if ($Err.isERR(rv))
+            {
+                testResults.push({step: "Test 30: add_officer (duplicate phone)", status: "passed", message: "correctly rejected duplicate phone"});
+            }
+            else
+            {
+                testResults.push({step: "Test 30: add_officer (duplicate phone)", status: "warning", message: "accepted duplicate phone unexpectedly"});
+                $executeAPI(this.$Session, "Officer/delete_officer", { user_id: rv.user_id });
+            }
+
+            testResults.push({step: "Test 31: delete_officer_evaluation (invalid ID)", status: "running"});
+            rv = $executeAPI(this.$Session, "Officer/delete_officer_evaluation", { evaluation_id: 999999999 });
+            if ($Err.isERR(rv))
+            {
+                testResults.push({step: "Test 31: delete_officer_evaluation (invalid ID)", status: "passed", message: "correctly rejected invalid evaluation ID"});
+            }
+            else
+            {
+                testResults.push({step: "Test 31: delete_officer_evaluation (invalid ID)", status: "warning", message: "accepted invalid evaluation ID unexpectedly"});
+            }
+
+            testResults.push({step: "Test 32: add_officer_evaluation (invalid officer)", status: "running"});
+            rv = $executeAPI(this.$Session, "Officer/add_officer_evaluation", {
+                user_id: "invalid_id_999", text: "Should fail", date: "2025-01-01"
+            });
+            if ($Err.isERR(rv))
+            {
+                testResults.push({step: "Test 32: add_officer_evaluation (invalid officer)", status: "passed", message: "correctly rejected invalid officer ID"});
+            }
+            else
+            {
+                testResults.push({step: "Test 32: add_officer_evaluation (invalid officer)", status: "warning", message: "accepted invalid officer ID unexpectedly"});
+            }
+
+            testResults.push({step: "Test 33: get_officer_evaluations (invalid officer)", status: "running"});
+            rv = $executeAPI(this.$Session, "Officer/get_officer_evaluations", { user_id: "invalid_id_999" });
+            if ($Err.isERR(rv))
+            {
+                testResults.push({step: "Test 33: get_officer_evaluations (invalid officer)", status: "passed", message: "correctly rejected invalid officer ID"});
+            }
+            else
+            {
+                testResults.push({step: "Test 33: get_officer_evaluations (invalid officer)", status: "warning", message: "accepted invalid officer ID unexpectedly"});
+            }
+
+            // -----------------------------------------------------------------
+            // Edge Case Tests
+            // -----------------------------------------------------------------
+
+            testResults.push({step: "Test 34: add_officer (special chars)", status: "running"});
+            let specialPhone = "+1555" + Math.floor(Math.random() * 10000000).toString().padStart(7, "0");
+            rv = $executeAPI(this.$Session, "Officer/add_officer", {
+                first_name: `Test-Officer_Name & More ${uniqueId}`, phone_num: specialPhone,
+                community_id: addedCommunityId, title: "Special Test"
+            });
+            if ($Err.isERR(rv))
+            {
+                testResults.push({step: "Test 34: add_officer (special chars)", status: "warning", message: "rejected special characters", error: rv.message});
+            }
+            else
+            {
+                testResults.push({step: "Test 34: add_officer (special chars)", status: "passed", user_id: rv.user_id});
+                $executeAPI(this.$Session, "Officer/delete_officer", { user_id: rv.user_id });
+            }
+
+            testResults.push({step: "Test 35: add_officer (long name)", status: "running"});
+            let longPhone = "+1555" + Math.floor(Math.random() * 10000000).toString().padStart(7, "0");
+            let longName = `Test Officer with Very Long Name That Contains Many Characters ${uniqueId} Extra Text To Make It Even Longer`;
+            rv = $executeAPI(this.$Session, "Officer/add_officer", {
+                first_name: longName, phone_num: longPhone,
+                community_id: addedCommunityId, title: "Long Name Test"
+            });
+            if ($Err.isERR(rv))
+            {
+                testResults.push({step: "Test 35: add_officer (long name)", status: "warning", message: "rejected long name", error: rv.message});
+            }
+            else
+            {
+                testResults.push({step: "Test 35: add_officer (long name)", status: "passed", user_id: rv.user_id});
+                $executeAPI(this.$Session, "Officer/delete_officer", { user_id: rv.user_id });
+            }
+
+            testResults.push({step: "Test 36: update_officer (invalid email)", status: "running"});
+            rv = $executeAPI(this.$Session, "Officer/update_officer", {
+                user_id: addedOfficerId, email: "not_an_email"
+            });
+            if ($Err.isERR(rv))
+            {
+                testResults.push({step: "Test 36: update_officer (invalid email)", status: "passed", message: "correctly rejected invalid email"});
+            }
+            else
+            {
+                testResults.push({step: "Test 36: update_officer (invalid email)", status: "warning", message: "accepted invalid email unexpectedly"});
+            }
+
+            testResults.push({step: "Test 37: add_officer (inactive community)", status: "running"});
+            let inactiveComRv = $executeAPI(this.$Session, "Community/add_community", {
+                name: `Inactive Community ${uniqueId}`, area: "Test", is_active: true
+            });
+            if (!$Err.isERR(inactiveComRv))
+            {
+                let inactiveComId = inactiveComRv.community_id;
+                $executeAPI(this.$Session, "Community/update_community", { community_id: inactiveComId, is_active: false });
+
+                let inactivePhone = "+1555" + Math.floor(Math.random() * 10000000).toString().padStart(7, "0");
+                rv = $executeAPI(this.$Session, "Officer/add_officer", {
+                    first_name: "InactiveCom", phone_num: inactivePhone,
+                    community_id: inactiveComId, title: "Test"
+                });
+                if ($Err.isERR(rv))
+                {
+                    testResults.push({step: "Test 37: add_officer (inactive community)", status: "passed", message: "correctly rejected inactive community"});
+                }
+                else
+                {
+                    testResults.push({step: "Test 37: add_officer (inactive community)", status: "warning", message: "accepted inactive community unexpectedly"});
+                    $executeAPI(this.$Session, "Officer/delete_officer", { user_id: rv.user_id });
+                }
+            }
+            else
+            {
+                testResults.push({step: "Test 37: add_officer (inactive community)", status: "warning", message: "could not create temp community for test"});
+            }
+
+            testResults.push({step: "Test 38: update_officer (reassign to inactive community)", status: "running"});
+            if (inactiveComRv && !$Err.isERR(inactiveComRv))
+            {
+                rv = $executeAPI(this.$Session, "Officer/update_officer", {
+                    user_id: addedOfficerId, community_id: inactiveComRv.community_id
+                });
+                if ($Err.isERR(rv))
+                {
+                    testResults.push({step: "Test 38: update_officer (reassign to inactive community)", status: "passed", message: "correctly rejected inactive community"});
+                }
+                else
+                {
+                    testResults.push({step: "Test 38: update_officer (reassign to inactive community)", status: "warning", message: "accepted inactive community unexpectedly"});
+                    // Reassign back to original community
+                    $executeAPI(this.$Session, "Officer/update_officer", { user_id: addedOfficerId, community_id: addedCommunityId });
+                }
+            }
+            else
+            {
+                testResults.push({step: "Test 38: update_officer (reassign to inactive community)", status: "warning", message: "skipped - inactive community not available"});
+            }
+
+            // -----------------------------------------------------------------
+            // Impersonation Tests — Officer Self-Service
+            // -----------------------------------------------------------------
+
+            testResults.push({step: "Test 39: get_my_details (as officer)", status: "running"});
+            try
+            {
+                this.$Session.impersonateAccount(addedOfficerId);
+
+                rv = $executeAPI(this.$Session, "Officer/get_my_details", {});
+
+                this.$Session.accountImpersonationStack = null;
+                this.$Session.userId = adminUserId;
+                this.$Session.userType = $Const.USER_TYPE_ADMIN;
+
+                if ($Err.isERR(rv))
+                {
+                    testResults.push({step: "Test 39: get_my_details (as officer)", status: "failed", error: rv.message});
+                }
+                else
+                {
+                    if (rv.officer && rv.officer.user_id === addedOfficerId)
+                    {
+                        testResults.push({step: "Test 39: get_my_details (as officer)", status: "passed", user_id: rv.officer.user_id});
+                    }
+                    else
+                    {
+                        testResults.push({step: "Test 39: get_my_details (as officer)", status: "warning", message: "get_my_details returned unexpected data"});
+                    }
+                }
+            }
+            catch (impErr)
+            {
+                this.$Session.accountImpersonationStack = null;
+                this.$Session.userId = adminUserId;
+                this.$Session.userType = $Const.USER_TYPE_ADMIN;
+                testResults.push({step: "Test 39: get_my_details (as officer)", status: "warning", message: "impersonation not supported or failed", error: impErr.message});
+            }
+
+            testResults.push({step: "Test 40: update_my_details (as officer)", status: "running"});
+            try
+            {
+                this.$Session.impersonateAccount(addedOfficerId);
+
+                rv = $executeAPI(this.$Session, "Officer/update_my_details", {
+                    first_name: "SelfUpdated",
+                    address: "789 Self Street"
+                });
+
+                this.$Session.accountImpersonationStack = null;
+                this.$Session.userId = adminUserId;
+                this.$Session.userType = $Const.USER_TYPE_ADMIN;
+
+                if ($Err.isERR(rv))
+                {
+                    testResults.push({step: "Test 40: update_my_details (as officer)", status: "failed", error: rv.message});
+                }
+                else
+                {
+                    testResults.push({step: "Test 40: update_my_details (as officer)", status: "passed"});
+                }
+            }
+            catch (impErr)
+            {
+                this.$Session.accountImpersonationStack = null;
+                this.$Session.userId = adminUserId;
+                this.$Session.userType = $Const.USER_TYPE_ADMIN;
+                testResults.push({step: "Test 40: update_my_details (as officer)", status: "warning", message: "impersonation not supported or failed", error: impErr.message});
+            }
+
+            testResults.push({step: "Test 41: get_my_details (verify self-update)", status: "running"});
+            try
+            {
+                this.$Session.impersonateAccount(addedOfficerId);
+
+                rv = $executeAPI(this.$Session, "Officer/get_my_details", {});
+
+                this.$Session.accountImpersonationStack = null;
+                this.$Session.userId = adminUserId;
+                this.$Session.userType = $Const.USER_TYPE_ADMIN;
+
+                if ($Err.isERR(rv))
+                {
+                    testResults.push({step: "Test 41: get_my_details (verify self-update)", status: "failed", error: rv.message});
+                }
+                else
+                {
+                    if (rv.officer.first_name === "SelfUpdated" && rv.officer.address === "789 Self Street")
+                    {
+                        testResults.push({step: "Test 41: get_my_details (verify self-update)", status: "passed", verified: true});
+                    }
+                    else
+                    {
+                        testResults.push({step: "Test 41: get_my_details (verify self-update)", status: "warning", verified: false, message: "Self-updated fields not saved correctly"});
+                    }
+                }
+            }
+            catch (impErr)
+            {
+                this.$Session.accountImpersonationStack = null;
+                this.$Session.userId = adminUserId;
+                this.$Session.userType = $Const.USER_TYPE_ADMIN;
+                testResults.push({step: "Test 41: get_my_details (verify self-update)", status: "warning", message: "impersonation not supported or failed", error: impErr.message});
+            }
+
+            // -----------------------------------------------------------------
+            // Cleanup
+            // -----------------------------------------------------------------
+
+            testResults.push({step: "Test 42: delete_officer_evaluation (cleanup remaining)", status: "running"});
+            if (addedEvaluation2Id !== null)
+            {
+                rv = $executeAPI(this.$Session, "Officer/delete_officer_evaluation", { evaluation_id: addedEvaluation2Id });
+                testResults.push({step: "Test 42: delete_officer_evaluation (cleanup remaining)", status: $Err.isERR(rv) ? "failed" : "passed"});
+            }
+            else
+            {
+                testResults.push({step: "Test 42: delete_officer_evaluation (cleanup remaining)", status: "warning", message: "no second evaluation to clean up"});
+            }
+
+            testResults.push({step: "Test 43: delete_officer", status: "running"});
+            rv = $executeAPI(this.$Session, "Officer/delete_officer", { user_id: addedOfficerId });
+            if ($Err.isERR(rv))
+            {
+                testResults.push({step: "Test 43: delete_officer", status: "failed", error: rv.message});
+            }
+            else
+            {
+                testResults.push({step: "Test 43: delete_officer", status: "passed"});
+            }
+
+            testResults.push({step: "Test 44: get_officers (verify deletion)", status: "running"});
+            rv = $executeAPI(this.$Session, "Officer/get_officers", { include_inactive: true });
+            if ($Err.isERR(rv))
+            {
+                testResults.push({step: "Test 44: get_officers (verify deletion)", status: "failed", error: rv.message});
+            }
+            else
+            {
+                let found = rv.officers.find(o => o.user_id === addedOfficerId);
+                if (!found)
+                {
+                    testResults.push({step: "Test 44: get_officers (verify deletion)", status: "passed", verified_deleted: true});
+                }
+                else
+                {
+                    testResults.push({step: "Test 44: get_officers (verify deletion)", status: "warning", message: "Deleted officer still appears in list"});
+                }
+            }
+
+            testResults.push({step: "Test 45: get_officer (verify deletion)", status: "running"});
+            rv = $executeAPI(this.$Session, "Officer/get_officer", { user_id: addedOfficerId });
+            if ($Err.isERR(rv))
+            {
+                testResults.push({step: "Test 45: get_officer (verify deletion)", status: "passed", message: "correctly returns error for deleted officer"});
+            }
+            else
+            {
+                testResults.push({step: "Test 45: get_officer (verify deletion)", status: "warning", message: "deleted officer still retrievable"});
+            }
+
+            testResults.push({step: "Test 46: delete_officer (already deleted)", status: "running"});
+            rv = $executeAPI(this.$Session, "Officer/delete_officer", { user_id: addedOfficerId });
+            if ($Err.isERR(rv))
+            {
+                testResults.push({step: "Test 46: delete_officer (already deleted)", status: "passed", message: "correctly rejected already deleted officer"});
+            }
+            else
+            {
+                testResults.push({step: "Test 46: delete_officer (already deleted)", status: "warning", message: "accepted already deleted officer unexpectedly"});
+            }
+
+            testResults.push({step: "All tests completed", status: "success"});
+        }
+        catch (error)
+        {
+            testResults.push({step: "Exception occurred", status: "error", error: error.message, stack: error.stack});
+
+            // Restore admin session if impersonation was active
+            if (this.$Session.accountImpersonationStack !== null)
+            {
+                this.$Session.accountImpersonationStack = null;
+                this.$Session.userId = adminUserId;
+                this.$Session.userType = $Const.USER_TYPE_ADMIN;
+            }
+        }
+
+        vals.test_results = testResults;
+        vals.summary = {
+            total: testResults.filter(r => r.status === "running").length,
+            passed: testResults.filter(r => r.status === "passed").length,
+            failed: testResults.filter(r => r.status === "failed").length,
+            warnings: testResults.filter(r => r.status === "warning").length
+        };
+
+        return {...rc, ...vals};
+    }
 }

@@ -60,16 +60,17 @@ This document lists all APIs required for the Code4 Security Operations Platform
 
 | API | ACL | Description |
 |-----|-----|-------------|
-| `Officer/get_officers_list` | ADMIN | Get paginated list of officers with filters |
-| `Officer/get_officer` | ADMIN | Get officer details |
+| `Officer/get_officers` | ADMIN | Get list of all officers with filters, search, and sorting |
+| `Officer/get_officer` | ADMIN | Get officer details (includes evaluations) |
 | `Officer/add_officer` | ADMIN | Create a new officer |
 | `Officer/update_officer` | ADMIN | Edit officer details |
 | `Officer/delete_officer` | ADMIN | Soft-delete officer (only if never logged in) |
 | `Officer/get_my_details` | OFFICER | Officer gets own details |
 | `Officer/update_my_details` | OFFICER | Officer updates own details |
-| `Officer/get_officers_info` | RESIDENT | Resident gets officer info for their community |
-| `Officer/add_evaluation` | ADMIN | Add evaluation to an officer |
-| `Officer/get_evaluations` | ADMIN | Get officer evaluations |
+| `Officer/get_officers_info` | RESIDENT | Resident gets public officer info for their community (SDS 2.8) |
+| `Officer/get_officer_evaluations` | ADMIN | Get officer evaluations |
+| `Officer/add_officer_evaluation` | ADMIN | Add evaluation to an officer |
+| `Officer/delete_officer_evaluation` | ADMIN | Soft-delete an officer evaluation |
 
 ---
 

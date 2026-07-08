@@ -162,6 +162,8 @@ module.exports = {
 	"ERR_OFFICER_HAS_ACTIVE_SHIFTS"						: {"rc" : 523,	"message" : "cannot delete officer with active shifts"},
 	"ERR_OFFICER_NOT_IN_COMMUNITY"						: {"rc" : 524,	"message" : "officer is not assigned to this community"},
 	"ERR_OFFICER_NOT_ON_DUTY"							: {"rc" : 525,	"message" : "officer is not on duty"},
+	"ERR_OFFICER_CANNOT_DELETE"							: {"rc" : 526,	"message" : "officer has logged in and cannot be deleted, only deactivated"},
+	"ERR_OFFICER_EVALUATION_NOT_FOUND"					: {"rc" : 527,	"message" : "officer evaluation not found"},
 
 	// Resident (540-559)
 	"ERR_RESIDENT_NOT_FOUND"							: {"rc" : 540,	"message" : "resident not found"},

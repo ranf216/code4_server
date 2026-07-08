@@ -217,7 +217,7 @@ module.exports = class
 		$Db.executeQuery(`INSERT INTO \`user\` (USR_ID, USR_EMAIL, USR_PASSWORD, USR_TOKEN, USR_CREATED_ON, USR_TYPE, USR_STATUS, USR_LOGIN_AUTHORITY,
 												USR_LANG, USR_PASSWORD_CREATED_ON)
 								VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-				[userId, this.$email, $Utils.hash(userId + this.$password), encToken, $Utils.now(), $Const.USER_TYPE_REGULAR, $Const.USER_STATUS_ACTIVE,
+				[userId, this.$email, $Utils.hash(userId + this.$password), encToken, $Utils.now(), $Const.USER_TYPE_RESIDENT, $Const.USER_STATUS_ACTIVE,
 						$Const.USER_LOGIN_AUTHORITY_EMAIL, this.$language, $Utils.now()]);
 		if ($Db.isError())
 		{
@@ -227,7 +227,7 @@ module.exports = class
 
 		$Db.executeQuery(`INSERT INTO \`user_details\` (USD_USR_ID, USD_EMAIL, USD_TYPE, USD_STATUS, USD_FIRST_NAME, USD_LAST_NAME)
 								VALUES (?, ?, ?, ?, ?, ?)`,
-				[userId, this.$email, $Const.USER_TYPE_REGULAR, $Const.USER_STATUS_ACTIVE, this.$first_name, this.$last_name]);
+				[userId, this.$email, $Const.USER_TYPE_RESIDENT, $Const.USER_STATUS_ACTIVE, this.$first_name, this.$last_name]);
 		if ($Db.isError())
 		{
 			$Db.rollbackTransaction();
@@ -673,7 +673,7 @@ module.exports = class
 
 		$Db.executeQuery(`INSERT INTO \`user\` (USR_ID, USR_EMAIL, USR_PASSWORD, USR_TOKEN, USR_CREATED_ON, USR_TYPE, USR_STATUS, USR_LOGIN_AUTHORITY, USR_PHONE_NUM, USR_LANG)
 												VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-				[userId, email, '', encToken, $Utils.now(), $Const.USER_TYPE_REGULAR, $Const.USER_STATUS_ACTIVE, $Const.USER_LOGIN_AUTHORITY_OTP, phoneNumber, language]);
+				[userId, email, '', encToken, $Utils.now(), $Const.USER_TYPE_RESIDENT, $Const.USER_STATUS_ACTIVE, $Const.USER_LOGIN_AUTHORITY_OTP, phoneNumber, language]);
 		if ($Db.isError())
 		{
 			$Db.rollbackTransaction();
@@ -682,7 +682,7 @@ module.exports = class
 
 		$Db.executeQuery(`INSERT INTO \`user_details\` (USD_USR_ID, USD_EMAIL, USD_TYPE, USD_STATUS, USD_FIRST_NAME, USD_LAST_NAME, USD_PHONE_NUM)
 								VALUES (?, ?, ?, ?, ?, ?, ?)`,
-				[userId, email, $Const.USER_TYPE_REGULAR, $Const.USER_STATUS_ACTIVE, first_name, last_name, phoneNumber]);
+				[userId, email, $Const.USER_TYPE_RESIDENT, $Const.USER_STATUS_ACTIVE, first_name, last_name, phoneNumber]);
 		if ($Db.isError())
 		{
 			$Db.rollbackTransaction();
@@ -936,7 +936,7 @@ module.exports = class
 		let rc = $ERRS.ERR_SUCCESS;
 		
 		
-		if (this.$type != $Const.USER_TYPE_ADMIN && this.$type != $Const.USER_TYPE_REGULAR)
+		if (this.$type != $Const.USER_TYPE_ADMIN && this.$type != $Const.USER_TYPE_OFFICER && this.$type != $Const.USER_TYPE_RESIDENT)
 		{
 			return $ERRS.ERR_INVALID_USER_TYPE;
 		}
@@ -985,7 +985,7 @@ module.exports = class
 		let rc = $ERRS.ERR_SUCCESS;
 		
 		
-		if (this.$type != $Const.USER_TYPE_ADMIN && this.$type != $Const.USER_TYPE_REGULAR)
+		if (this.$type != $Const.USER_TYPE_ADMIN && this.$type != $Const.USER_TYPE_OFFICER && this.$type != $Const.USER_TYPE_RESIDENT)
 		{
 			return $ERRS.ERR_INVALID_USER_TYPE;
 		}

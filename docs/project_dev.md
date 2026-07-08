@@ -1,7 +1,7 @@
 # Server Implementation Documentation
 
-**Document Version:** 1.4  
-**Last Updated:** 2026-07-08
+**Document Version:** 1.5  
+**Last Updated:** 2026-07-09
 **Purpose:** Comprehensive documentation of the project server business logic implementation
 
 ---
@@ -62,6 +62,12 @@ Project-specific error codes start at RC 500:
 | Table | Prefix | Description |
 |---|---|---|
 | `data_item` | `DIT_` | Runtime-manageable lookup types (service_type, task_type, asset_type, po_section_type) |
+
+### Database Tables (V 4.2.0)
+| Table | Prefix | Description |
+|---|---|---|
+| `officer` | `OFC_` | Officer-specific profile fields (title, description, address, roles, badges) |
+| `officer_evaluation` | `OFE_` | Officer evaluations (text, date, evaluator) — visible to admin/manager only |
 
 
 ---
@@ -193,6 +199,73 @@ Each community can have at most one featured officer banner (1:1, enforced by `U
 - **Active filtering:** `get_communities` defaults to active-only; pass `include_inactive: true` to see deactivated communities.
 - **Free-text search:** `get_communities` supports `search_text` parameter for server-side filtering across community names, officer names, and resident names via EXISTS subqueries.
 - **Community association:** `user_details.USD_COM_ID` links officers and residents to communities. Managed via `add_community` and `update_community` endpoints.
+
+---
+
+## Phase 2 — People
+
+### 2.1 Officer (`platform/api/officer.js`, `platform/funcs/officer.js`)
+
+Manages officers — the primary operational actors in the system. Full CRUD for admins, self-service endpoints for mobile, and evaluation management. Uses `user` + `user_details` tables for core user fields plus a dedicated `officer` table for officer-specific attributes.
+
+#### Officer CRUD (Admin)
+
+Officers are `USER_TYPE_OFFICER` (2) in the `user` table. Each officer has a login phone number (OTP-based auth), first/last name, email, community assignment, title, description, address, roles, certification badges, and active/inactive status.
+
+- **get_officers** — Lists all non-deleted officers. Optional `community_id` filter, `include_inactive` (default: active only), `search_text` for free-text search across name, email, phone, community name. Sortable by `first_name`, `last_name`, `community`, `created_on`.
+- **get_officer** — Returns full officer details by user ID including evaluations array. Returns `ERR_OFFICER_NOT_FOUND` (520) if not found.
+- **add_officer** — Creates a new officer. Validates phone uniqueness, email uniqueness (if provided), and community existence/active status. Creates user via `User/add_user` with OTP login authority. Sets community association, image, and officer-specific fields. Returns new `user_id`.
+- **update_officer** — Dynamic partial update across `user_details` and `officer` tables. Phone change requires re-identification (terminates session). Email and community changes validated. Deactivation terminates session.
+- **delete_officer** — Soft deletes officer only if they have never logged in (`USR_LAST_LOGIN IS NULL`). Otherwise returns `ERR_OFFICER_CANNOT_DELETE` (526). Appends `/DELETED` to email and phone.
+
+#### Officer Self-Service (Mobile)
+
+- **get_my_details** — Officer retrieves their own profile. Same data as `get_officer` but without evaluations.
+- **update_my_details** — Officer can edit: first_name, last_name, address, email. Cannot edit: title, phone, community, image, roles, badges.
+
+#### Officer Evaluations (Admin-only)
+
+Evaluations are stored in `officer_evaluation` table. Each has text, date, and evaluator name (auto-populated from session). Visible only to admin/manager, never to the officer.
+
+- **get_officer_evaluations** — Get all evaluations for an officer ordered by date descending.
+- **add_officer_evaluation** — Add a new evaluation. Evaluator name auto-derived from the current admin session.
+- **delete_officer_evaluation** — Soft-delete an evaluation.
+
+| API | ACL | Description |
+|---|---|---|
+| `Officer/get_officers` | ADMIN | List all officers |
+| `Officer/get_officer` | ADMIN | Get a single officer by ID (with evaluations) |
+| `Officer/add_officer` | ADMIN | Create a new officer |
+| `Officer/update_officer` | ADMIN | Update officer details |
+| `Officer/delete_officer` | ADMIN | Soft-delete an officer |
+| `Officer/get_my_details` | OFFICER | Get own officer profile |
+| `Officer/update_my_details` | OFFICER | Update own editable fields |
+| `Officer/get_officer_evaluations` | ADMIN | Get evaluations for an officer |
+| `Officer/add_officer_evaluation` | ADMIN | Add an evaluation |
+| `Officer/delete_officer_evaluation` | ADMIN | Soft-delete an evaluation |
+
+#### Officer Error Codes (520–539)
+| Code | Constant | Message |
+|---|---|---|
+| 520 | `ERR_OFFICER_NOT_FOUND` | officer not found |
+| 521 | `ERR_OFFICER_ALREADY_IN_COMMUNITY` | officer is already assigned to this community |
+| 522 | `ERR_OFFICER_HAS_ACTIVE_CALLS` | cannot delete officer with active calls |
+| 523 | `ERR_OFFICER_HAS_ACTIVE_SHIFTS` | cannot delete officer with active shifts |
+| 524 | `ERR_OFFICER_NOT_IN_COMMUNITY` | officer is not assigned to this community |
+| 525 | `ERR_OFFICER_NOT_ON_DUTY` | officer is not on duty |
+| 526 | `ERR_OFFICER_CANNOT_DELETE` | officer has logged in and cannot be deleted, only deactivated |
+| 527 | `ERR_OFFICER_EVALUATION_NOT_FOUND` | officer evaluation not found |
+
+#### Design Notes
+- **Helper functions:** `fetchOfficerRecord(userId)` — module-level helper joining `user`, `user_details`, and `officer` tables. `mapOfficerRow(row, filesSql)` — maps DB columns to API response fields.
+- **DB tables:** Leverages existing `user` + `user_details` for core user fields (name, email, phone, status, community, image). Dedicated `officer` table for officer-specific attributes (title, description, address, roles, badges).
+- **Login authority:** Officers use OTP phone login (`USER_LOGIN_AUTHORITY_OTP = 6`). On creation, `USR_LOGIN_AUTHORITY` is set to OTP.
+- **Session termination:** Phone changes, deactivation clear `USR_TOKEN` and `USR_DEVICE_ID`, plus invalidate the token cache.
+- **JSON columns:** `OFC_ROLES` and `OFC_CERTIFICATION_BADGES` use MySQL JSON type to store arrays of strings.
+- **Soft deletion cascade:** `delete_officer` soft-deletes both `user_details` (via `USD_DELETED_ON`) and `officer` (via `OFC_DELETED_ON`).
+- **Evaluation auto-evaluator:** `add_officer_evaluation` automatically derives the evaluator name from the admin's `user_details` record.
+
+---
 
 ### 1.3 Admin User (`platform/api/admin_user.js`, `platform/funcs/admin_user.js`)
 
