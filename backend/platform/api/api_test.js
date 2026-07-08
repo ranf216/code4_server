@@ -21,4 +21,11 @@ module.exports =
                                                 "#token"                        : "s",
                                             },
 
+    "test_officer_apis"                     : {
+                                                "@acl"                          : [$ACL.USER_TYPE_ADMIN],
+                                                "@doc"                          : "Test all Officer module APIs (CRUD, evaluations, self-service, search & sort)",
+                                                "@mode"                         : "test",
+                                                "#token"                        : "s",
+                                            },
+
 };

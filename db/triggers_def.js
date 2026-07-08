@@ -118,4 +118,22 @@ module.exports =
         update_custom: null, // Optional code to run after the insertion to change_log
         log_delete: false,
     },
+    {
+        name: "officer",
+        id: "OFC_USR_ID",
+        insert_fields: ["OFC_TITLE", "OFC_DESCRIPTION", "OFC_ADDRESS", "OFC_ROLES", "OFC_CERTIFICATION_BADGES", "OFC_LAST_UPDATE", "OFC_DELETED_ON"],
+        update_fields: ["OFC_TITLE", "OFC_DESCRIPTION", "OFC_ADDRESS", "OFC_ROLES", "OFC_CERTIFICATION_BADGES", "OFC_LAST_UPDATE", "OFC_DELETED_ON"],
+        insert_custom: null, // Optional code to run after the insertion to change_log
+        update_custom: null, // Optional code to run after the insertion to change_log
+        log_delete: false,
+    },
+    {
+        name: "officer_evaluation",
+        id: "OFE_ID",
+        insert_fields: ["OFE_OFC_USR_ID", "OFE_TEXT", "OFE_DATE", "OFE_EVALUATOR_NAME", "OFE_DELETED_ON"],
+        update_fields: ["OFE_TEXT", "OFE_DATE", "OFE_EVALUATOR_NAME", "OFE_DELETED_ON"],
+        insert_custom: null, // Optional code to run after the insertion to change_log
+        update_custom: null, // Optional code to run after the insertion to change_log
+        log_delete: false,
+    },
 ];

@@ -8,6 +8,7 @@
 		<script type="text/javascript" src="/public/jquery-1.8.2.mini.js"></script>
 		<script type="text/javascript" src="/public/jquery.cookie.js"></script>
 		<script type="text/javascript" src="/public/rest-base.js"></script>
+		<script type="text/javascript" src="/public/rest-base-array-helpers.js"></script>
 		<script type="text/javascript" src="/public/apiclient-control.js"></script>
 		<script type="text/javascript" src="/public/jsapi.js"></script>
 		
@@ -160,6 +161,13 @@
 			.userCtxSelect {font-weight: bold; color: #28a745;}
 			.inputParam {min-width: 360px;}
 			.inputParamOptional {color: #28a745;}
+			.null-optional-label {
+				color: #8c959f;
+				font-style: italic;
+				font-size: 14px;
+				padding: 8px 12px;
+				display: inline-block;
+			}
 			input {
 				width: 100%;
 				padding: 8px 12px;
@@ -529,7 +537,67 @@
 			::-webkit-scrollbar-thumb:hover {
 				background: #a0a0a0;
 			}
-		</style>
+			.array-input-container {
+				display: flex;
+				flex-direction: column;
+				gap: 8px;
+			}
+
+			.array-input-row {
+				display: flex;
+				gap: 8px;
+				align-items: center;
+			}
+
+			.array-input-row input {
+				flex: 1;
+			}
+
+			.array-add-btn {
+				padding: 4px 14px;
+				border: 1px solid #d0d7de;
+				border-radius: 6px;
+				background: #f6f8fa;
+				color: #24292f;
+				cursor: pointer;
+				font-size: 16px;
+				font-weight: bold;
+				transition: background 0.2s;
+				width: auto;
+				min-width: auto;
+				align-self: flex-start;
+			}
+
+			.array-add-btn:hover {
+				background: #e1e4e8;
+			}
+
+			.array-add-btn:active {
+				background: #d0d7de;
+			}
+
+			.array-remove-btn {
+				padding: 4px 10px;
+				border: 1px solid #ff4d4f;
+				border-radius: 6px;
+				background: #fff1f0;
+				color: #ff4d4f;
+				cursor: pointer;
+				font-size: 14px;
+				font-weight: bold;
+				transition: background 0.2s;
+				width: auto;
+				min-width: auto;
+				flex-shrink: 0;
+			}
+
+			.array-remove-btn:hover {
+				background: #ffccc7;
+			}
+
+			.array-remove-btn:active {
+				background: #ffa39e;
+			}		</style>
 
     </head>
     <body>

@@ -552,7 +552,7 @@ var RestControl =
 		RestControl.resetPage();
 	},
 	
-	createRequest: function(method, url, doc, postParams, getParams, onSuccess, onFail, optionals, docData, paramTypes)
+	createRequest: function(method, url, doc, postParams, getParams, onSuccess, onFail, optionals, docData, paramTypes, nullOptionals)
 	{
 		var reqParams = 
 		{
@@ -572,7 +572,8 @@ var RestControl =
 			responseCnt: "response",
 			optionals: optionals,
 			docData: docData,
-			paramTypes: paramTypes
+			paramTypes: paramTypes,
+			nullOptionals: nullOptionals || []
 		};
 		
 		RestControl.resetPage();

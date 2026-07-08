@@ -2,7 +2,23 @@ module.exports =
 {
 			"api_ver"							: {
 													"@acl"							: [$ACL.USER_TYPE_NA],
-													"welcome"						: "o:s:Hello World***A welcome message.<br/>This parameter will be sent back in the response"
+												},
+
+			"api_test"							: {
+													"@acl"							: [$ACL.USER_TYPE_NA],
+													"@mode"							: "test",
+													"a_string"						: "o:s:Hello World***A welcome message",
+													"an_integer"					: "o:i:42",
+													"a_decimal"						: "o:d:3.14",
+													"a_boolean"						: "o:b:true",
+													"numbers_array"					: "o:n:123",
+													"strings_arraay"				: "o:a:abc",
+													"nullable_string"				: "o:s:/null/",
+													"nullable_integer"				: "o:i:/null/",
+													"nullable_decimal"				: "o:d:/null/",
+													"nullable_boolean"				: "o:b:/null/",
+													"nullable_numbers_array"		: "o:n:/null/",
+													"nullable_strings_arraay"		: "o:a:/null/",
 												},
 
 

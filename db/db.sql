@@ -251,6 +251,59 @@ CREATE TABLE `entity_lock` (
 
 
 --
+-- Definition of table `officer`
+--
+
+DROP TABLE IF EXISTS `officer`;
+CREATE TABLE `officer` (
+  `OFC_USR_ID` varchar(128) NOT NULL,
+  `OFC_TITLE` varchar(200) NOT NULL DEFAULT '',
+  `OFC_DESCRIPTION` text,
+  `OFC_ADDRESS` varchar(500) NOT NULL DEFAULT '',
+  `OFC_ROLES` json DEFAULT NULL,
+  `OFC_CERTIFICATION_BADGES` json DEFAULT NULL,
+  `OFC_CREATED_ON` datetime NOT NULL,
+  `OFC_LAST_UPDATE` datetime DEFAULT NULL,
+  `OFC_DELETED_ON` datetime DEFAULT NULL,
+  PRIMARY KEY (`OFC_USR_ID`),
+  CONSTRAINT `FK_OFC_USR_ID` FOREIGN KEY (`OFC_USR_ID`) REFERENCES `user` (`USR_ID`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+--
+-- Dumping data for table `officer`
+--
+
+/*!40000 ALTER TABLE `officer` DISABLE KEYS */;
+/*!40000 ALTER TABLE `officer` ENABLE KEYS */;
+
+
+--
+-- Definition of table `officer_evaluation`
+--
+
+DROP TABLE IF EXISTS `officer_evaluation`;
+CREATE TABLE `officer_evaluation` (
+  `OFE_ID` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `OFE_OFC_USR_ID` varchar(128) NOT NULL,
+  `OFE_TEXT` text NOT NULL,
+  `OFE_DATE` date NOT NULL,
+  `OFE_EVALUATOR_NAME` varchar(200) NOT NULL,
+  `OFE_CREATED_ON` datetime NOT NULL,
+  `OFE_DELETED_ON` datetime DEFAULT NULL,
+  PRIMARY KEY (`OFE_ID`),
+  KEY `IX_OFE_OFC_USR_ID` (`OFE_OFC_USR_ID`),
+  CONSTRAINT `FK_OFE_OFC_USR_ID` FOREIGN KEY (`OFE_OFC_USR_ID`) REFERENCES `user` (`USR_ID`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+--
+-- Dumping data for table `officer_evaluation`
+--
+
+/*!40000 ALTER TABLE `officer_evaluation` DISABLE KEYS */;
+/*!40000 ALTER TABLE `officer_evaluation` ENABLE KEYS */;
+
+
+--
 -- Definition of table `file`
 --
 
