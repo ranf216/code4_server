@@ -576,13 +576,13 @@ function parseParamInfo(type, path, isOptional, optionalDefVal, paramDoc, arrayN
 	}
 	else if (type == "n")
 	{
-		defaultVal = (isOptional ? optionalDefVal : 0);
+		defaultVal = (isOptional && optionalDefVal !== "") ? optionalDefVal : 0;
 		doc = `"(array of numbers) ${paramDoc}"`;
 		contentText = `\tparamTypes.${path} = \"narray\";\r\n`;
 	}
 	else if (type == "a")
 	{
-		defaultVal = (isOptional ? `\"${optionalDefVal}\"` : "\"\"");
+		defaultVal = (isOptional && optionalDefVal !== "") ? `\"${optionalDefVal}\"` : "\"\"";
 		doc = `"(array of strings) ${paramDoc}"`;
 		contentText = `\tparamTypes.${path} = \"sarray\";\r\n`;
 	}

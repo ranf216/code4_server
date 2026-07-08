@@ -1,7 +1,7 @@
 module.exports = {
 	// Version
 	"api_version"							: "1",
-	"infra_version"							: "3.12.2",
+	"infra_version"							: "3.12.3",
 
 	// Server online - If set to false, no API is able to run!!!
 	"api_server_active"						: true,
