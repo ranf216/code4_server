@@ -227,7 +227,11 @@ function runAPI(json, reqQuery, session, isRun)
 					value = type.substring(4).trim();
 					type = type.substring(2,3);
 	
-					if (type == "b")
+					if (value === "/null/")
+					{
+						return;
+					}
+					else if (type == "b")
 					{
 						value = (value == "true");
 					}

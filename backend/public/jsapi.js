@@ -386,6 +386,7 @@ var userRoles = new Array();`;
 		var paramTypes = new Object();
 		postData["#request"] = "` + group + "/" + request + `";
 		var optionals = new Array();
+		var nullOptionals = new Array();
 	`;
 
 			contentText += parseApiParams(params);
@@ -406,7 +407,7 @@ var userRoles = new Array();`;
 				"login_with_social", "register_with_social",
 				"system_login", "verify_otp_code"];
 			let successHandler = loginMethods.includes(request) ? "onSuccessLogin" : "onSuccess";
-			contentText += `RestControl.createRequest('POST', BASE_API_URL, doc, ` + paramsOrder + `, ` + successHandler + `, null, optionals, docData, paramTypes);`;
+			contentText += `RestControl.createRequest('POST', BASE_API_URL, doc, ` + paramsOrder + `, ` + successHandler + `, null, optionals, docData, paramTypes, nullOptionals);`;
 
 			if (!$Utils.empty(params["#token"]))
 			{
@@ -468,6 +469,23 @@ function parseApiParams(params, arrayName = "", parentArrayName = "")
 			type = type.substring(2, 3);
 			isOptional = true;
 			contentText += "\toptionals.push(\"" + name + "\");\r\n";
+
+			if (optionalDefVal === "/null/")
+			{
+				contentText += "\tnullOptionals.push(\"" + name + "\");\r\n";
+				if (type === "b")
+				{
+					optionalDefVal = "false";
+				}
+				else if (type === "i" || type === "d" || type === "n")
+				{
+					optionalDefVal = "0";
+				}
+				else
+				{
+					optionalDefVal = "";
+				}
+			}
 		}
 		
 		
@@ -558,13 +576,13 @@ function parseParamInfo(type, path, isOptional, optionalDefVal, paramDoc, arrayN
 	}
 	else if (type == "n")
 	{
-		defaultVal = 0;
+		defaultVal = (isOptional ? optionalDefVal : 0);
 		doc = `"(array of numbers) ${paramDoc}"`;
 		contentText = `\tparamTypes.${path} = \"narray\";\r\n`;
 	}
 	else if (type == "a")
 	{
-		defaultVal = "\"\"";
+		defaultVal = (isOptional ? `\"${optionalDefVal}\"` : "\"\"");
 		doc = `"(array of strings) ${paramDoc}"`;
 		contentText = `\tparamTypes.${path} = \"sarray\";\r\n`;
 	}

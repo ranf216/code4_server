@@ -842,7 +842,7 @@ module.exports = class
                             new $Date(user.USR_PASSWORD_CREATED_ON).addSeconds($Config.get("password_valid_for_seconds")).format() < $Utils.now());
 
 		const isHashed = /^[a-fA-F0-9]{64}$/.test(user.USR_PASSWORD);
-        vals.need_change_password = (pwdTooOld || !isHashed);
+        vals.need_change_password = (user.USR_LOGIN_AUTHORITY == $Const.USER_LOGIN_AUTHORITY_EMAIL && (pwdTooOld || !isHashed));
 
         if (vals.need_change_password)
         {

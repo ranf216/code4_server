@@ -74,9 +74,31 @@ module.exports = class
 		vals.api_version = $Config.get("api_version");
 		vals.infra_version = $Config.get("infra_version");
 		vals.environment = $Config.get("environment");
-		vals.welcome = this.$welcome;
 		vals.deployment_version = global.$ServerDeploymentVersion;
 		vals.server_start_time = global.$ServerStartTime;
+
+		return {...rc, ...vals};
+	}
+
+	api_test()
+	{
+		let vals = {};
+		let rc = $ERRS.ERR_SUCCESS;
+
+		let rawBody = this.$Session.request.rawBody;
+		let jsonString = rawBody.toString('utf8');
+		let requestObject = JSON.parse(jsonString);
+		
+		vals.received_object = requestObject;
+
+		vals.received_params = {};
+		for (let key in this)
+		{
+			if (key.startsWith('$') && key !== '$Session')
+			{
+				vals.received_params[key] = this[key];
+			}
+		} 
 
 		return {...rc, ...vals};
 	}

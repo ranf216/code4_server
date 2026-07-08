@@ -69,7 +69,7 @@ function createRequest(reqParams)
 	{
 		var table = document.createElement("table");
 		postParamsParent.append(table);
-		addPostParams(reqParams.postParamsCnt, reqParams.postParams, reqParams.instId, reqParams.optionals, reqParams.docData);
+		addPostParams(reqParams.postParamsCnt, reqParams.postParams, reqParams.instId, reqParams.optionals, reqParams.docData, null, null, reqParams.nullOptionals || [], reqParams.paramTypes || {});
 	}
 	else
 	{
@@ -174,7 +174,7 @@ function syntaxHighlight(json)
 	});
 }
 
-function addPostParams(postParamsCnt, postParams, instId, optionals, docData, prefix, objName)
+function addPostParams(postParamsCnt, postParams, instId, optionals, docData, prefix, objName, nullOptionals, paramTypes)
 {
 	if (prefix == null)
 	{
@@ -191,11 +191,13 @@ function addPostParams(postParamsCnt, postParams, instId, optionals, docData, pr
 	{
 		if (postParams[param] instanceof Object || postParams[param] instanceof Array)
 		{
-			addPostParams(postParamsCnt, postParams[param], instId, optionals, docData[param], prefix + validName(param), objName + validName(param));
+			addPostParams(postParamsCnt, postParams[param], instId, optionals, docData[param], prefix + validName(param), objName + validName(param), nullOptionals, paramTypes);
 			continue;
 		}
 	
 		var inp = null;
+		var paramKey = (prefix ? prefix + validName(param) : validName(param));
+		var isArrayType = paramTypes[paramKey] === "narray" || paramTypes[paramKey] === "sarray";
 		
 		if (typeof postParams[param] == "boolean")
 		{
@@ -232,6 +234,12 @@ function addPostParams(postParamsCnt, postParams, instId, optionals, docData, pr
 			inp.value = postParams[param];
 			inp.type = "text";
 			inp.className = "inputParam";
+
+			if (isArrayType)
+			{
+				inp.setAttribute("data-array-type", paramTypes[paramKey]);
+				inp.setAttribute("data-array-index", "0");
+			}
 		}
 
 		
@@ -246,20 +254,90 @@ function addPostParams(postParamsCnt, postParams, instId, optionals, docData, pr
 		if (optionals.indexOf(param) != -1)
 		{
 			td1.className = "inputParamOptional";
-			$(inp).prop('disabled', true);
+
+			var isNullOptional = nullOptionals && nullOptionals.indexOf(param) != -1;
 
 			var chk = document.createElement("input");
 			chk.type = "checkbox";
 			chk.id = inp.id + "_chk";
+
+			if (isNullOptional)
+			{
+				var paramType = (inp.tagName === "SELECT") ? "b" : (typeof postParams[param] === "number" ? "n" : "s");
+				chk.setAttribute("data-null-optional", "true");
+				chk.setAttribute("data-param-type", paramType);
+
+				var undefinedLabel = document.createElement("span");
+				undefinedLabel.id = inp.id + "_undef";
+				undefinedLabel.className = "null-optional-label";
+				undefinedLabel.textContent = "Undefined";
+
+				inp.style.display = "none";
+
+				td2.appendChild(chk);
+				td2.appendChild(undefinedLabel);
+			}
+			else
+			{
+				$(inp).prop('disabled', true);
+				td2.appendChild(chk);
+			}
+
 			$(chk).click(function()
 			{
 				onClickOptionalCheckbox(this);
 			});
-
-			td2.appendChild(chk);
 		}
 
-		td2.appendChild(inp);
+		if (isArrayType)
+		{
+			var arrayContainer = document.createElement("div");
+			arrayContainer.id = inp.id + "_container";
+			arrayContainer.className = "array-input-container";
+			arrayContainer.setAttribute("data-base-id", inp.id);
+			arrayContainer.setAttribute("data-array-type", paramTypes[paramKey]);
+			
+			var firstRow = document.createElement("div");
+			firstRow.className = "array-input-row";
+			firstRow.appendChild(inp);
+			
+			var removeBtn = document.createElement("button");
+			removeBtn.type = "button";
+			removeBtn.className = "array-remove-btn";
+			removeBtn.textContent = "\u2715";
+			removeBtn.onclick = function() { removeArrayInput(this); };
+			firstRow.appendChild(removeBtn);
+			
+			arrayContainer.appendChild(firstRow);
+			
+			var addBtn = document.createElement("button");
+			addBtn.type = "button";
+			addBtn.className = "array-add-btn";
+			addBtn.textContent = "+";
+			addBtn.onclick = function()
+			{
+				var cnt = this.parentElement;
+				addArrayInput(cnt.getAttribute("data-base-id"), cnt.getAttribute("data-array-type"));
+			};
+			arrayContainer.appendChild(addBtn);
+			
+			if (optionals.indexOf(param) != -1)
+			{
+				$(arrayContainer).find("input").prop('disabled', true);
+				$(arrayContainer).find("button").prop('disabled', true);
+				
+				if (isNullOptional)
+				{
+					arrayContainer.style.display = "none";
+				}
+			}
+			
+			td2.appendChild(arrayContainer);
+		}
+		else
+		{
+			td2.appendChild(inp);
+		}
 
 		var td3 = document.createElement("td");
 		tr.appendChild(td3);
@@ -273,7 +351,68 @@ function onClickOptionalCheckbox(chkObj)
 {
 	var chkId = $(chkObj).attr('id');
 	var inpId = chkId.substr(0, chkId.length - 4);
-	$("#" + inpId).prop('disabled', !chkObj.checked);
+
+	var isNullOptional = $(chkObj).attr('data-null-optional') === "true";
+
+	if (isNullOptional)
+	{
+		var undefId = inpId + "_undef";
+		var container = $("#" + inpId + "_container");
+		var hasContainer = container.length > 0;
+
+		if (chkObj.checked)
+		{
+			$("#" + undefId).hide();
+
+			if (hasContainer)
+			{
+				container.show();
+				container.find("input").show().prop('disabled', false);
+				container.find("button").prop('disabled', false);
+			}
+			else
+			{
+				$("#" + inpId).show();
+			}
+
+			var paramType = $(chkObj).attr('data-param-type');
+			if (paramType === "b")
+			{
+				$("#" + inpId).val("false");
+			}
+			else if (paramType === "n")
+			{
+				$("#" + inpId).val("0");
+			}
+		}
+		else
+		{
+			if (hasContainer)
+			{
+				container.hide();
+				container.find("input").prop('disabled', true);
+				container.find("button").prop('disabled', true);
+			}
+			else
+			{
+				$("#" + inpId).hide();
+			}
+			$("#" + undefId).show();
+		}
+	}
+	else
+	{
+		var container = $("#" + inpId + "_container");
+		if (container.length > 0)
+		{
+			container.find("input").prop('disabled', !chkObj.checked);
+			container.find("button").prop('disabled', !chkObj.checked);
+		}
+		else
+		{
+			$("#" + inpId).prop('disabled', !chkObj.checked);
+		}
+	}
 }
 
 function createPostParams(instId, postParams, postData, optionals, paramTypes, prefix, arrName)
@@ -323,34 +462,74 @@ function createPostParams(instId, postParams, postData, optionals, paramTypes, p
 			continue;
 		}
 	
-		var val = $("#" + inpId).val();
-		val = evalIfNeeded(val);
-
 		if (paramTypes[arrName + param] == "narray")
 		{
 			hasContent = true;
-			if (postData instanceof Array)
+			var arrayValues = [];
+			
+			var baseId = "post_" + prefix + validName(param) + "_" + instId;
+			var container = $("#" + baseId + "_container");
+			if (container.length > 0)
 			{
-				postData.push([Number(val)]);
+				container.find("input[data-array-type='narray']").each(function() {
+					var v = $(this).val();
+					v = evalIfNeeded(v);
+					arrayValues.push(Number(v));
+				});
 			}
 			else
 			{
-				postData[param] = [Number(val)];
+				var val = $("#" + inpId).val();
+				val = evalIfNeeded(val);
+				arrayValues.push(Number(val));
+			}
+			
+			if (postData instanceof Array)
+			{
+				postData.push(arrayValues);
+			}
+			else
+			{
+				postData[param] = arrayValues;
 			}
 		}
 		else if (paramTypes[arrName + param] == "sarray")
 		{
 			hasContent = true;
-			if (postData instanceof Array)
+			var arrayValues = [];
+			
+			var baseId = "post_" + prefix + validName(param) + "_" + instId;
+			var container = $("#" + baseId + "_container");
+			if (container.length > 0)
 			{
-				postData.push(["" + val]);
+				container.find("input[data-array-type='sarray']").each(function() {
+					var v = $(this).val();
+					v = evalIfNeeded(v);
+					arrayValues.push("" + v);
+				});
 			}
 			else
 			{
-				postData[param] = ["" + val];
+				var val = $("#" + inpId).val();
+				val = evalIfNeeded(val);
+				arrayValues.push("" + val);
+			}
+			
+			if (postData instanceof Array)
+			{
+				postData.push(arrayValues);
+			}
+			else
+			{
+				postData[param] = arrayValues;
 			}
 		}
-		else if (typeof postParams[param] == "boolean")
+		else
+		{
+			var val = $("#" + inpId).val();
+			val = evalIfNeeded(val);
+
+			if (typeof postParams[param] == "boolean")
 		{
 			hasContent = true;
 			if (postData instanceof Array)
@@ -389,6 +568,7 @@ function createPostParams(instId, postParams, postData, optionals, paramTypes, p
 			{
 				postData[param] = "" + val;
 			}
+		}
 		}
 	}
 	
