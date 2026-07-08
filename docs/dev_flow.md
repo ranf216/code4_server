@@ -1,7 +1,7 @@
 # Code4 - Development Flow
 
 **Document Version:** 1.0
-**Last Updated:** 2026-07-02
+**Last Updated:** 2026-07-08
 **Purpose:** Recommended order of implementation for the Code4 Security Operations Platform server modules
 
 ---
@@ -33,7 +33,7 @@ The project infrastructure is set up with the following **built-in platform modu
 - `USER_ROLE_LOGISTICS` = 5
 - `USER_ROLE_FINANCE` = 6
 
-**Implemented project-specific API modules:** `settings` (Phase 1.1), `community` (Phase 1.2)
+**Implemented project-specific API modules:** `settings` (Phase 1.1), `community` (Phase 1.2), `admin_user` (Phase 1.3)
 
 ---
 
@@ -74,11 +74,12 @@ These are the foundational CRUD modules that all other features depend on. They 
 - **Why early:** Nearly every entity in the system is scoped to a community
 - **Implementation:** 7 API endpoints — `get_communities`, `get_community`, `add_community`, `update_community`, `delete_community`, `get_featured_officer`, `set_featured_officer`, `delete_featured_officer`. Supports free-text search, inactive filtering, map image upload, officer/resident association, and timezone per community.
 
-#### 1.3 Admin User (`platform/api/admin_user.js`)
-- Management system user CRUD (Super Admin only), password reset, change password
+#### ~~1.3 Admin User (`platform/api/admin_user.js`)~~ ✅ Done
+- ~~Management system user CRUD (Super Admin only), password reset, change password~~
 - **DB tables:** Uses existing `user` / `user_details` tables
 - **Depends on:** Phase 0 (roles)
 - **Why early:** Needed to manage portal users before testing other admin-facing APIs
+- **Implementation:** 8 API endpoints — `get_admin_users`, `get_admin_user`, `add_admin_user`, `update_admin_user`, `delete_admin_user`, `change_admin_user_role`, `reset_admin_user_password`, `change_my_password`. Supports free-text search, sorting, soft deletion, email-change with mandatory initial password, session termination, and last-active-admin protection.
 
 ---
 

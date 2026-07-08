@@ -1,7 +1,7 @@
 # Server Implementation Documentation
 
-**Document Version:** 1.3  
-**Last Updated:** 2026-06-16
+**Document Version:** 1.4  
+**Last Updated:** 2026-07-08
 **Purpose:** Comprehensive documentation of the project server business logic implementation
 
 ---
@@ -193,6 +193,53 @@ Each community can have at most one featured officer banner (1:1, enforced by `U
 - **Active filtering:** `get_communities` defaults to active-only; pass `include_inactive: true` to see deactivated communities.
 - **Free-text search:** `get_communities` supports `search_text` parameter for server-side filtering across community names, officer names, and resident names via EXISTS subqueries.
 - **Community association:** `user_details.USD_COM_ID` links officers and residents to communities. Managed via `add_community` and `update_community` endpoints.
+
+### 1.3 Admin User (`platform/api/admin_user.js`, `platform/funcs/admin_user.js`)
+
+Manages management portal users (admin type). Full CRUD for admin users with soft deletion, password management, and role assignment. Uses existing `user` and `user_details` tables (no new DB tables).
+
+#### Admin User CRUD
+
+Admin users are `USER_TYPE_ADMIN` (1) in the `user` table. Each user has a login email, first/last name, phone number, an assigned role, and active/inactive status. Soft deletion via `USD_DELETED_ON` on `user_details`.
+
+- **get_admin_users** — Lists all non-deleted admin users. Optional `include_inactive` (default: active only). Optional `search_text` for free-text search across first name, last name, email, phone. Sortable by `first_name`, `last_name`, `email`, `role`, `created_on`.
+- **get_admin_user** — Returns a single admin user by ID. Returns `ERR_ADMIN_USER_NOT_FOUND` (770) if not found.
+- **add_admin_user** — Creates a new admin user via `User/add_user`. Validates email format & uniqueness, password criteria, and role validity. Sets phone number and role after creation. Password is stored as initial (user must change on first login).
+- **update_admin_user** — Dynamic partial update. Only provided fields are modified. If email is changed, `initial_password` is mandatory (SDS 5.2.3) — sessions are terminated and user must re-login. Deactivating the last active admin is blocked. Deactivation also terminates sessions.
+- **delete_admin_user** — Soft delete. Cannot delete self. Cannot delete the last active admin. Terminates sessions and appends `/DELETED` to email and phone to free uniqueness constraints.
+
+#### Role Management
+
+- **change_admin_user_role** — Super Admin only. Changes a user's role. Cannot change own role. Resets previous roles and sets the new one via `$UserRoles.setUserRoles()`.
+
+#### Password Management
+
+- **reset_admin_user_password** — Resets a user's password to a new initial password. Terminates active sessions. User must change password on next login.
+- **change_my_password** — Allows the current user to voluntarily change their own password. Verifies current password, validates new password criteria, and ensures new password differs from current. Stores hashed password via `$Utils.hash(userId + newPassword)`.
+
+| API | ACL | Description |
+|---|---|---|
+| `AdminUser/get_admin_users` | ADMIN | List all management system users |
+| `AdminUser/get_admin_user` | ADMIN | Get a single admin user by ID |
+| `AdminUser/add_admin_user` | ADMIN | Create a new admin user |
+| `AdminUser/update_admin_user` | ADMIN | Update admin user details |
+| `AdminUser/delete_admin_user` | ADMIN | Soft-delete an admin user |
+| `AdminUser/change_admin_user_role` | SUPER_ADMIN | Change a user's role |
+| `AdminUser/reset_admin_user_password` | ADMIN | Reset a user's password |
+| `AdminUser/change_my_password` | ADMIN | Change own password |
+
+#### Admin User Error Codes (770–779)
+| Code | Constant | Message |
+|---|---|---|
+| 770 | `ERR_ADMIN_USER_NOT_FOUND` | admin user not found |
+| 771 | `ERR_ADMIN_CANNOT_DELETE_SELF` | cannot delete your own account |
+| 772 | `ERR_ADMIN_CANNOT_EDIT_SELF_ROLE` | cannot change your own role |
+
+#### Design Notes
+- **Helper functions:** `fetchAdminUserRecord(userId)` and `getActiveAdminCount()` are module-level helpers. `mapAdminUserRow(row)` maps DB columns to API response fields using `$Utils.getCalculatedUserRoles()` for role resolution.
+- **No new DB tables:** Leverages existing `user` and `user_details` tables with `USR_TYPE = USER_TYPE_ADMIN` filter.
+- **Session termination:** Email changes, password resets, and deactivation clear `USR_TOKEN` and `USR_DEVICE_ID`, plus invalidate the token cache via `tokenValidator.deleteFromUserCache()`.
+- **Protected requests:** `add_admin_user` masks `password`, `update_admin_user` masks `initial_password`, `reset_admin_user_password` masks `password`, `change_my_password` masks `current_password` and `new_password` in request logs.
 
 ---
 
