@@ -38,3 +38,7 @@ if not exist ".devin\rules\05-create-api-module-doc.md" (
     mklink .devin\rules\05-create-api-module-doc.md C:\Development\FuzzyClick\windsurf_cascade_brain\devin_rules\05-create-api-module-doc.md
     echo .devin/rules/05-create-api-module-doc.md >> .git/info/exclude
 )
+if not exist ".devin\rules\06-code-maintenance.md" (
+    mklink .devin\rules\06-code-maintenance.md C:\Development\FuzzyClick\windsurf_cascade_brain\devin_rules\06-code-maintenance.md
+    echo .devin/rules/06-code-maintenance.md >> .git/info/exclude
+)
