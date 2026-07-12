@@ -263,7 +263,32 @@ vals.need_change_password = (user.USR_LOGIN_AUTHORITY == $Const.USER_LOGIN_AUTHO
 5. Set `USR_LOGIN_AUTHORITY = OTP` on `user` table
 6. Insert into `officer` table (title, description, address, roles, badges)
 
-### 4.3 Session Termination on Phone Change (SDS 4.3.3)
+### 4.3 Partial Update Parameter Strategy
+
+Both `update_officer` and `update_my_details` implement partial (PATCH-like) update semantics: only fields explicitly included in the request are modified; omitted fields retain their current database values.
+
+**Implementation:** Optional parameters that should preserve existing values when omitted use `/null/` as their default in the API definition (`platform/api/officer.js`). This causes the infrastructure to inject `null` when the client does not send the field. The implementation then checks each field with `$Utils.isset()` — which returns `false` for `null` — skipping the update for that column.
+
+**Affected parameters in `update_officer`:**
+| Parameter | Definition | Behavior when omitted |
+|---|---|---|
+| `last_name` | `o:s:/null/` | Preserves current last name |
+| `address` | `o:s:/null/` | Preserves current address |
+| `description` | `o:s:/null/` | Preserves current description |
+| `image` | `o:s:/null/` | Preserves current photo |
+| `roles` | `o:a:/null/` | Preserves current roles array |
+| `certification_badges` | `o:a:/null/` | Preserves current badges array |
+| `is_active` | `o:b:/null/` | Preserves current active status |
+
+**Affected parameters in `update_my_details`:**
+| Parameter | Definition | Behavior when omitted |
+|---|---|---|
+| `last_name` | `o:s:/null/` | Preserves current last name |
+| `address` | `o:s:/null/` | Preserves current address |
+
+**Contrast with clearable fields:** Parameters using `o:s:` (empty string default) or `o:a:` (empty array default) — such as `first_name`, `phone_num`, `email` — are treated as "always present" by `$Utils.isset()` when sent, but these are fields that require explicit validation (phone uniqueness, email format) and are only processed when non-empty via `$Utils.empty()` checks in the implementation.
+
+### 4.4 Session Termination on Phone Change (SDS 4.3.3)
 
 **SDS Requirement:** *"[Mobile number] is used by the officer to enter his app, therefore if it is changed, the officer must be identified again before login to his app."*
 
@@ -293,7 +318,7 @@ if needsSessionTermination:
 2. **Cache invalidation:** `deleteFromUserCache()` ensures the token validator's cache (mode 1 or 2) doesn't serve stale session data.
 3. **Deactivation → immediate lockout:** Setting status to inactive AND clearing the token ensures the officer cannot continue using the app.
 
-### 4.4 Deletion Constraints (SDS 4.3.4)
+### 4.5 Deletion Constraints (SDS 4.3.4)
 
 **SDS Requirement:** *"The officer can be deleted only if he hasn't logged in to the app yet. Otherwise he can only turn to inactive."*
 
@@ -318,7 +343,7 @@ if (officer.USR_LAST_LOGIN !== null)
 
 **Rationale for the constraint:** Once an officer has logged in, they may have associated data (calls, shifts, reports, route history). Hard-deleting or fully soft-deleting their profile would orphan those records. Deactivation (setting `is_active: false`) preserves historical data integrity while preventing further app access.
 
-### 4.5 Sort / Filter (SDS 4.3.5)
+### 4.6 Sort / Filter (SDS 4.3.5)
 
 **SDS Requirement:** *"The manager can sort the table according to each data column... filter according to: Community name, Active/inactive... free search in all the table's columns."*
 
@@ -339,7 +364,7 @@ let validSortColumns = {
 };
 ```
 
-### 4.6 Officer Evaluations (SDS 4.3.2 / 4.3.3)
+### 4.7 Officer Evaluations (SDS 4.3.2 / 4.3.3)
 
 **SDS Requirement:** *"A manager can add the officer evaluations. Each evaluation will include: Text, Date, Evaluator name."*
 
@@ -351,13 +376,13 @@ let validSortColumns = {
 
 **Visibility Rule (SDS):** *"This field is visible only for the manager/admin (not to the officer)"* — Enforced via ACL: evaluation endpoints require `$ACL.USER_TYPE_ADMIN`. The officer's `get_my_details` endpoint does NOT include evaluations.
 
-### 4.7 Officer Self-Service (Mobile App)
+### 4.8 Officer Self-Service (Mobile App)
 
 **`get_my_details`** — Returns the officer's own profile using `this.$Session.userId`. Includes all profile fields, community info, roles, and badges. Does NOT include evaluations.
 
 **`update_my_details`** — Allows the officer to edit their own: first name, last name, email, and address. Officers CANNOT change their phone number (that's admin-only since it affects authentication) or their title/roles/badges/community/status.
 
-### 4.8 Resident-Facing Officers Info (SDS 2.8)
+### 4.9 Resident-Facing Officers Info (SDS 2.8)
 
 **SDS Requirement:** *"In this screen, the user can see the list of officers currently working in his community and to read about them and their experience. The system will filter the officers list and present only the officers checked in."*
 

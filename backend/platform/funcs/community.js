@@ -71,13 +71,19 @@ module.exports = class
         let communities = $Db.executeQuery(
             `SELECT COM_ID, COM_NAME, COM_AREA, COM_LATITUDE, COM_LONGITUDE,
                     COM_LOCATION_NAME, COM_TIMEZONE, ${filesSql.select()},
-                    COM_MAP_BOUNDARIES, COM_IS_ACTIVE, COM_CREATED_ON, COM_LAST_UPDATE
+                    COM_MAP_BOUNDARIES, COM_IS_ACTIVE, COM_CREATED_ON, COM_LAST_UPDATE,
+                    (SELECT COUNT(*) FROM \`user_details\` WHERE USD_COM_ID = COM_ID AND USD_TYPE = ? AND USD_DELETED_ON IS NULL) as COM_OFFICER_COUNT,
+                    (SELECT COUNT(*) FROM \`user_details\` WHERE USD_COM_ID = COM_ID AND USD_TYPE = ? AND USD_DELETED_ON IS NULL) as COM_RESIDENT_COUNT
              FROM \`community\`
                 ${filesSql.join()}
              WHERE ${conditions.join(" AND ")}
-             ORDER BY COM_NAME`, params);
+             ORDER BY COM_NAME`, [$Const.USER_TYPE_OFFICER, $Const.USER_TYPE_RESIDENT, ...params]);
 
-        vals.communities = communities.map(c => mapCommunityRow(c, filesSql));
+        vals.communities = communities.map(c => ({
+            ...mapCommunityRow(c, filesSql),
+            officer_count: c.COM_OFFICER_COUNT,
+            resident_count: c.COM_RESIDENT_COUNT,
+        }));
 
         return {...rc, ...vals};
     }

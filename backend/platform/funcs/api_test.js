@@ -956,6 +956,16 @@ module.exports = class
                 {
                     testResults.push({step: "Test 5: get_communities (verify count increased)", status: "warning", expected: initialCount + 1, actual: rv.communities.length});
                 }
+
+                let testCom = rv.communities.find(c => c.community_id === addedCommunityId);
+                if (testCom && typeof testCom.officer_count === "number" && typeof testCom.resident_count === "number")
+                {
+                    testResults.push({step: "Test 5a: get_communities (officer_count & resident_count present)", status: "passed", officer_count: testCom.officer_count, resident_count: testCom.resident_count});
+                }
+                else
+                {
+                    testResults.push({step: "Test 5a: get_communities (officer_count & resident_count present)", status: "warning", message: "officer_count or resident_count not present or not numeric"});
+                }
             }
 
             testResults.push({step: "Test 6: update_community", status: "running"});
@@ -2904,6 +2914,73 @@ module.exports = class
                 else
                 {
                     testResults.push({step: "Test 16: update_officer (clear roles & badges)", status: "warning", message: "Roles or badges not cleared correctly"});
+                }
+            }
+
+            // -----------------------------------------------------------------
+            // Partial Update Regression (omitted fields must retain values)
+            // -----------------------------------------------------------------
+
+            testResults.push({step: "Test 16b: update_officer (set known values for partial update test)", status: "running"});
+            rv = $executeAPI(this.$Session, "Officer/update_officer", {
+                user_id: addedOfficerId,
+                first_name: "PartialTest",
+                last_name: "KeepMe",
+                title: "KeepTitle",
+                description: "KeepDesc",
+                address: "KeepAddr",
+                roles: ["RoleA", "RoleB"],
+                certification_badges: ["BadgeX"]
+            });
+            if ($Err.isERR(rv))
+            {
+                testResults.push({step: "Test 16b: update_officer (set known values for partial update test)", status: "failed", error: rv.message});
+            }
+            else
+            {
+                testResults.push({step: "Test 16b: update_officer (set known values for partial update test)", status: "passed"});
+            }
+
+            testResults.push({step: "Test 16c: update_officer (partial update - only first_name)", status: "running"});
+            rv = $executeAPI(this.$Session, "Officer/update_officer", {
+                user_id: addedOfficerId,
+                first_name: "OnlyThisChanged"
+            });
+            if ($Err.isERR(rv))
+            {
+                testResults.push({step: "Test 16c: update_officer (partial update - only first_name)", status: "failed", error: rv.message});
+            }
+            else
+            {
+                testResults.push({step: "Test 16c: update_officer (partial update - only first_name)", status: "passed"});
+            }
+
+            testResults.push({step: "Test 16d: get_officer (verify partial update preserved fields)", status: "running"});
+            rv = $executeAPI(this.$Session, "Officer/get_officer", { user_id: addedOfficerId });
+            if ($Err.isERR(rv))
+            {
+                testResults.push({step: "Test 16d: get_officer (verify partial update preserved fields)", status: "failed", error: rv.message});
+            }
+            else
+            {
+                let o = rv.officer;
+                let preserved = o.first_name === "OnlyThisChanged" &&
+                                o.last_name === "KeepMe" &&
+                                o.title === "KeepTitle" &&
+                                o.description === "KeepDesc" &&
+                                o.address === "KeepAddr" &&
+                                o.roles.length === 2 && o.roles.includes("RoleA") && o.roles.includes("RoleB") &&
+                                o.certification_badges.length === 1 && o.certification_badges.includes("BadgeX");
+                if (preserved)
+                {
+                    testResults.push({step: "Test 16d: get_officer (verify partial update preserved fields)", status: "passed", verified: true});
+                }
+                else
+                {
+                    testResults.push({step: "Test 16d: get_officer (verify partial update preserved fields)", status: "failed", verified: false,
+                        message: "Omitted fields were cleared during partial update",
+                        actual: { first_name: o.first_name, last_name: o.last_name, title: o.title, description: o.description, address: o.address, roles: o.roles, certification_badges: o.certification_badges }
+                    });
                 }
             }
 

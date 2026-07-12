@@ -69,7 +69,9 @@ Each community may have a single featured officer banner displayed to residents 
                 "map_boundaries": "{\"type\":\"Polygon\",\"coordinates\":[...]}",
                 "is_active": true,
                 "created_on": "2026-01-15 10:30:00",
-                "last_update": "2026-02-20 14:00:00"
+                "last_update": "2026-02-20 14:00:00",
+                "officer_count": 5,
+                "resident_count": 42
             }
         ]
     }
@@ -89,6 +91,8 @@ Each community may have a single featured officer banner displayed to residents 
     | `is_active` | boolean | Whether the community is currently active. |
     | `created_on` | string | ISO datetime of creation. |
     | `last_update` | string | ISO datetime of last modification, or `null`. |
+    | `officer_count` | integer | Number of active officers assigned to this community. |
+    | `resident_count` | integer | Number of active residents assigned to this community. |
 
     The list is sorted alphabetically by community name. By default, only active communities are returned. Soft-deleted communities are never included.
 

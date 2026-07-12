@@ -269,6 +269,8 @@ Managers can record performance evaluations for officers. Each evaluation contai
 - **Usage & Flows:**
     Called from the officer edit form in the management portal (SDS 4.3.3). Supports partial updates — only send the fields that changed.
 
+    **Partial update semantics:** Omitting a field entirely from the request preserves its current value in the database. This is distinct from explicitly sending an empty value — for example, sending `"roles": []` clears the roles list, whereas not including `roles` in the request leaves the existing roles untouched. The same applies to all optional fields (`last_name`, `address`, `description`, `image`, `roles`, `certification_badges`, `is_active`).
+
     **Session termination:** Two specific changes trigger immediate session termination (SDS 4.3.3):
     1. **Phone number change** — Since the phone number is the officer's login credential, changing it invalidates the current session. The officer must re-authenticate via OTP with their new number.
     2. **Deactivation** (`is_active: false`) — The officer is immediately locked out of the app.
@@ -391,6 +393,8 @@ Managers can record performance evaluations for officers. Each evaluation contai
 
 - **Usage & Flows:**
     Called from the officer mobile app's "My Details" edit screen (SDS 3.14.1). Officers can edit their full name, address, and email. Officers **cannot** change their own phone number (it is the login credential, changes require admin action — SDS 3.14.1), title, community, roles, certification badges, profile picture, or active status.
+
+    **Partial update semantics:** Omitting a field preserves its current value. For example, sending only `{"first_name": "NewName"}` updates the first name without clearing `last_name`, `address`, or `email`.
 
 ---
 
