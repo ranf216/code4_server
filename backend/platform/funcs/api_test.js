@@ -2918,6 +2918,73 @@ module.exports = class
             }
 
             // -----------------------------------------------------------------
+            // Partial Update Regression (omitted fields must retain values)
+            // -----------------------------------------------------------------
+
+            testResults.push({step: "Test 16b: update_officer (set known values for partial update test)", status: "running"});
+            rv = $executeAPI(this.$Session, "Officer/update_officer", {
+                user_id: addedOfficerId,
+                first_name: "PartialTest",
+                last_name: "KeepMe",
+                title: "KeepTitle",
+                description: "KeepDesc",
+                address: "KeepAddr",
+                roles: ["RoleA", "RoleB"],
+                certification_badges: ["BadgeX"]
+            });
+            if ($Err.isERR(rv))
+            {
+                testResults.push({step: "Test 16b: update_officer (set known values for partial update test)", status: "failed", error: rv.message});
+            }
+            else
+            {
+                testResults.push({step: "Test 16b: update_officer (set known values for partial update test)", status: "passed"});
+            }
+
+            testResults.push({step: "Test 16c: update_officer (partial update - only first_name)", status: "running"});
+            rv = $executeAPI(this.$Session, "Officer/update_officer", {
+                user_id: addedOfficerId,
+                first_name: "OnlyThisChanged"
+            });
+            if ($Err.isERR(rv))
+            {
+                testResults.push({step: "Test 16c: update_officer (partial update - only first_name)", status: "failed", error: rv.message});
+            }
+            else
+            {
+                testResults.push({step: "Test 16c: update_officer (partial update - only first_name)", status: "passed"});
+            }
+
+            testResults.push({step: "Test 16d: get_officer (verify partial update preserved fields)", status: "running"});
+            rv = $executeAPI(this.$Session, "Officer/get_officer", { user_id: addedOfficerId });
+            if ($Err.isERR(rv))
+            {
+                testResults.push({step: "Test 16d: get_officer (verify partial update preserved fields)", status: "failed", error: rv.message});
+            }
+            else
+            {
+                let o = rv.officer;
+                let preserved = o.first_name === "OnlyThisChanged" &&
+                                o.last_name === "KeepMe" &&
+                                o.title === "KeepTitle" &&
+                                o.description === "KeepDesc" &&
+                                o.address === "KeepAddr" &&
+                                o.roles.length === 2 && o.roles.includes("RoleA") && o.roles.includes("RoleB") &&
+                                o.certification_badges.length === 1 && o.certification_badges.includes("BadgeX");
+                if (preserved)
+                {
+                    testResults.push({step: "Test 16d: get_officer (verify partial update preserved fields)", status: "passed", verified: true});
+                }
+                else
+                {
+                    testResults.push({step: "Test 16d: get_officer (verify partial update preserved fields)", status: "failed", verified: false,
+                        message: "Omitted fields were cleared during partial update",
+                        actual: { first_name: o.first_name, last_name: o.last_name, title: o.title, description: o.description, address: o.address, roles: o.roles, certification_badges: o.certification_badges }
+                    });
+                }
+            }
+
+            // -----------------------------------------------------------------
             // Officer Evaluations
             // -----------------------------------------------------------------
 
