@@ -956,6 +956,16 @@ module.exports = class
                 {
                     testResults.push({step: "Test 5: get_communities (verify count increased)", status: "warning", expected: initialCount + 1, actual: rv.communities.length});
                 }
+
+                let testCom = rv.communities.find(c => c.community_id === addedCommunityId);
+                if (testCom && typeof testCom.officer_count === "number" && typeof testCom.resident_count === "number")
+                {
+                    testResults.push({step: "Test 5a: get_communities (officer_count & resident_count present)", status: "passed", officer_count: testCom.officer_count, resident_count: testCom.resident_count});
+                }
+                else
+                {
+                    testResults.push({step: "Test 5a: get_communities (officer_count & resident_count present)", status: "warning", message: "officer_count or resident_count not present or not numeric"});
+                }
             }
 
             testResults.push({step: "Test 6: update_community", status: "running"});

@@ -163,15 +163,17 @@ Both `community` and `featured_officer` tables are configured for audit logging 
 2. Build a dynamic `WHERE` clause starting with `COM_DELETED_ON IS NULL`.
 3. If `include_inactive` is `false` (default), append `COM_IS_ACTIVE = 1`.
 4. If `search_text` is non-empty, append a compound condition using `LIKE` for community names and an `EXISTS` subquery for associated officer/resident names.
-5. Execute a single query selecting all community fields plus file join columns.
-6. Map each row through `mapCommunityRow()` to produce API-friendly field names.
+5. Execute a single query selecting all community fields plus file join columns and correlated subqueries for `officer_count` and `resident_count`.
+6. Map each row through `mapCommunityRow()` to produce API-friendly field names, appending `officer_count` and `resident_count` from the subquery results.
 7. Return `{ rc: 0, communities: [...] }`.
 
 **SQL query structure (with search):**
 ```sql
 SELECT COM_ID, COM_NAME, COM_AREA, COM_LATITUDE, COM_LONGITUDE,
        COM_LOCATION_NAME, COM_TIMEZONE, <filesSql.select()>,
-       COM_MAP_BOUNDARIES, COM_IS_ACTIVE, COM_CREATED_ON, COM_LAST_UPDATE
+       COM_MAP_BOUNDARIES, COM_IS_ACTIVE, COM_CREATED_ON, COM_LAST_UPDATE,
+       (SELECT COUNT(*) FROM `user_details` WHERE USD_COM_ID = COM_ID AND USD_TYPE = ? AND USD_DELETED_ON IS NULL) as COM_OFFICER_COUNT,
+       (SELECT COUNT(*) FROM `user_details` WHERE USD_COM_ID = COM_ID AND USD_TYPE = ? AND USD_DELETED_ON IS NULL) as COM_RESIDENT_COUNT
 FROM `community`
     <filesSql.join()>
 WHERE COM_DELETED_ON IS NULL
@@ -184,6 +186,8 @@ WHERE COM_DELETED_ON IS NULL
   ))
 ORDER BY COM_NAME
 ```
+
+The two subquery parameters (`$Const.USER_TYPE_OFFICER`, `$Const.USER_TYPE_RESIDENT`) are prepended to the params array before any condition parameters.
 
 **Convention compliance:**
 - No table aliases used — column prefixes (`COM_*`, `USD_*`) ensure uniqueness per SQL alias rules.
