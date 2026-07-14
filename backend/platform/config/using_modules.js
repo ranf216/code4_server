@@ -15,7 +15,7 @@ module.exports =
         // "queue_service",
         // "sendgrid",
         // "service",
-        // "sms",
+        "sms",
         // "socket_service",
         // "spreadsheet_reader",
         // "test",
