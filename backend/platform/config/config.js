@@ -1,7 +1,7 @@
 module.exports = {
 	// Version
 	"api_version"							: "1",
-	"infra_version"							: "3.12.4",
+	"infra_version"							: "3.12.5",
 
 	// Server online - If set to false, no API is able to run!!!
 	"api_server_active"						: true,
@@ -48,6 +48,7 @@ module.exports = {
 	"fail_deprecated_api"					: false,
 	"enable_set_file_access"				: false,
 	"default_language"						: "en",
+	"default_phone_country_code"			: "us",
 
 	// Logger
 	"project_log_type_name"					: "", // Set name to enable project specific log level (no white spaces)
