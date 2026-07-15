@@ -71,7 +71,7 @@
 *	function saveNewFileOrKeepOld(fileOwner, file, ext, accessLevel = null, fileTypePath = $Const.FILE_TYPE_PATH_FILE)
 *	function parseFilesList(filesJson, fileTypePath = $Const.FILE_TYPE_PATH_FILE)
 *	function formatPhone(phoneNum)
-*	function validatePhone(phoneNum, doFormat = false, canBeEmpty = false)
+*	function validatePhone(phoneNum, doFormat = false, canBeEmpty = false, countryCode = "")
 *	function makeIntlPhoneNum(obj, phoneField, countryCodeField)
 *	function validateEmail(email)
 *	function isValidPassword(password)
@@ -1407,7 +1407,7 @@ module.exports =
 
 	formatPhone(phoneNum)
     {
-		let phone = $CountryUtils.makeIntlPhoneNumber(phoneNum, "us");
+		let phone = $CountryUtils.makeIntlPhoneNumber(phoneNum);
         if ($Utils.empty(phone))
         {
             return "";
@@ -1416,25 +1416,37 @@ module.exports =
         return `+1-${phone.substring(2, 5)}-${phone.substring(5, 8)}-${phone.substring(8)}`;
     },
 
-	validatePhone(phoneNum, doFormat = false, canBeEmpty = false)
+	validatePhone(phoneNum, doFormat = false, canBeEmpty = false, countryCode = "")
 	{
 		if ($Utils.empty(phoneNum))
 		{
 			return canBeEmpty ? "" : false;
 		}
 
-		let phone = $CountryUtils.makeIntlPhoneNumber(phoneNum, "us");
-		if ($Utils.empty(phone) || phone.length != 12)
+		const phoneNumber = $CountryUtils.getIntlPhoneNumber(phoneNum, countryCode);
+		if ($Utils.empty(phoneNumber))
 		{
 			return false;
 		}
 
-        if (doFormat)
+		const digits = phoneNumber.intlFormat.replace(/\D/g, "");
+		if (digits.length < 8 || digits.length > 15)
+		{
+			return false;
+		}
+
+		if ($Utils.empty(phoneNumber) || phoneNumber.length != 12)
+		{
+			return false;
+		}
+
+		if (doFormat && phoneNumber.dialingCode === "1" && phoneNumber.phoneNumber.length === 10)
         {
+			const phone = phoneNumber.intlFormat;
             return `${phone.substring(0, 2)} (${phone.substring(2, 5)}) ${phone.substring(5, 8)}-${phone.substring(8)}`;
         }
 
-        return phone;
+        return phoneNumber.intlFormat;
     },
 
 	makeIntlPhoneNum: function(obj, phoneField, countryCodeField)
@@ -1452,9 +1464,42 @@ module.exports =
 
 	validateEmail: function(email)
 	{
-		return String(email).toLowerCase().match(
-			/^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|.(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
-		);
+		if ($Utils.empty(email)) return false;
+
+		const trimmed = String(email).trim();
+		if (trimmed !== String(email).trim().replace(/\s+/g, ""))
+		{
+			// any internal whitespace at all is invalid
+			return false;
+		}
+		if (/\s/.test(trimmed)) return false;
+		if (trimmed.length > 254) return false;
+
+		const parts = trimmed.split("@");
+		if (parts.length !== 2) return false;
+
+		const [local, domain] = parts;
+		if (!local || local.length > 64) return false;
+		if (local.startsWith(".") || local.endsWith(".")) return false;
+		if (local.includes("..")) return false;
+
+		// allowed local-part characters (RFC-compatible subset, not quoted-strings)
+		if (!/^[A-Za-z0-9!#$%&'*+\-/=?^_`{|}~.]+$/.test(local)) return false;
+
+		if (!domain || !domain.includes(".")) return false;
+
+		const labels = domain.split(".");
+		for (const lbl of labels)
+		{
+			if (!lbl) return false;
+			if (lbl.startsWith("-") || lbl.endsWith("-")) return false;
+			if (!/^[A-Za-z0-9-]+$/.test(lbl)) return false;
+		}
+
+		const tld = labels[labels.length - 1];
+		if (!/^[A-Za-z]{2,24}$/.test(tld)) return false;
+
+		return true;
 	},
 
 	isValidPassword: function(password)
