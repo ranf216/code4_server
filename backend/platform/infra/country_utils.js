@@ -188,6 +188,22 @@ module.exports =
 {
 	makeIntlPhoneNumber(phone, countryCode = "")
 	{
+		phone = String(phone).trim();
+
+		// Reject letters
+		if (/[A-Za-z]/.test(phone))
+		{
+			return "";
+		}
+
+		// Strip everything except digits, "+", "(", ")", ".", "-", spaces.
+		const allowedChars = /^[\d+()\.\-\s]+$/;
+		if (!allowedChars.test(phone))
+		{
+			return "";
+		}
+
+
 		if (phone.startsWith("+"))
 		{
 			phone = countryUtils.parseIntlPhoneNumber(phone).intlFormat;
