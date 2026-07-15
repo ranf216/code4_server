@@ -192,8 +192,13 @@ module.exports =
 		{
 			phone = countryUtils.parseIntlPhoneNumber(phone).intlFormat;
 		}
-		else if (!$Utils.empty(countryCode))
+		else
 		{
+			if ($Utils.empty(countryCode))
+			{
+				countryCode = $Config.get("default_phone_country_code");
+			}
+
 			const dc = countryUtils.getCountriesByDialingCode();
 			if ($Utils.empty(dc[countryCode]))
 			{
