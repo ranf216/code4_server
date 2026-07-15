@@ -188,7 +188,11 @@ module.exports =
 {
 	makeIntlPhoneNumber(phone, countryCode = "")
 	{
-		if (!$Utils.empty(countryCode))
+		if (phone.startsWith("+"))
+		{
+			phone = countryUtils.parseIntlPhoneNumber(phone).intlFormat;
+		}
+		else if (!$Utils.empty(countryCode))
 		{
 			const dc = countryUtils.getCountriesByDialingCode();
 			if ($Utils.empty(dc[countryCode]))
