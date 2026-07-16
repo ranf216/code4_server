@@ -28,6 +28,7 @@
 module.exports =
 {
 	_dataTablesData: {},
+	_cacheVersions: {},
 	_definedTables: {},
 
 	isValidItemId: function(dataId, dataTable)
@@ -474,6 +475,14 @@ module.exports =
 		{
 			delete this._dataTablesData[dataTable];
 		}
+
+		delete this._cacheVersions[dataTable];
+
+		$Db.executeQuery(
+			`INSERT INTO \`cache_version\` (CVR_TABLE, CVR_VERSION) VALUES (?, 1)
+			ON DUPLICATE KEY UPDATE CVR_VERSION = CVR_VERSION + 1`,
+			[dataTable]
+		);
 	},
 
 	addItem: function(dataTable, name, extra)
@@ -586,6 +595,29 @@ module.exports =
 
 		let cacheObj = this;
 
+		if (!$Utils.empty(this._dataTablesData[dataTable]))
+		{
+			const meta = this._cacheVersions[dataTable];
+			if (meta && meta.ttl > 0)
+			{
+				if ($Utils.now() - meta.lastCheckSec > meta.ttl)
+				{
+					const rows = $Db.executeQuery(`SELECT CVR_VERSION FROM \`cache_version\` WHERE CVR_TABLE=?`, [dataTable]);
+					const dbVersion = (rows.length > 0) ? rows[0].CVR_VERSION : 0;
+
+					if (dbVersion !== meta.version)
+					{
+						delete this._dataTablesData[dataTable];
+						delete this._cacheVersions[dataTable];
+					}
+					else
+					{
+						meta.lastCheckSec = $Utils.now();
+					}
+				}
+			}
+		}
+
 		if ($Utils.empty(this._dataTablesData[dataTable]))
 		{
 			let session = $HttpContext.get("session");
@@ -629,6 +661,18 @@ module.exports =
 			}
 
 			cacheObj._dataTablesData[dataTable] = json;
+
+			if (cacheObj === this && data && $Utils.isset(data.cache_ttl) && data.cache_ttl > 0)
+			{
+				const rows = $Db.executeQuery(`SELECT CVR_VERSION FROM \`cache_version\` WHERE CVR_TABLE=?`, [dataTable]);
+				const dbVersion = (rows.length > 0) ? rows[0].CVR_VERSION : 0;
+
+				this._cacheVersions[dataTable] = {
+					version: dbVersion,
+					lastCheckSec: Date.now(),
+					ttl: data.cache_ttl
+				};
+			}
 		}
 
 		return JSON.parse(cacheObj._dataTablesData[dataTable]);

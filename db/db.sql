@@ -43,6 +43,26 @@ CREATE TABLE  `bulk_action` (
 /*!40000 ALTER TABLE `bulk_action` DISABLE KEYS */;
 /*!40000 ALTER TABLE `bulk_action` ENABLE KEYS */;
 
+
+--
+-- Definition of table `cache_version`
+--
+
+DROP TABLE IF EXISTS `cache_version`;
+CREATE TABLE `cache_version` (
+  `CVR_TABLE` varchar(100) NOT NULL,
+  `CVR_VERSION` int unsigned NOT NULL DEFAULT 1,
+  PRIMARY KEY (`CVR_TABLE`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
+
+--
+-- Dumping data for table `cache_version`
+--
+
+/*!40000 ALTER TABLE `cache_version` DISABLE KEYS */;
+/*!40000 ALTER TABLE `cache_version` ENABLE KEYS */;
+
+
 --
 -- Definition of table `change_log`
 --

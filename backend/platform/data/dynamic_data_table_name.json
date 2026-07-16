@@ -1,4 +1,5 @@
 {
     "dynamic": "dynamic_data_table_name",
-    "cache": true
+    "cache": true,
+    "cache_ttl": 10
 }

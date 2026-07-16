@@ -43,6 +43,7 @@
 *	function callAPI(serverUrl, params)
 *	function callAsyncAPI(params)
 *	function getUserTypesList()
+*	function getUserTypeName(type)
 *	function getUserTypesListAsJson()
 *	function getUserRolesList(excludeRolesArr = [])
 *	function getUserRoleName(userRole)
@@ -756,6 +757,16 @@ module.exports =
         });
 		
 		return types;
+	},
+
+	getUserTypeName: function(type)
+	{
+        const typeInfo = $Globals.allUserTypes.find(t => t[1] === type);
+        if (typeInfo)
+        {
+            return typeInfo[2];
+        }
+        return null;
 	},
 
 	getUserTypesListAsJson: function()
