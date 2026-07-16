@@ -28,4 +28,11 @@ module.exports =
                                                 "#token"                        : "s",
                                             },
 
+    "test_resident_apis"                    : {
+                                                "@acl"                          : [$ACL.USER_TYPE_ADMIN],
+                                                "@doc"                          : "Test all Resident module APIs (CRUD, self-service, officer search, image management)",
+                                                "@mode"                         : "test",
+                                                "#token"                        : "s",
+                                            },
+
 };

@@ -8,7 +8,7 @@ process.on("SIGINT", (code) =>
 {
     $Logger.logString($Const.LL_INFO, `Service is not active shutdown with: ${code}`);
     console.log(`Service is not active shutdown with: ${code}`);
-    this.isc.endStandAlone($ERRS.ERR_SUCCESS);
+    isc.endStandAlone($ERRS.ERR_SUCCESS);
 });
 
 $Utils.createCron({cronExpression: "* * * * *"}, doMonitorLogs);

@@ -33,7 +33,7 @@ The project infrastructure is set up with the following **built-in platform modu
 - `USER_ROLE_LOGISTICS` = 5
 - `USER_ROLE_FINANCE` = 6
 
-**Implemented project-specific API modules:** `settings` (Phase 1.1), `community` (Phase 1.2), `admin_user` (Phase 1.3)
+**Implemented project-specific API modules:** `settings` (Phase 1.1), `community` (Phase 1.2), `admin_user` (Phase 1.3), `officer` (Phase 2.1), `resident` (Phase 2.2)
 
 ---
 
@@ -88,18 +88,20 @@ These are the foundational CRUD modules that all other features depend on. They 
 
 Officers and residents are the primary actors. Calls, tasks, shifts, and all operational modules depend on them.
 
-#### 2.1 Officer (`platform/api/officer.js`)
-- Officer CRUD (admin), self-details (mobile), evaluations
-- Creates users with `USER_TYPE_OFFICER` (2)
+#### ~~2.1 Officer (`platform/api/officer.js`)~~ ✅ Done
+- ~~Officer CRUD (admin), self-details (mobile), evaluations~~
+- ~~Creates users with `USER_TYPE_OFFICER` (2)~~
 - **DB tables:** `officer`, `officer_evaluation`
 - **Depends on:** Community (Phase 1.2)
 - **Why before Resident:** Officers are needed to accept calls, be assigned to shifts, and handle all operational workflows
+- **Implementation:** 11 API endpoints — `get_officers`, `get_officer`, `add_officer`, `update_officer`, `delete_officer`, `get_my_details`, `update_my_details`, `get_officers_info`, `get_officer_evaluations`, `add_officer_evaluation`, `delete_officer_evaluation`. Supports free-text search, sorting, community filtering, image upload, phone OTP login authority, roles/certification badges (JSON arrays), evaluations with evaluator name, soft-delete (only if never logged in), session termination on deactivation/phone change, and resident-facing officer list.
 
-#### 2.2 Resident (`platform/api/resident.js`)
-- Resident CRUD (admin), self-details (mobile), search by officer
-- Creates users with `USER_TYPE_RESIDENT` (3)
+#### ~~2.2 Resident (`platform/api/resident.js`)~~ ✅ Done
+- ~~Resident CRUD (admin), self-details (mobile), search by officer~~
+- ~~Creates users with `USER_TYPE_RESIDENT` (3)~~
 - **DB tables:** `resident`
 - **Depends on:** Community (Phase 1.2)
+- **Implementation:** 8 API endpoints — `get_residents`, `get_resident`, `add_resident`, `update_resident`, `delete_resident`, `get_my_details`, `update_my_details`, `search_residents`. Supports free-text search, sorting, community filtering, property images (JSON array, up to 10), vehicle license plates (JSON array), special instructions, communication test flag, phone OTP login authority, soft-delete (only if no activity), session termination on deactivation/phone change, officer-facing resident search (scoped to community), and TODO placeholders for active-call checks (Phase 3).
 
 #### 2.3 Notification (`platform/api/notification.js`)
 - Get notifications, mark read, unread count

@@ -43,6 +43,26 @@ CREATE TABLE  `bulk_action` (
 /*!40000 ALTER TABLE `bulk_action` DISABLE KEYS */;
 /*!40000 ALTER TABLE `bulk_action` ENABLE KEYS */;
 
+
+--
+-- Definition of table `cache_version`
+--
+
+DROP TABLE IF EXISTS `cache_version`;
+CREATE TABLE `cache_version` (
+  `CVR_TABLE` varchar(100) NOT NULL,
+  `CVR_VERSION` int unsigned NOT NULL DEFAULT 1,
+  PRIMARY KEY (`CVR_TABLE`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
+
+--
+-- Dumping data for table `cache_version`
+--
+
+/*!40000 ALTER TABLE `cache_version` DISABLE KEYS */;
+/*!40000 ALTER TABLE `cache_version` ENABLE KEYS */;
+
+
 --
 -- Definition of table `change_log`
 --
@@ -301,6 +321,33 @@ CREATE TABLE `officer_evaluation` (
 
 /*!40000 ALTER TABLE `officer_evaluation` DISABLE KEYS */;
 /*!40000 ALTER TABLE `officer_evaluation` ENABLE KEYS */;
+
+
+--
+-- Definition of table `resident`
+--
+
+DROP TABLE IF EXISTS `resident`;
+CREATE TABLE `resident` (
+  `RES_USR_ID` varchar(128) NOT NULL,
+  `RES_ADDRESS` varchar(500) NOT NULL DEFAULT '',
+  `RES_VEHICLES` json DEFAULT NULL,
+  `RES_INSTRUCTIONS` text,
+  `RES_IMAGES` json DEFAULT NULL,
+  `RES_COMMUNICATION_TEST` tinyint unsigned NOT NULL DEFAULT '0',
+  `RES_CREATED_ON` datetime NOT NULL,
+  `RES_LAST_UPDATE` datetime DEFAULT NULL,
+  `RES_DELETED_ON` datetime DEFAULT NULL,
+  PRIMARY KEY (`RES_USR_ID`),
+  CONSTRAINT `FK_RES_USR_ID` FOREIGN KEY (`RES_USR_ID`) REFERENCES `user` (`USR_ID`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+--
+-- Dumping data for table `resident`
+--
+
+/*!40000 ALTER TABLE `resident` DISABLE KEYS */;
+/*!40000 ALTER TABLE `resident` ENABLE KEYS */;
 
 
 --

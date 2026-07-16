@@ -316,6 +316,68 @@ Admin users are `USER_TYPE_ADMIN` (1) in the `user` table. Each user has a login
 
 ---
 
+### Resident Module (`platform/api/resident.js`)
+
+Manages residents (security service clients/homeowners). Residents belong to a single community and use phone OTP to log in to the mobile app.
+
+#### DB Table: `resident`
+| Column | Type | Description |
+|---|---|---|
+| `RES_USR_ID` | varchar(128) PK, FK→user | Links to user table |
+| `RES_ADDRESS` | varchar(500) | Resident address |
+| `RES_VEHICLES` | json | Array of vehicle license plate strings |
+| `RES_INSTRUCTIONS` | text | Special instructions for officers |
+| `RES_IMAGES` | json | Array of property image file names (up to 10) |
+| `RES_COMMUNICATION_TEST` | tinyint | Communication test flag (0/1) |
+| `RES_CREATED_ON` | datetime | Record creation timestamp |
+| `RES_LAST_UPDATE` | datetime | Last modification timestamp |
+| `RES_DELETED_ON` | datetime | Soft-delete timestamp |
+
+#### Admin CRUD
+
+- **get_residents** — List all residents with optional community filter, active/inactive filter, free-text search (name, email, phone, address, community), and sorting.
+- **get_resident** — Get a single resident by user ID with full details.
+- **add_resident** — Creates a new resident. Validates phone uniqueness, community existence/active status, email format/uniqueness. Creates user via `User/add_user` with `USER_TYPE_RESIDENT`, sets OTP login authority, creates `resident` record.
+- **update_resident** — Dynamic partial update. Validates email/phone uniqueness, community changes. Blocks deactivation and community move if resident has active calls (TODO: Call module Phase 3). Handles property images (base64 save). Phone change or deactivation terminates session.
+- **delete_resident** — Soft delete. Blocked if resident has any activity (calls past or present → `ERR_RESIDENT_CANNOT_DELETE`). Falls back to "never logged in" check until Call module is implemented. Terminates session, appends `/DELETED` to email/phone.
+
+#### Resident Self-Service (Mobile)
+
+- **get_my_details** — Returns the resident's own profile including community name and property image URLs.
+- **update_my_details** — Resident can edit: first_name, last_name, email, address, instructions, images. Cannot edit: phone, community, vehicles.
+
+#### Officer-Facing
+
+- **search_residents** — Officer searches for residents in their own community by name, license plate, or address (SDS 3.10). Returns: name, phone, address, vehicles.
+
+| API | ACL | Description |
+|---|---|---|
+| `Resident/get_residents` | ADMIN | List all residents |
+| `Resident/get_resident` | ADMIN | Get a single resident by ID |
+| `Resident/add_resident` | ADMIN | Create a new resident |
+| `Resident/update_resident` | ADMIN | Update resident details |
+| `Resident/delete_resident` | ADMIN | Soft-delete a resident |
+| `Resident/get_my_details` | RESIDENT | Get own profile |
+| `Resident/update_my_details` | RESIDENT | Update own editable details |
+| `Resident/search_residents` | OFFICER | Search residents in officer's community |
+
+#### Resident Error Codes (540–559)
+| Code | Constant | Message |
+|---|---|---|
+| 540 | `ERR_RESIDENT_NOT_FOUND` | resident not found |
+| 541 | `ERR_RESIDENT_HAS_ACTIVE_CALLS` | cannot modify resident with active calls |
+| 542 | `ERR_RESIDENT_ALREADY_EXISTS` | resident already exists in this community |
+| 543 | `ERR_RESIDENT_CANNOT_DELETE` | resident has activity and cannot be deleted, only deactivated |
+
+#### Design Notes
+- **Helper functions:** `fetchResidentRecord(userId)` fetches joined user+user_details+resident record. `mapResidentRow(row)` maps DB columns to API response fields. `saveImagesArray(userId, newArr, existingJson)` handles base64 image saving with existing file preservation. `parseImagesArray(imagesArr)` converts stored file names to URLs.
+- **No profile image:** Residents do not use `USD_IMAGE`. Property images are stored in `RES_IMAGES` as a JSON array.
+- **Vehicles:** Admin-managed only. Stored as JSON array in `RES_VEHICLES`.
+- **Session termination:** Phone changes and deactivation clear `USR_TOKEN`/`USR_DEVICE_ID` and invalidate token cache.
+- **TODO placeholders:** Active-call checks for delete/deactivate/community-move will be implemented when the Call module (Phase 3) is built.
+
+---
+
 ## Development Best Practices
 
 For comprehensive development best practices, including database code guidelines, implementation checklists, and common patterns, see the **"Critical Rules & Best Practices"** section in `docs/brain.md`.
