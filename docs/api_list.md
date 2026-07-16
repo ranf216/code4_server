@@ -45,14 +45,14 @@ This document lists all APIs required for the Code4 Security Operations Platform
 
 | API | ACL | Description |
 |-----|-----|-------------|
-| `Resident/get_residents_list` | ADMIN | Get paginated list of residents with filters |
+| `Resident/get_residents` | ADMIN | Get list of residents with filters, search, and sorting |
 | `Resident/get_resident` | ADMIN | Get resident details |
 | `Resident/add_resident` | ADMIN | Create a new resident in a community |
-| `Resident/update_resident` | ADMIN | Edit resident details |
+| `Resident/update_resident` | ADMIN | Edit resident details (images via File API + new_image_ids/keep_images) |
 | `Resident/delete_resident` | ADMIN | Soft-delete resident (only if never logged in) |
 | `Resident/get_my_details` | RESIDENT | Resident gets own details |
-| `Resident/update_my_details` | RESIDENT | Resident updates own details |
-| `Resident/search_resident` | OFFICER | Officer searches for a resident (by name, plate, address) |
+| `Resident/update_my_details` | RESIDENT | Resident updates own details (images via File API + new_image_ids/keep_images) |
+| `Resident/search_residents` | OFFICER | Officer searches residents in own community (by name, plate, address) |
 
 ---
 

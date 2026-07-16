@@ -5,6 +5,7 @@ module.exports =
 	"community",
 	"file",
 	"officer",
+	"resident",
 	"settings",
 	//"social_login",
 	"system",

@@ -324,6 +324,33 @@ CREATE TABLE `officer_evaluation` (
 
 
 --
+-- Definition of table `resident`
+--
+
+DROP TABLE IF EXISTS `resident`;
+CREATE TABLE `resident` (
+  `RES_USR_ID` varchar(128) NOT NULL,
+  `RES_ADDRESS` varchar(500) NOT NULL DEFAULT '',
+  `RES_VEHICLES` json DEFAULT NULL,
+  `RES_INSTRUCTIONS` text,
+  `RES_IMAGES` json DEFAULT NULL,
+  `RES_COMMUNICATION_TEST` tinyint unsigned NOT NULL DEFAULT '0',
+  `RES_CREATED_ON` datetime NOT NULL,
+  `RES_LAST_UPDATE` datetime DEFAULT NULL,
+  `RES_DELETED_ON` datetime DEFAULT NULL,
+  PRIMARY KEY (`RES_USR_ID`),
+  CONSTRAINT `FK_RES_USR_ID` FOREIGN KEY (`RES_USR_ID`) REFERENCES `user` (`USR_ID`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+--
+-- Dumping data for table `resident`
+--
+
+/*!40000 ALTER TABLE `resident` DISABLE KEYS */;
+/*!40000 ALTER TABLE `resident` ENABLE KEYS */;
+
+
+--
 -- Definition of table `file`
 --
 

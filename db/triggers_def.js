@@ -136,4 +136,13 @@ module.exports =
         update_custom: null, // Optional code to run after the insertion to change_log
         log_delete: false,
     },
+    {
+        name: "resident",
+        id: "RES_USR_ID",
+        insert_fields: ["RES_ADDRESS", "RES_VEHICLES", "RES_INSTRUCTIONS", "RES_IMAGES", "RES_COMMUNICATION_TEST", "RES_LAST_UPDATE", "RES_DELETED_ON"],
+        update_fields: ["RES_ADDRESS", "RES_VEHICLES", "RES_INSTRUCTIONS", "RES_IMAGES", "RES_COMMUNICATION_TEST", "RES_LAST_UPDATE", "RES_DELETED_ON"],
+        insert_custom: null, // Optional code to run after the insertion to change_log
+        update_custom: null, // Optional code to run after the insertion to change_log
+        log_delete: false,
+    },
 ];

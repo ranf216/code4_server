@@ -167,8 +167,9 @@ module.exports = {
 
 	// Resident (540-559)
 	"ERR_RESIDENT_NOT_FOUND"							: {"rc" : 540,	"message" : "resident not found"},
-	"ERR_RESIDENT_HAS_ACTIVE_CALLS"						: {"rc" : 541,	"message" : "cannot delete resident with active calls"},
+	"ERR_RESIDENT_HAS_ACTIVE_CALLS"						: {"rc" : 541,	"message" : "cannot modify resident with active calls"},
 	"ERR_RESIDENT_ALREADY_EXISTS"						: {"rc" : 542,	"message" : "resident already exists in this community"},
+	"ERR_RESIDENT_CANNOT_DELETE"						: {"rc" : 543,	"message" : "resident has activity and cannot be deleted, only deactivated"},
 
 	// Call (560-589)
 	"ERR_CALL_NOT_FOUND"								: {"rc" : 560,	"message" : "call not found"},
