@@ -245,6 +245,8 @@ module.exports = {
 
 	// Notification (730-739)
 	"ERR_NOTIFICATION_NOT_FOUND"						: {"rc" : 730,	"message" : "notification not found"},
+	"ERR_NOTIFICATION_INVALID_TYPE"						: {"rc" : 731,	"message" : "invalid notification type"},
+	"ERR_NOTIFICATION_ALREADY_READ"						: {"rc" : 732,	"message" : "notification is already marked as read"},
 
 	// Settings (740-749)
 	"ERR_SETTING_NOT_FOUND"								: {"rc" : 740,	"message" : "setting not found"},

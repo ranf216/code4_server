@@ -103,11 +103,12 @@ Officers and residents are the primary actors. Calls, tasks, shifts, and all ope
 - **Depends on:** Community (Phase 1.2)
 - **Implementation:** 8 API endpoints — `get_residents`, `get_resident`, `add_resident`, `update_resident`, `delete_resident`, `get_my_details`, `update_my_details`, `search_residents`. Supports free-text search, sorting, community filtering, property images (JSON array, up to 10), vehicle license plates (JSON array), special instructions, communication test flag, phone OTP login authority, soft-delete (only if no activity), session termination on deactivation/phone change, officer-facing resident search (scoped to community), and TODO placeholders for active-call checks (Phase 3).
 
-#### 2.3 Notification (`platform/api/notification.js`)
-- Get notifications, mark read, unread count
+#### ~~2.3 Notification (`platform/api/notification.js`)~~ ✅ Done
+- ~~Get notifications, mark read, unread count~~
 - **DB tables:** `notification`
 - **Depends on:** Phase 0
 - **Why here:** Starting from Phase 3, most operations trigger push notifications. Having the notification infrastructure ready before implementing calls/tasks avoids backtracking.
+- **Implementation:** 7 API endpoints — `get_notifications`, `get_unread_count`, `mark_as_read`, `mark_all_as_read`, `create_notification`, `create_bulk_notifications`, `delete_notification`. Supports paginated retrieval with filters (read status, type, date range), single/bulk notification creation with optional FCM push delivery, soft-delete. Uses fan-out model (one row per recipient). See `docs/notification_questions.md` for pending design decisions.
 
 ---
 

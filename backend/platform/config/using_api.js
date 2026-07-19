@@ -4,6 +4,7 @@ module.exports =
 	"api_test",
 	"community",
 	"file",
+	"notification",
 	"officer",
 	"resident",
 	"settings",

@@ -500,6 +500,38 @@ CREATE TABLE `mailer_queue` (
 
 
 --
+-- Definition of table `notification`
+--
+
+DROP TABLE IF EXISTS `notification`;
+CREATE TABLE `notification` (
+  `NTF_ID` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `NTF_USR_ID` varchar(128) NOT NULL COMMENT 'Recipient user ID',
+  `NTF_TYPE` varchar(50) NOT NULL COMMENT 'Notification type key (e.g. call_accepted, new_emergency)',
+  `NTF_TITLE` varchar(200) NOT NULL,
+  `NTF_MESSAGE` varchar(1000) NOT NULL,
+  `NTF_PAYLOAD` json DEFAULT NULL COMMENT 'Additional data for deep linking (entity_type, entity_id, etc.)',
+  `NTF_IS_READ` tinyint NOT NULL DEFAULT 0,
+  `NTF_READ_ON` datetime DEFAULT NULL,
+  `NTF_SENDER_ID` varchar(128) DEFAULT NULL COMMENT 'User who triggered the notification',
+  `NTF_COMMUNITY_ID` bigint unsigned DEFAULT NULL,
+  `NTF_CREATED_ON` datetime NOT NULL,
+  `NTF_DELETED_ON` datetime DEFAULT NULL,
+  PRIMARY KEY (`NTF_ID`),
+  KEY `IX_NTF_USR_ID` (`NTF_USR_ID`),
+  KEY `IX_NTF_USR_READ` (`NTF_USR_ID`, `NTF_IS_READ`, `NTF_DELETED_ON`),
+  KEY `IX_NTF_CREATED_ON` (`NTF_CREATED_ON`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
+
+--
+-- Dumping data for table `notification`
+--
+
+/*!40000 ALTER TABLE `notification` DISABLE KEYS */;
+/*!40000 ALTER TABLE `notification` ENABLE KEYS */;
+
+
+--
 -- Definition of table `otp_auth`
 --
 

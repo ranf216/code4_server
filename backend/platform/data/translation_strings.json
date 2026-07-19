@@ -9,5 +9,8 @@
 
     "sms - otp verification"							:	{"name" : {"en" : "Your verification code for Infra is: {0}"}                   },
     "email - otp verification"							:	{"name" : {"en" : "Your verification code to Infra"}                            },
-    "email template - otp verification"					:	{"name" : {"en" : "otp_verification_code.html"}                                 }
+    "email template - otp verification"					:	{"name" : {"en" : "otp_verification_code.html"}                                 },
+
+    "email - notification"								:	{"name" : {"en" : "#TITLE#"}                                                    },
+    "email template - notification"						:	{"name" : {"en" : "notification_alert.html"}                                    }
 }

@@ -35,4 +35,11 @@ module.exports =
                                                 "#token"                        : "s",
                                             },
 
+    "test_notifications_apis"               : {
+                                                "@acl"                          : [$ACL.USER_TYPE_ADMIN],
+                                                "@doc"                          : "Test all Notification module APIs (CRUD, read status, bulk, template rendering, filters, pagination, deletion)",
+                                                "@mode"                         : "test",
+                                                "#token"                        : "s",
+                                            },
+
 };
