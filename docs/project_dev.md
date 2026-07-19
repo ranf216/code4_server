@@ -1,7 +1,7 @@
 # Server Implementation Documentation
 
-**Document Version:** 1.5  
-**Last Updated:** 2026-07-09
+**Document Version:** 1.6  
+**Last Updated:** 2026-07-10
 **Purpose:** Comprehensive documentation of the project server business logic implementation
 
 ---
@@ -68,6 +68,11 @@ Project-specific error codes start at RC 500:
 |---|---|---|
 | `officer` | `OFC_` | Officer-specific profile fields (title, description, address, roles, badges) |
 | `officer_evaluation` | `OFE_` | Officer evaluations (text, date, evaluator) — visible to admin/manager only |
+
+### Database Tables (V 4.3.0)
+| Table | Prefix | Description |
+|---|---|---|
+| `notification` | `NTF_` | In-app notification records per user (read/unread, type, payload for deep linking) |
 
 
 ---
@@ -375,6 +380,69 @@ Manages residents (security service clients/homeowners). Residents belong to a s
 - **Vehicles:** Admin-managed only. Stored as JSON array in `RES_VEHICLES`.
 - **Session termination:** Phone changes and deactivation clear `USR_TOKEN`/`USR_DEVICE_ID` and invalidate token cache.
 - **TODO placeholders:** Active-call checks for delete/deactivate/community-move will be implemented when the Call module (Phase 3) is built.
+
+### 2.3 Notification (`platform/api/notification.js`, `platform/funcs/notification.js`)
+
+Manages in-app notification storage, retrieval, and read-state tracking. Provides creation endpoints for other modules to call via `$executeAPI`. Optionally sends FCM push notifications when the `fcm` module is enabled.
+
+#### API Endpoints
+
+| API | ACL | Description |
+|---|---|---|
+| `Notification/get_notifications` | ALL AUTHED | Get paginated list of notifications for the current user. Supports filters: `is_read`, `type`, `from_date`, `to_date`. |
+| `Notification/get_unread_count` | ALL AUTHED | Get unread notification count for the current user |
+| `Notification/mark_as_read` | ALL AUTHED | Mark a single notification as read |
+| `Notification/mark_all_as_read` | ALL AUTHED | Mark all unread notifications as read |
+| `Notification/create_notification` | ALL AUTHED | Create a notification for a single user (internal use via `$executeAPI`) |
+| `Notification/create_bulk_notifications` | ALL AUTHED | Create notifications for multiple users at once (internal use via `$executeAPI`) |
+| `Notification/delete_notification` | ALL AUTHED | Soft-delete a notification (owner only) |
+
+#### Usage by Other Modules
+
+Other modules create notifications by calling:
+```js
+$executeAPI(this.$Session, "Notification/create_notification", {
+    target_user_id: recipientUserId,
+    type: "call_accepted",
+    title: "Call Accepted",
+    message: "Your call was accepted by Officer Smith",
+    payload: JSON.stringify({ entity_type: "call", entity_id: callId }),
+    community_id: communityId,
+    send_push: true
+});
+```
+
+For bulk notifications (e.g., all officers in a community):
+```js
+$executeAPI(this.$Session, "Notification/create_bulk_notifications", {
+    target_user_ids: officerUserIds,
+    type: "new_emergency",
+    title: "New Emergency Call",
+    message: "A new emergency call was opened",
+    payload: JSON.stringify({ entity_type: "call", entity_id: callId }),
+    community_id: communityId,
+    send_push: true
+});
+```
+
+#### Notification Types
+
+Valid types: `new_emergency`, `new_service_call`, `call_accepted`, `call_resolved`, `call_updated`, `call_canceled`, `resident_like`, `new_incident_report`, `report_submitted`, `report_approved`, `report_changes_requested`, `report_delivered`, `shift_published`, `shift_updated`, `shift_cancelled`, `shift_starting_soon`, `route_updated`, `post_order_published`, `post_order_updated`, `poi_active`, `poi_updated`, `poi_inactivated`, `poi_expiring_soon`, `poi_expired`, `task_update`, `panic_button`, `gps_signal_lost`, `officer_off_route`, `general`.
+
+#### Notification Error Codes (730–739)
+| Code | Constant | Message |
+|---|---|---|
+| 730 | `ERR_NOTIFICATION_NOT_FOUND` | notification not found |
+| 731 | `ERR_NOTIFICATION_INVALID_TYPE` | invalid notification type |
+| 732 | `ERR_NOTIFICATION_ALREADY_READ` | notification is already marked as read |
+
+#### Design Notes
+- **Soft deletion:** Uses `NTF_DELETED_ON` timestamp pattern.
+- **Bulk insert:** `create_bulk_notifications` uses a single INSERT with multiple value sets (no queries in loops).
+- **FCM graceful degradation:** Push delivery is silently skipped when FCM module is not loaded (`typeof $Fcm === "undefined"`).
+- **Pagination:** `get_notifications` uses LIMIT/OFFSET (passed as strings per infrastructure rules). Max page size: 100.
+- **Helper functions:** `mapNotificationRow(row)` maps DB columns to API response. `insertNotification(...)` handles single record creation. `sendPushToUser(...)` handles FCM delivery.
+- **Open items:** See `docs/notification_questions.md` for pending design decisions.
 
 ---
 

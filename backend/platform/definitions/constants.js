@@ -29,6 +29,7 @@ module.exports = {
     EMAIL_TEMPLATE_RESET_PASSWORD			                : "reset password",
     EMAIL_TEMPLATE_FORGOT_PASSWORD			                : "forgot password",
     EMAIL_TEMPLATE_OTP_VERIFICATION			                : "otp verification",
+    EMAIL_TEMPLATE_NOTIFICATION				                : "notification",
 
     DATE_NULL                                               : "0000-00-00 00:00:00",
     S3_MIN_UPLOAD_PART_SIZE                                 : 5242880, // 5Mb

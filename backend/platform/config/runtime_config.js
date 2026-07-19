@@ -14,6 +14,8 @@ module.exports =
 					],
 	},
 
+	"NOTIFICATION_MAX_PAGE_SIZE"										: 100,
+
 	"SETTINGS_DEFAULTS"													: {
 		"gps": {
 			gps_interval_normal: 30,

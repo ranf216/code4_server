@@ -9,7 +9,7 @@ module.exports =
         {
             try
             {
-                Admin.initializeApp({credential: Admin.credential.cert($Const.CONFIG_PATH + "/" + $Config.get("google_fb_key"))});
+                Admin.initializeApp({credential: Admin.credential.cert(JSON.parse($Config.get("google_fb_key")))});
                 adminIsInit = true;
             }
             catch (e)

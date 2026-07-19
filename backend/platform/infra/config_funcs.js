@@ -197,6 +197,8 @@ module.exports =
 		}
 
 		const privConfArr = require($Const.CONFIG_PATH + "/" + decConfigFileName);
+		resolveFileRefs($Const.CONFIG_PATH, privConfArr);
+
 		const decData = JSON.stringify(privConfArr);
 		const encData = encryptData(decData, this.get("env_uid"));
 
@@ -212,6 +214,24 @@ module.exports =
 	}
 };
 
+
+function resolveFileRefs(configPath, confArr)
+{
+	Object.entries(confArr).forEach(item =>
+	{
+		const key = item[0];
+		const val = item[1];
+
+		if ((typeof val === "object" || typeof val === 'function') && (val !== null))
+		{
+			resolveFileRefs(configPath, val);
+		}
+		else if ((typeof val === 'string' || val instanceof String) && val.startsWith("file://"))
+		{
+			confArr[key] = $Utils.fileGetContents(`${configPath}/${val.substring(7)}`).trim();
+		}
+	});
+}
 
 function removeHiddenVals(subitem)
 {

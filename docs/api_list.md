@@ -306,10 +306,13 @@ This document lists all APIs required for the Code4 Security Operations Platform
 
 | API | ACL | Description |
 |-----|-----|-------------|
-| `Notification/get_notifications` | ADMIN, OFFICER, RESIDENT | Get user's notifications list |
-| `Notification/mark_read` | ADMIN, OFFICER, RESIDENT | Mark notification as read |
-| `Notification/mark_all_read` | ADMIN, OFFICER, RESIDENT | Mark all notifications as read |
+| `Notification/get_notifications` | ADMIN, OFFICER, RESIDENT | Get paginated notifications list with filters (is_read, type, date range) |
 | `Notification/get_unread_count` | ADMIN, OFFICER, RESIDENT | Get unread notifications count |
+| `Notification/mark_as_read` | ADMIN, OFFICER, RESIDENT | Mark a single notification as read |
+| `Notification/mark_all_as_read` | ADMIN, OFFICER, RESIDENT | Mark all notifications as read |
+| `Notification/create_notification` | ADMIN, OFFICER, RESIDENT | Create notification for a single user (internal via $executeAPI) |
+| `Notification/create_bulk_notifications` | ADMIN, OFFICER, RESIDENT | Create notifications for multiple users (internal via $executeAPI) |
+| `Notification/delete_notification` | ADMIN, OFFICER, RESIDENT | Soft-delete a notification (owner only) |
 
 ---
 

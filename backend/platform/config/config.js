@@ -241,7 +241,7 @@ module.exports = {
 	"apple_api_url"							: "ssl://gateway.push.apple.com:2195",
 
 	// FCM / Google API		
-	"#google_fb_key"          				: "{firebase.json in config folder}",
+	"#google_fb_key"          				: "{firebase.json content}", // "file://firebase.json"
 	"#google_api_key"						: "{Google API Key}",
 	"google_api_protocol"					: "https",
 	"google_api_lang"						: "en",

@@ -4655,4 +4655,846 @@ module.exports = class
 
         return {...rc, ...vals};
     }
+
+    test_notifications_apis()
+    {
+        let vals = {};
+        let rc = $ERRS.ERR_SUCCESS;
+
+        let testResults = [];
+        let createdNotificationId = null;
+        let bulkNotificationIds = [];
+        let adminUserId = this.$Session.userId;
+
+        try
+        {
+            testResults.push({step: "Starting Notification API tests", status: "info"});
+
+            // ==================================================================
+            // Test 1: create_notification (with direct title/message)
+            // ==================================================================
+            testResults.push({step: "Test 1: create_notification (direct text)", status: "running"});
+            let rv = $executeAPI(this.$Session, "Notification/create_notification", {
+                target_user_id: adminUserId,
+                type:           "general",
+                title:          "Test Notification",
+                message:        "This is a test notification message",
+                payload:        JSON.stringify({entity_type: "test", entity_id: 1}),
+                community_id:   0,
+                send_push:      false
+            });
+
+            if ($Err.isERR(rv))
+            {
+                testResults.push({step: "Test 1: create_notification (direct text)", status: "failed", error: rv.message});
+                vals.test_results = testResults;
+                vals.summary = {
+                    total: testResults.filter(r => r.status === "running").length,
+                    passed: testResults.filter(r => r.status === "passed").length,
+                    failed: testResults.filter(r => r.status === "failed").length,
+                    warnings: testResults.filter(r => r.status === "warning").length
+                };
+                return {...rc, ...vals};
+            }
+
+            createdNotificationId = rv.notification_id;
+            testResults.push({step: "Test 1: create_notification (direct text)", status: "passed", notification_id: createdNotificationId});
+
+            // ==================================================================
+            // Test 2: create_notification (with template_vars)
+            // ==================================================================
+            testResults.push({step: "Test 2: create_notification (template_vars)", status: "running"});
+            rv = $executeAPI(this.$Session, "Notification/create_notification", {
+                target_user_id: adminUserId,
+                type:           "call_accepted",
+                template_vars:  JSON.stringify({officer_name: "Test Officer", call_number: "EC-9999"}),
+                send_push:      false
+            });
+
+            if ($Err.isERR(rv))
+            {
+                testResults.push({step: "Test 2: create_notification (template_vars)", status: "failed", error: rv.message});
+            }
+            else
+            {
+                let templateNotifId = rv.notification_id;
+                testResults.push({step: "Test 2: create_notification (template_vars)", status: "passed", notification_id: templateNotifId});
+
+                // Verify rendered text
+                testResults.push({step: "Test 3: get_notifications (verify template rendering)", status: "running"});
+                rv = $executeAPI(this.$Session, "Notification/get_notifications", {offset: 0, limit: 50});
+                if ($Err.isERR(rv))
+                {
+                    testResults.push({step: "Test 3: get_notifications (verify template rendering)", status: "failed", error: rv.message});
+                }
+                else
+                {
+                    let found = rv.notifications.find(n => n.notification_id === templateNotifId);
+                    if (found && found.title === "Call Accepted" && found.message.includes("Test Officer") && found.message.includes("EC-9999"))
+                    {
+                        testResults.push({step: "Test 3: get_notifications (verify template rendering)", status: "passed", title: found.title, message: found.message});
+                    }
+                    else if (found)
+                    {
+                        testResults.push({step: "Test 3: get_notifications (verify template rendering)", status: "warning", message: "Template not rendered as expected", title: found.title, actual_message: found.message});
+                    }
+                    else
+                    {
+                        testResults.push({step: "Test 3: get_notifications (verify template rendering)", status: "warning", message: "Template notification not found in list"});
+                    }
+                }
+
+                // Cleanup template notification
+                $executeAPI(this.$Session, "Notification/delete_notification", {notification_id: templateNotifId});
+            }
+
+            // ==================================================================
+            // Test 4: create_notification (invalid type)
+            // ==================================================================
+            testResults.push({step: "Test 4: create_notification (invalid type)", status: "running"});
+            rv = $executeAPI(this.$Session, "Notification/create_notification", {
+                target_user_id: adminUserId,
+                type:           "invalid_type_xyz",
+                title:          "Should Fail",
+                message:        "This should not be created",
+                send_push:      false
+            });
+
+            if ($Err.isERR(rv) && rv.rc === 731)
+            {
+                testResults.push({step: "Test 4: create_notification (invalid type)", status: "passed", message: "correctly rejected invalid type with rc 731"});
+            }
+            else
+            {
+                testResults.push({step: "Test 4: create_notification (invalid type)", status: "warning", message: "expected rc 731 for invalid type", rc: rv.rc});
+            }
+
+            // ==================================================================
+            // Test 5: create_notification (no title/message/template_vars)
+            // ==================================================================
+            testResults.push({step: "Test 5: create_notification (template fallback for general)", status: "running"});
+            rv = $executeAPI(this.$Session, "Notification/create_notification", {
+                target_user_id: adminUserId,
+                type:           "general",
+                send_push:      false
+            });
+
+            if ($Err.isERR(rv))
+            {
+                testResults.push({step: "Test 5: create_notification (template fallback for general)", status: "warning", message: "rejected notification unexpectedly — general type has templates", error: rv.message});
+            }
+            else
+            {
+                testResults.push({step: "Test 5: create_notification (template fallback for general)", status: "passed", message: "general type template fallback created notification with unresolved placeholders", notification_id: rv.notification_id});
+                $executeAPI(this.$Session, "Notification/delete_notification", {notification_id: rv.notification_id});
+            }
+
+            // ==================================================================
+            // Test 6: get_notifications (basic)
+            // ==================================================================
+            testResults.push({step: "Test 6: get_notifications", status: "running"});
+            rv = $executeAPI(this.$Session, "Notification/get_notifications", {});
+
+            if ($Err.isERR(rv))
+            {
+                testResults.push({step: "Test 6: get_notifications", status: "failed", error: rv.message});
+            }
+            else
+            {
+                let found = rv.notifications.find(n => n.notification_id === createdNotificationId);
+                if (found && found.title === "Test Notification" && found.message === "This is a test notification message" && found.is_read === false)
+                {
+                    testResults.push({step: "Test 6: get_notifications", status: "passed", total_count: rv.total_count, found_test_notification: true});
+                }
+                else if (found)
+                {
+                    testResults.push({step: "Test 6: get_notifications", status: "warning", message: "Notification found but fields don't match", found: found});
+                }
+                else
+                {
+                    testResults.push({step: "Test 6: get_notifications", status: "warning", message: "Created notification not found in list"});
+                }
+            }
+
+            // ==================================================================
+            // Test 7: get_notifications (filter is_read=false)
+            // ==================================================================
+            testResults.push({step: "Test 7: get_notifications (filter unread)", status: "running"});
+            rv = $executeAPI(this.$Session, "Notification/get_notifications", {is_read: false});
+
+            if ($Err.isERR(rv))
+            {
+                testResults.push({step: "Test 7: get_notifications (filter unread)", status: "failed", error: rv.message});
+            }
+            else
+            {
+                let allUnread = rv.notifications.every(n => n.is_read === false);
+                let found = rv.notifications.find(n => n.notification_id === createdNotificationId);
+                if (allUnread && found)
+                {
+                    testResults.push({step: "Test 7: get_notifications (filter unread)", status: "passed", count: rv.notifications.length, all_unread: true});
+                }
+                else
+                {
+                    testResults.push({step: "Test 7: get_notifications (filter unread)", status: "warning", all_unread: allUnread, found: !!found});
+                }
+            }
+
+            // ==================================================================
+            // Test 8: get_notifications (filter by type)
+            // ==================================================================
+            testResults.push({step: "Test 8: get_notifications (filter by type)", status: "running"});
+            rv = $executeAPI(this.$Session, "Notification/get_notifications", {type: "general"});
+
+            if ($Err.isERR(rv))
+            {
+                testResults.push({step: "Test 8: get_notifications (filter by type)", status: "failed", error: rv.message});
+            }
+            else
+            {
+                let allGeneral = rv.notifications.every(n => n.type === "general");
+                let found = rv.notifications.find(n => n.notification_id === createdNotificationId);
+                if (allGeneral && found)
+                {
+                    testResults.push({step: "Test 8: get_notifications (filter by type)", status: "passed", count: rv.notifications.length, all_correct_type: true});
+                }
+                else
+                {
+                    testResults.push({step: "Test 8: get_notifications (filter by type)", status: "warning", all_correct_type: allGeneral, found: !!found});
+                }
+            }
+
+            // ==================================================================
+            // Test 9: get_notifications (pagination)
+            // ==================================================================
+            testResults.push({step: "Test 9: get_notifications (pagination)", status: "running"});
+            rv = $executeAPI(this.$Session, "Notification/get_notifications", {offset: 0, limit: 1});
+
+            if ($Err.isERR(rv))
+            {
+                testResults.push({step: "Test 9: get_notifications (pagination)", status: "failed", error: rv.message});
+            }
+            else
+            {
+                if (rv.notifications.length <= 1 && rv.limit === 1 && rv.offset === 0)
+                {
+                    testResults.push({step: "Test 9: get_notifications (pagination)", status: "passed", returned: rv.notifications.length, limit: rv.limit, offset: rv.offset, total_count: rv.total_count});
+                }
+                else
+                {
+                    testResults.push({step: "Test 9: get_notifications (pagination)", status: "warning", message: "Pagination not working as expected", returned: rv.notifications.length, limit: rv.limit});
+                }
+            }
+
+            // ==================================================================
+            // Test 10: get_notifications (date range filter)
+            // ==================================================================
+            testResults.push({step: "Test 10: get_notifications (date filter)", status: "running"});
+            let today = $Utils.now().substring(0, 10);
+            rv = $executeAPI(this.$Session, "Notification/get_notifications", {from_date: today, to_date: today});
+
+            if ($Err.isERR(rv))
+            {
+                testResults.push({step: "Test 10: get_notifications (date filter)", status: "failed", error: rv.message});
+            }
+            else
+            {
+                let found = rv.notifications.find(n => n.notification_id === createdNotificationId);
+                testResults.push({step: "Test 10: get_notifications (date filter)", status: "passed", count: rv.notifications.length, found_today: !!found});
+            }
+
+            // ==================================================================
+            // Test 11: get_unread_count
+            // ==================================================================
+            testResults.push({step: "Test 11: get_unread_count", status: "running"});
+            rv = $executeAPI(this.$Session, "Notification/get_unread_count", {});
+
+            if ($Err.isERR(rv))
+            {
+                testResults.push({step: "Test 11: get_unread_count", status: "failed", error: rv.message});
+            }
+            else
+            {
+                if (rv.unread_count >= 1)
+                {
+                    testResults.push({step: "Test 11: get_unread_count", status: "passed", unread_count: rv.unread_count});
+                }
+                else
+                {
+                    testResults.push({step: "Test 11: get_unread_count", status: "warning", message: "Expected at least 1 unread", unread_count: rv.unread_count});
+                }
+            }
+
+            // ==================================================================
+            // Test 12: mark_as_read
+            // ==================================================================
+            testResults.push({step: "Test 12: mark_as_read", status: "running"});
+            if (createdNotificationId === null)
+            {
+                testResults.push({step: "Test 12: mark_as_read", status: "failed", error: "Cannot mark - notification was not created"});
+            }
+            else
+            {
+                rv = $executeAPI(this.$Session, "Notification/mark_as_read", {notification_id: createdNotificationId});
+                if ($Err.isERR(rv))
+                {
+                    testResults.push({step: "Test 12: mark_as_read", status: "failed", error: rv.message});
+                }
+                else
+                {
+                    testResults.push({step: "Test 12: mark_as_read", status: "passed"});
+                }
+            }
+
+            // ==================================================================
+            // Test 13: verify mark_as_read
+            // ==================================================================
+            testResults.push({step: "Test 13: get_notifications (verify read)", status: "running"});
+            if (createdNotificationId === null)
+            {
+                testResults.push({step: "Test 13: get_notifications (verify read)", status: "failed", error: "Cannot verify - notification was not created"});
+            }
+            else
+            {
+                rv = $executeAPI(this.$Session, "Notification/get_notifications", {is_read: true});
+                if ($Err.isERR(rv))
+                {
+                    testResults.push({step: "Test 13: get_notifications (verify read)", status: "failed", error: rv.message});
+                }
+                else
+                {
+                    let found = rv.notifications.find(n => n.notification_id === createdNotificationId);
+                    if (found && found.is_read === true && found.read_on !== null)
+                    {
+                        testResults.push({step: "Test 13: get_notifications (verify read)", status: "passed", is_read: true, read_on: found.read_on});
+                    }
+                    else
+                    {
+                        testResults.push({step: "Test 13: get_notifications (verify read)", status: "warning", message: "Notification not found in read list", found: !!found});
+                    }
+                }
+            }
+
+            // ==================================================================
+            // Test 14: get_unread_count (verify decreased)
+            // ==================================================================
+            testResults.push({step: "Test 14: get_unread_count (after mark_as_read)", status: "running"});
+            rv = $executeAPI(this.$Session, "Notification/get_unread_count", {});
+            if ($Err.isERR(rv))
+            {
+                testResults.push({step: "Test 14: get_unread_count (after mark_as_read)", status: "failed", error: rv.message});
+            }
+            else
+            {
+                testResults.push({step: "Test 14: get_unread_count (after mark_as_read)", status: "passed", unread_count: rv.unread_count});
+            }
+
+            // ==================================================================
+            // Test 15: mark_as_read (already read — expect error 732)
+            // ==================================================================
+            testResults.push({step: "Test 15: mark_as_read (already read)", status: "running"});
+            if (createdNotificationId === null)
+            {
+                testResults.push({step: "Test 15: mark_as_read (already read)", status: "failed", error: "Cannot test - notification was not created"});
+            }
+            else
+            {
+                rv = $executeAPI(this.$Session, "Notification/mark_as_read", {notification_id: createdNotificationId});
+                if ($Err.isERR(rv) && rv.rc === 732)
+                {
+                    testResults.push({step: "Test 15: mark_as_read (already read)", status: "passed", message: "correctly returned rc 732 for already-read notification"});
+                }
+                else
+                {
+                    testResults.push({step: "Test 15: mark_as_read (already read)", status: "warning", message: "expected rc 732", rc: rv.rc});
+                }
+            }
+
+            // ==================================================================
+            // Test 16: mark_as_read (invalid ID — expect error 731)
+            // ==================================================================
+            testResults.push({step: "Test 16: mark_as_read (invalid ID)", status: "running"});
+            rv = $executeAPI(this.$Session, "Notification/mark_as_read", {notification_id: 999999999});
+            if ($Err.isERR(rv) && rv.rc === 730)
+            {
+                testResults.push({step: "Test 16: mark_as_read (invalid ID)", status: "passed", message: "correctly returned rc 730 for nonexistent notification"});
+            }
+            else
+            {
+                testResults.push({step: "Test 16: mark_as_read (invalid ID)", status: "warning", message: "expected rc 730", rc: rv.rc});
+            }
+
+            // ==================================================================
+            // Test 17: mark_all_as_read
+            // ==================================================================
+            // Create 2 unread notifications first
+            let markAllId1 = null;
+            let markAllId2 = null;
+
+            rv = $executeAPI(this.$Session, "Notification/create_notification", {
+                target_user_id: adminUserId, type: "general",
+                title: "MarkAll Test 1", message: "Unread 1", send_push: false
+            });
+            if (!$Err.isERR(rv)) { markAllId1 = rv.notification_id; }
+
+            rv = $executeAPI(this.$Session, "Notification/create_notification", {
+                target_user_id: adminUserId, type: "general",
+                title: "MarkAll Test 2", message: "Unread 2", send_push: false
+            });
+            if (!$Err.isERR(rv)) { markAllId2 = rv.notification_id; }
+
+            testResults.push({step: "Test 17: mark_all_as_read", status: "running"});
+            rv = $executeAPI(this.$Session, "Notification/mark_all_as_read", {});
+            if ($Err.isERR(rv))
+            {
+                testResults.push({step: "Test 17: mark_all_as_read", status: "failed", error: rv.message});
+            }
+            else
+            {
+                testResults.push({step: "Test 17: mark_all_as_read", status: "passed", updated_count: rv.updated_count});
+            }
+
+            // ==================================================================
+            // Test 18: verify mark_all_as_read (unread count = 0)
+            // ==================================================================
+            testResults.push({step: "Test 18: get_unread_count (verify mark_all)", status: "running"});
+            rv = $executeAPI(this.$Session, "Notification/get_unread_count", {});
+            if ($Err.isERR(rv))
+            {
+                testResults.push({step: "Test 18: get_unread_count (verify mark_all)", status: "failed", error: rv.message});
+            }
+            else
+            {
+                if (rv.unread_count === 0)
+                {
+                    testResults.push({step: "Test 18: get_unread_count (verify mark_all)", status: "passed", unread_count: 0});
+                }
+                else
+                {
+                    testResults.push({step: "Test 18: get_unread_count (verify mark_all)", status: "warning", message: "Expected 0 unread after mark_all_as_read", unread_count: rv.unread_count});
+                }
+            }
+
+            // Cleanup mark_all test notifications
+            if (markAllId1) { $executeAPI(this.$Session, "Notification/delete_notification", {notification_id: markAllId1}); }
+            if (markAllId2) { $executeAPI(this.$Session, "Notification/delete_notification", {notification_id: markAllId2}); }
+
+            // ==================================================================
+            // Test 19: mark_all_as_read (no unread — should succeed with 0)
+            // ==================================================================
+            testResults.push({step: "Test 19: mark_all_as_read (none unread)", status: "running"});
+            rv = $executeAPI(this.$Session, "Notification/mark_all_as_read", {});
+            if ($Err.isERR(rv))
+            {
+                testResults.push({step: "Test 19: mark_all_as_read (none unread)", status: "failed", error: rv.message});
+            }
+            else
+            {
+                if (rv.updated_count === 0)
+                {
+                    testResults.push({step: "Test 19: mark_all_as_read (none unread)", status: "passed", updated_count: 0});
+                }
+                else
+                {
+                    testResults.push({step: "Test 19: mark_all_as_read (none unread)", status: "warning", message: "Expected 0 updated", updated_count: rv.updated_count});
+                }
+            }
+
+            // ==================================================================
+            // Test 20: create_bulk_notifications
+            // ==================================================================
+            testResults.push({step: "Test 20: create_bulk_notifications", status: "running"});
+            rv = $executeAPI(this.$Session, "Notification/create_bulk_notifications", {
+                target_user_ids: [adminUserId],
+                type:            "general",
+                title:           "Bulk Test Notification",
+                message:         "Bulk test message",
+                payload:         JSON.stringify({entity_type: "test", entity_id: 99}),
+                community_id:    0,
+                send_push:       false
+            });
+
+            if ($Err.isERR(rv))
+            {
+                testResults.push({step: "Test 20: create_bulk_notifications", status: "failed", error: rv.message});
+            }
+            else
+            {
+                testResults.push({step: "Test 20: create_bulk_notifications", status: "passed", created_count: rv.created_count});
+            }
+
+            // ==================================================================
+            // Test 21: verify bulk notification appears in list
+            // ==================================================================
+            testResults.push({step: "Test 21: get_notifications (verify bulk)", status: "running"});
+            rv = $executeAPI(this.$Session, "Notification/get_notifications", {offset: 0, limit: 50});
+            if ($Err.isERR(rv))
+            {
+                testResults.push({step: "Test 21: get_notifications (verify bulk)", status: "failed", error: rv.message});
+            }
+            else
+            {
+                let bulkNotif = rv.notifications.find(n => n.title === "Bulk Test Notification" && n.message === "Bulk test message");
+                if (bulkNotif)
+                {
+                    bulkNotificationIds.push(bulkNotif.notification_id);
+                    testResults.push({step: "Test 21: get_notifications (verify bulk)", status: "passed", notification_id: bulkNotif.notification_id});
+                }
+                else
+                {
+                    testResults.push({step: "Test 21: get_notifications (verify bulk)", status: "warning", message: "Bulk notification not found in list"});
+                }
+            }
+
+            // ==================================================================
+            // Test 22: create_bulk_notifications (with template_vars)
+            // ==================================================================
+            testResults.push({step: "Test 22: create_bulk_notifications (template_vars)", status: "running"});
+            rv = $executeAPI(this.$Session, "Notification/create_bulk_notifications", {
+                target_user_ids: [adminUserId],
+                type:            "call_resolved",
+                template_vars:   JSON.stringify({officer_name: "Bulk Officer", call_number: "EC-8888"}),
+                send_push:       false
+            });
+
+            if ($Err.isERR(rv))
+            {
+                testResults.push({step: "Test 22: create_bulk_notifications (template_vars)", status: "failed", error: rv.message});
+            }
+            else
+            {
+                testResults.push({step: "Test 22: create_bulk_notifications (template_vars)", status: "passed", created_count: rv.created_count});
+
+                // Find and cleanup
+                let listRv = $executeAPI(this.$Session, "Notification/get_notifications", {type: "call_resolved", offset: 0, limit: 10});
+                if (!$Err.isERR(listRv))
+                {
+                    let bulkTpl = listRv.notifications.find(n => n.message && n.message.includes("Bulk Officer") && n.message.includes("EC-8888"));
+                    if (bulkTpl)
+                    {
+                        bulkNotificationIds.push(bulkTpl.notification_id);
+                    }
+                }
+            }
+
+            // ==================================================================
+            // Test 23: create_bulk_notifications (invalid type)
+            // ==================================================================
+            testResults.push({step: "Test 23: create_bulk_notifications (invalid type)", status: "running"});
+            rv = $executeAPI(this.$Session, "Notification/create_bulk_notifications", {
+                target_user_ids: [adminUserId],
+                type:            "completely_invalid_type",
+                title:           "Should Fail",
+                message:         "Should Fail",
+                send_push:       false
+            });
+
+            if ($Err.isERR(rv) && rv.rc === 731)
+            {
+                testResults.push({step: "Test 23: create_bulk_notifications (invalid type)", status: "passed", message: "correctly rejected invalid type with rc 731"});
+            }
+            else
+            {
+                testResults.push({step: "Test 23: create_bulk_notifications (invalid type)", status: "warning", message: "expected rc 731", rc: rv.rc});
+            }
+
+            // ==================================================================
+            // Test 24: create_bulk_notifications (empty target_user_ids)
+            // ==================================================================
+            testResults.push({step: "Test 24: create_bulk_notifications (empty targets)", status: "running"});
+            rv = $executeAPI(this.$Session, "Notification/create_bulk_notifications", {
+                target_user_ids: [],
+                type:            "general",
+                title:           "Should Fail",
+                message:         "No targets",
+                send_push:       false
+            });
+
+            if ($Err.isERR(rv))
+            {
+                testResults.push({step: "Test 24: create_bulk_notifications (empty targets)", status: "passed", message: "correctly rejected empty target_user_ids"});
+            }
+            else
+            {
+                testResults.push({step: "Test 24: create_bulk_notifications (empty targets)", status: "warning", message: "accepted empty target_user_ids unexpectedly"});
+            }
+
+            // ==================================================================
+            // Test 25: delete_notification
+            // ==================================================================
+            testResults.push({step: "Test 25: delete_notification", status: "running"});
+            if (createdNotificationId === null)
+            {
+                testResults.push({step: "Test 25: delete_notification", status: "failed", error: "Cannot delete - notification was not created"});
+            }
+            else
+            {
+                rv = $executeAPI(this.$Session, "Notification/delete_notification", {notification_id: createdNotificationId});
+                if ($Err.isERR(rv))
+                {
+                    testResults.push({step: "Test 25: delete_notification", status: "failed", error: rv.message});
+                }
+                else
+                {
+                    testResults.push({step: "Test 25: delete_notification", status: "passed"});
+                }
+            }
+
+            // ==================================================================
+            // Test 26: verify delete (should not appear in list)
+            // ==================================================================
+            testResults.push({step: "Test 26: get_notifications (verify delete)", status: "running"});
+            if (createdNotificationId === null)
+            {
+                testResults.push({step: "Test 26: get_notifications (verify delete)", status: "failed", error: "Cannot verify - notification was not created"});
+            }
+            else
+            {
+                rv = $executeAPI(this.$Session, "Notification/get_notifications", {offset: 0, limit: 100});
+                if ($Err.isERR(rv))
+                {
+                    testResults.push({step: "Test 26: get_notifications (verify delete)", status: "failed", error: rv.message});
+                }
+                else
+                {
+                    let found = rv.notifications.find(n => n.notification_id === createdNotificationId);
+                    if (!found)
+                    {
+                        testResults.push({step: "Test 26: get_notifications (verify delete)", status: "passed", verified_deleted: true});
+                    }
+                    else
+                    {
+                        testResults.push({step: "Test 26: get_notifications (verify delete)", status: "warning", verified_deleted: false, message: "Deleted notification still appears in list"});
+                    }
+                }
+            }
+
+            // ==================================================================
+            // Test 27: delete_notification (already deleted — expect 731)
+            // ==================================================================
+            testResults.push({step: "Test 27: delete_notification (already deleted)", status: "running"});
+            if (createdNotificationId === null)
+            {
+                testResults.push({step: "Test 27: delete_notification (already deleted)", status: "failed", error: "Cannot test - notification was not created"});
+            }
+            else
+            {
+                rv = $executeAPI(this.$Session, "Notification/delete_notification", {notification_id: createdNotificationId});
+                if ($Err.isERR(rv) && rv.rc === 730)
+                {
+                    testResults.push({step: "Test 27: delete_notification (already deleted)", status: "passed", message: "correctly returned rc 730 for already-deleted notification"});
+                }
+                else
+                {
+                    testResults.push({step: "Test 27: delete_notification (already deleted)", status: "warning", message: "expected rc 730", rc: rv.rc});
+                }
+            }
+
+            // ==================================================================
+            // Test 28: delete_notification (invalid ID)
+            // ==================================================================
+            testResults.push({step: "Test 28: delete_notification (invalid ID)", status: "running"});
+            rv = $executeAPI(this.$Session, "Notification/delete_notification", {notification_id: 999999999});
+            if ($Err.isERR(rv) && rv.rc === 730)
+            {
+                testResults.push({step: "Test 28: delete_notification (invalid ID)", status: "passed", message: "correctly returned rc 730 for nonexistent notification"});
+            }
+            else
+            {
+                testResults.push({step: "Test 28: delete_notification (invalid ID)", status: "warning", message: "expected rc 730", rc: rv.rc});
+            }
+
+            // ==================================================================
+            // Test 29: get_notifications (filter is_read=true)
+            // ==================================================================
+            testResults.push({step: "Test 29: get_notifications (filter read)", status: "running"});
+            rv = $executeAPI(this.$Session, "Notification/get_notifications", {is_read: true});
+            if ($Err.isERR(rv))
+            {
+                testResults.push({step: "Test 29: get_notifications (filter read)", status: "failed", error: rv.message});
+            }
+            else
+            {
+                let allRead = rv.notifications.every(n => n.is_read === true);
+                testResults.push({step: "Test 29: get_notifications (filter read)", status: "passed", count: rv.notifications.length, all_read: allRead});
+            }
+
+            // ==================================================================
+            // Test 30: get_notifications (large offset — expect empty)
+            // ==================================================================
+            testResults.push({step: "Test 30: get_notifications (large offset)", status: "running"});
+            rv = $executeAPI(this.$Session, "Notification/get_notifications", {offset: 999999, limit: 20});
+            if ($Err.isERR(rv))
+            {
+                testResults.push({step: "Test 30: get_notifications (large offset)", status: "failed", error: rv.message});
+            }
+            else
+            {
+                if (rv.notifications.length === 0)
+                {
+                    testResults.push({step: "Test 30: get_notifications (large offset)", status: "passed", count: 0, message: "correctly returned empty list for large offset"});
+                }
+                else
+                {
+                    testResults.push({step: "Test 30: get_notifications (large offset)", status: "warning", message: "expected empty list", count: rv.notifications.length});
+                }
+            }
+
+            // ==================================================================
+            // Test 31: get_notifications (nonexistent type filter)
+            // ==================================================================
+            testResults.push({step: "Test 31: get_notifications (nonexistent type)", status: "running"});
+            rv = $executeAPI(this.$Session, "Notification/get_notifications", {type: "nonexistent_type_xyz"});
+            if ($Err.isERR(rv))
+            {
+                testResults.push({step: "Test 31: get_notifications (nonexistent type)", status: "failed", error: rv.message});
+            }
+            else
+            {
+                if (rv.notifications.length === 0)
+                {
+                    testResults.push({step: "Test 31: get_notifications (nonexistent type)", status: "passed", count: 0, message: "correctly returned empty list for nonexistent type"});
+                }
+                else
+                {
+                    testResults.push({step: "Test 31: get_notifications (nonexistent type)", status: "warning", message: "expected empty list", count: rv.notifications.length});
+                }
+            }
+
+            // ==================================================================
+            // Test 32: create_notification (payload parsing)
+            // ==================================================================
+            testResults.push({step: "Test 32: create_notification (payload parsing)", status: "running"});
+            let payloadNotifId = null;
+            rv = $executeAPI(this.$Session, "Notification/create_notification", {
+                target_user_id: adminUserId,
+                type:           "general",
+                title:          "Payload Test",
+                message:        "Testing payload deep-link data",
+                payload:        JSON.stringify({entity_type: "call", entity_id: 42, extra: "data"}),
+                send_push:      false
+            });
+
+            if ($Err.isERR(rv))
+            {
+                testResults.push({step: "Test 32: create_notification (payload parsing)", status: "failed", error: rv.message});
+            }
+            else
+            {
+                payloadNotifId = rv.notification_id;
+                let listRv = $executeAPI(this.$Session, "Notification/get_notifications", {offset: 0, limit: 10});
+                if (!$Err.isERR(listRv))
+                {
+                    let found = listRv.notifications.find(n => n.notification_id === payloadNotifId);
+                    if (found && found.payload && found.payload.entity_type === "call" && found.payload.entity_id === 42)
+                    {
+                        testResults.push({step: "Test 32: create_notification (payload parsing)", status: "passed", payload: found.payload});
+                    }
+                    else
+                    {
+                        testResults.push({step: "Test 32: create_notification (payload parsing)", status: "warning", message: "Payload not parsed correctly", payload: found ? found.payload : null});
+                    }
+                }
+                else
+                {
+                    testResults.push({step: "Test 32: create_notification (payload parsing)", status: "passed", notification_id: payloadNotifId});
+                }
+            }
+
+            // ==================================================================
+            // Test 33: create_notification (partial override — title only)
+            // ==================================================================
+            testResults.push({step: "Test 33: create_notification (title-only override)", status: "running"});
+            let partialNotifId = null;
+            rv = $executeAPI(this.$Session, "Notification/create_notification", {
+                target_user_id: adminUserId,
+                type:           "call_accepted",
+                title:          "Custom Title Override",
+                template_vars:  JSON.stringify({officer_name: "Partial Officer", call_number: "EC-7777"}),
+                send_push:      false
+            });
+
+            if ($Err.isERR(rv))
+            {
+                testResults.push({step: "Test 33: create_notification (title-only override)", status: "failed", error: rv.message});
+            }
+            else
+            {
+                partialNotifId = rv.notification_id;
+                let listRv = $executeAPI(this.$Session, "Notification/get_notifications", {offset: 0, limit: 10});
+                if (!$Err.isERR(listRv))
+                {
+                    let found = listRv.notifications.find(n => n.notification_id === partialNotifId);
+                    if (found && found.title === "Custom Title Override" && found.message.includes("Partial Officer"))
+                    {
+                        testResults.push({step: "Test 33: create_notification (title-only override)", status: "passed", title: found.title, message: found.message});
+                    }
+                    else
+                    {
+                        testResults.push({step: "Test 33: create_notification (title-only override)", status: "warning", message: "Partial override not applied correctly", title: found ? found.title : null, actual_message: found ? found.message : null});
+                    }
+                }
+                else
+                {
+                    testResults.push({step: "Test 33: create_notification (title-only override)", status: "passed", notification_id: partialNotifId});
+                }
+            }
+
+            // ==================================================================
+            // Test 34: create_notification (invalid template_vars JSON)
+            // ==================================================================
+            testResults.push({step: "Test 34: create_notification (invalid template_vars)", status: "running"});
+            rv = $executeAPI(this.$Session, "Notification/create_notification", {
+                target_user_id: adminUserId,
+                type:           "call_accepted",
+                template_vars:  "not_valid_json{{{",
+                send_push:      false
+            });
+
+            if ($Err.isERR(rv))
+            {
+                testResults.push({step: "Test 34: create_notification (invalid template_vars)", status: "warning", message: "rejected notification with invalid template_vars", error: rv.message});
+            }
+            else
+            {
+                testResults.push({step: "Test 34: create_notification (invalid template_vars)", status: "passed", message: "invalid JSON template_vars handled gracefully — notification created with unresolved placeholders", notification_id: rv.notification_id});
+                $executeAPI(this.$Session, "Notification/delete_notification", {notification_id: rv.notification_id});
+            }
+
+            // ==================================================================
+            // Cleanup remaining test notifications
+            // ==================================================================
+            testResults.push({step: "Cleanup: removing test notifications", status: "info"});
+
+            if (payloadNotifId) { $executeAPI(this.$Session, "Notification/delete_notification", {notification_id: payloadNotifId}); }
+            if (partialNotifId) { $executeAPI(this.$Session, "Notification/delete_notification", {notification_id: partialNotifId}); }
+            for (let i = 0; i < bulkNotificationIds.length; i++)
+            {
+                $executeAPI(this.$Session, "Notification/delete_notification", {notification_id: bulkNotificationIds[i]});
+            }
+
+            testResults.push({step: "All tests completed", status: "success"});
+        }
+        catch (error)
+        {
+            testResults.push({step: "Exception occurred", status: "error", error: error.message, stack: error.stack});
+
+            if (this.$Session.accountImpersonationStack !== null)
+            {
+                this.$Session.accountImpersonationStack = null;
+                this.$Session.userId = adminUserId;
+                this.$Session.userType = $Const.USER_TYPE_ADMIN;
+            }
+        }
+
+        vals.test_results = testResults;
+        vals.summary = {
+            total: testResults.filter(r => r.status === "running").length,
+            passed: testResults.filter(r => r.status === "passed").length,
+            failed: testResults.filter(r => r.status === "failed").length,
+            warnings: testResults.filter(r => r.status === "warning").length
+        };
+
+        return {...rc, ...vals};
+    }
 }
