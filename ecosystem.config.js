@@ -31,7 +31,7 @@ module.exports = {
       ignore_watch : [__dirname + "/.git", __dirname + "/backend/content", __dirname + "/backend/runtime", __dirname + "/backend/key_value_sets" ],
     },
     {
-      name   : "code4_notifications_socket",
+      name   : "code4_notifications_socket_staging",
       script: __dirname + "/backend/platform/jobs/notifications_socket.js",
       // Specify which folder to watch
 //      watch: ["backend/platform/api", "backend/platform/config"],
@@ -41,7 +41,7 @@ module.exports = {
       ignore_watch : [__dirname + "/.git", __dirname + "/backend/content", __dirname + "/backend/runtime", __dirname + "/backend/key_value_sets" ],
     },
     {
-      name   : "code4_notifications_socket_service",
+      name   : "code4_notifications_socket_service_staging",
       script: __dirname + "/backend/platform/jobs/notifications_socket_service.js",
       // Specify which folder to watch
 //      watch: ["backend/platform/api", "backend/platform/config"],
