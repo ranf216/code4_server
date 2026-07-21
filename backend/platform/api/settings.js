@@ -189,6 +189,7 @@ module.exports =
                                                     "report_approved_enabled"       : "o:b:true***Enable notification for report approved",
                                                     "report_changes_enabled"        : "o:b:true***Enable notification for report changes requested",
                                                     "report_delivered_enabled"      : "o:b:true***Enable notification for report delivered",
+                                                    "notification_retention_days"   : "o:i:"+$Config.get("SETTINGS_DEFAULTS").notification.notification_retention_days+"***Number of days to retain notifications before cleanup",
                                                 },
 
 
