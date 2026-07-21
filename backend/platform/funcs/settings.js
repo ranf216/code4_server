@@ -249,6 +249,7 @@ module.exports = class
             report_approved_enabled: this.$report_approved_enabled,
             report_changes_enabled: this.$report_changes_enabled,
             report_delivered_enabled: this.$report_delivered_enabled,
+            notification_retention_days: this.$notification_retention_days,
         };
         const rv = updateSettings($Const.KVL_SETTINGS_NOTIFICATION, $Config.get("SETTINGS_DEFAULTS").notification, values);
         if ($Err.isERR(rv)) return rv;

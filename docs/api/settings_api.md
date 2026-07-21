@@ -683,7 +683,8 @@ GPS, Notification, POI, and Working Hours settings are global configurations sto
         "report_submitted_enabled": true,
         "report_approved_enabled": true,
         "report_changes_enabled": true,
-        "report_delivered_enabled": true
+        "report_delivered_enabled": true,
+        "notification_retention_days": 90
     }
     ```
 
@@ -707,6 +708,7 @@ GPS, Notification, POI, and Working Hours settings are global configurations sto
     | `report_approved_enabled` | boolean | Notify the officer when their incident report is approved. |
     | `report_changes_enabled` | boolean | Notify the officer when changes are requested on their report. |
     | `report_delivered_enabled` | boolean | Notify the client when an incident report is delivered. |
+    | `notification_retention_days` | integer | Number of days to retain notifications before automatic cleanup. |
 
 - **Error Cases:**
     | rc | Message | Scenario |
@@ -744,6 +746,7 @@ GPS, Notification, POI, and Working Hours settings are global configurations sto
     | `report_approved_enabled` | boolean | No | Enable notification for report approved. Default: `true`. |
     | `report_changes_enabled` | boolean | No | Enable notification for report changes requested. Default: `true`. |
     | `report_delivered_enabled` | boolean | No | Enable notification for report delivered. Default: `true`. |
+    | `notification_retention_days` | integer | No | Number of days to retain notifications before automatic cleanup. Default: `90`. |
 
 - **Return Values:**
     ```json

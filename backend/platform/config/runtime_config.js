@@ -46,6 +46,7 @@ module.exports =
 			report_approved_enabled: true,
 			report_changes_enabled: true,
 			report_delivered_enabled: true,
+			notification_retention_days: 90,
 		},
 		"poi": {
 			renewal_reminder_days: 14,
