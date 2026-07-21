@@ -8,7 +8,7 @@ module.exports = {
     "FILES_PORT"                            : 3086,
     "FILES_PUBLIC_URL"                      : "https://stg.api.code4.iuetechnologies.com",
 
-    "SOCKET_PROTOCOL"                       : "https",
+    "SOCKET_PROTOCOL"                       : "http",
     "SOCKET_PORT"                           : 3088,
     "SOCKET_PUBLIC_URL"                     : "https://stg.ws.code4.iuetechnologies.com",
 
