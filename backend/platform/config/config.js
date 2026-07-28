@@ -21,7 +21,7 @@ module.exports = {
 	"enable_api_client"						: true,
 	"enable_logtail"						: true,
 	"enable_socket_viewer"					: true,
-	"enable_dialer"							: true,
+	"enable_dialer"							: false,
 	"enable_log_analyzer"					: true,
 	"enable_audit_trail"					: true,
 	"enable_otp_viewer"						: true,
@@ -302,7 +302,7 @@ module.exports = {
 													"model"								: "gpt-4o-mini",
 													"temperature"						: 0.3,
 													"max_text_length"					: 5000,
-													"system_prompt"						: "You are a professional translator. Translate the following text to {target_language}. Rules:\n1. Preserve all tokens that start with # (e.g., #user_name, #address) exactly as-is — do NOT translate them.\n2. Preserve any HTML tags exactly as-is.\n3. Maintain the same tone and formatting.\n4. Return ONLY the translated text, no explanations.",
+													"system_prompt"						: "You are a professional translator. Translate the following text to {target_language}. Rules:\n1. Preserve all tokens that start with # (e.g., #user_name, #address) exactly as-is ï¿½ do NOT translate them.\n2. Preserve any HTML tags exactly as-is.\n3. Maintain the same tone and formatting.\n4. Return ONLY the translated text, no explanations.",
 												},
 											},
 
