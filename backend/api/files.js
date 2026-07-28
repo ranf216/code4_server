@@ -1,6 +1,6 @@
 const express = require('express');
 const cookieParser = require('cookie-parser')
-$HttpContext = require('express-http-context');
+$HttpContext = require('../platform/infra/http_context.js');
 const getRawBody = require('raw-body');
 const contentType = require('content-type');
 const Session = require("../platform/infra/session.js");

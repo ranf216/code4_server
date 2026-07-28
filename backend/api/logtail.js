@@ -1,36 +1,12 @@
 const fs = require('fs');
 
+const $ToolPage = require("../platform/infra/tool_page.js");
+
 exports.run = function (req, res)
 {
-	res.set("Content-Type", "text/html");
-	res.set("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0");
-	res.set("Cache-Control", "post-check=0, pre-check=0");
-	res.set("Pragma", "no-cache");
-
-	if ($Config.get("enable_logtail") != true)
+	if (!$ToolPage.checkAccess(req, res, {configKey: "enable_logtail", restrictConfigKey: "restrict_logtail_to_ip", toolName: "logtail"}))
 	{
-		$Utils.unauthorize();
 		return;
-	}
-
-	$Utils.authorizeIP($Config.get("restrict_logtail_to_ip"));
-
-	if ($Config.get("enable_system_login"))
-	{
-		const systemToken = req.cookies.system_token;
-		if (systemToken === undefined)
-		{
-			res.redirect("/system_login/logtail");
-			return;
-		}
-
-		const encToken = $Cipher.encryptData(systemToken, "static");
-		const isExist = $Db.executeQuery(`SELECT count(*) cnt FROM \`system_user\` WHERE STU_TOKEN=?`, [encToken])[0].cnt;
-		if (!isExist)
-		{
-			res.redirect("/system_login/logtail");
-			return;
-		}
 	}
 
 	let limit = 100;
@@ -66,10 +42,7 @@ exports.run = function (req, res)
 
 	let html = $Utils.fileGetContents(__dirname + "/content/logtail.html");
 
-	html = html.replace("{{getWebClientMessages}}", $Utils.getWebClientMessages())
-				.replace("{{getWebClientEnvironment}}", $Utils.getWebClientEnvironment())
-				.replace("{{environment}}", $Utils.empty($Config.get("env_name")) ? "default" : $Config.get("env_name"))
-				.replace("{{system}}", $Config.get("SYSTEM_NAME"))
+	html = $ToolPage.applyCommonReplacements(html, "logtail")
 				.replaceAll("{{project}}", $Config.get("project_log_type_name"))
 				.replace("{{project_display}}", $Config.get("project_log_type_name") ? "inline" : "none")
 				.replace("{{limit}}", limit)
@@ -77,9 +50,7 @@ exports.run = function (req, res)
 				.replace("{{fileOptions}}", getFileOptions())
 				.replace("{{lines}}", lines)
 				.replace("{{ipOptions}}", getIpOptions(arrIps))
-				.replace("{{reqOptions}}", getReqOptions(arrReqs))
-				.replace("{{api_url}}", $Config.get("api_url"))
-				.replace("{{enable_system_login}}", $Config.get("enable_system_login") ? "" : "display: none;");
+				.replace("{{reqOptions}}", getReqOptions(arrReqs));
 
 	res.send(html);
 }

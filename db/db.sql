@@ -64,6 +64,32 @@ CREATE TABLE `cache_version` (
 
 
 --
+-- Definition of table `call_log`
+--
+
+DROP TABLE IF EXISTS `call_log`;
+CREATE TABLE `call_log` (
+  `CLG_ID` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `CLG_ENTITY_ID` varchar(128) NOT NULL,
+  `CLG_USR_ID` varchar(128) NOT NULL,
+  `CLG_PHONE` varchar(20) NOT NULL,
+  `CLG_DIRECTION` varchar(10) NOT NULL DEFAULT 'outbound',
+  `CLG_RESULT` varchar(20) NOT NULL,
+  `CLG_DURATION_SEC` int NOT NULL DEFAULT 0,
+  `CLG_TWILIO_SID` varchar(64) DEFAULT NULL,
+  `CLG_NOTES` text DEFAULT NULL,
+  `CLG_CREATED_ON` datetime NOT NULL,
+  PRIMARY KEY (`CLG_ID`),
+  KEY `idx_clg_entity_id` (`CLG_ENTITY_ID`),
+  KEY `idx_clg_usr_id` (`CLG_USR_ID`),
+  KEY `idx_clg_created_on` (`CLG_CREATED_ON`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
+
+/*!40000 ALTER TABLE `call_log` DISABLE KEYS */;
+/*!40000 ALTER TABLE `call_log` ENABLE KEYS */;
+
+
+--
 -- Definition of table `change_log`
 --
 
@@ -243,6 +269,55 @@ CREATE TABLE  `debug_log` (
 
 /*!40000 ALTER TABLE `debug_log` DISABLE KEYS */;
 /*!40000 ALTER TABLE `debug_log` ENABLE KEYS */;
+
+
+--
+-- Definition of table `dialer_session`
+--
+
+DROP TABLE IF EXISTS `dialer_session`;
+CREATE TABLE `dialer_session` (
+  `DLS_ID` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `DLS_USR_ID` varchar(128) NOT NULL,
+  `DLS_STATUS` varchar(20) NOT NULL DEFAULT 'active',
+  `DLS_ENTITY_TYPE` varchar(50) NOT NULL DEFAULT 'generic',
+  `DLS_TOTAL_ITEMS` int NOT NULL DEFAULT 0,
+  `DLS_CURRENT_INDEX` int NOT NULL DEFAULT 0,
+  `DLS_CREATED_ON` datetime NOT NULL,
+  `DLS_ENDED_ON` datetime DEFAULT NULL,
+  PRIMARY KEY (`DLS_ID`),
+  KEY `idx_dls_usr_id` (`DLS_USR_ID`),
+  KEY `idx_dls_status` (`DLS_STATUS`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
+
+/*!40000 ALTER TABLE `dialer_session` DISABLE KEYS */;
+/*!40000 ALTER TABLE `dialer_session` ENABLE KEYS */;
+
+
+--
+-- Definition of table `dialer_queue_item`
+--
+
+DROP TABLE IF EXISTS `dialer_queue_item`;
+CREATE TABLE `dialer_queue_item` (
+  `DQI_ID` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `DQI_DLS_ID` bigint unsigned NOT NULL,
+  `DQI_ENTITY_ID` varchar(128) NOT NULL,
+  `DQI_ENTITY_TYPE` varchar(50) NOT NULL DEFAULT 'generic',
+  `DQI_ORDER` int NOT NULL DEFAULT 0,
+  `DQI_STATUS` varchar(20) NOT NULL DEFAULT 'pending',
+  `DQI_CALL_RESULT` varchar(20) DEFAULT NULL,
+  `DQI_DURATION_SEC` int DEFAULT NULL,
+  `DQI_CALLED_ON` datetime DEFAULT NULL,
+  `DQI_CREATED_ON` datetime NOT NULL,
+  PRIMARY KEY (`DQI_ID`),
+  KEY `idx_dqi_dls_id` (`DQI_DLS_ID`),
+  KEY `idx_dqi_entity_id` (`DQI_ENTITY_ID`),
+  KEY `idx_dqi_status` (`DQI_STATUS`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
+
+/*!40000 ALTER TABLE `dialer_queue_item` DISABLE KEYS */;
+/*!40000 ALTER TABLE `dialer_queue_item` ENABLE KEYS */;
 
 
 --

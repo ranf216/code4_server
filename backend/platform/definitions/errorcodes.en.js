@@ -116,6 +116,10 @@ module.exports = {
 	"ERR_INVALID_ACTION_ID"								: {"rc" : 370,	"message" : "Invalid action ID"},
 	"ERR_ACTION_STILL_IN_PROGRESS"						: {"rc" : 371,	"message" : "Action still in progress"},
 	"ERR_INVALID_LOG_ANALYZER_DATE"						: {"rc" : 372,	"message" : "Invalid date"},
+	"ERR_AI_TRANSLATION_FAILED"							: {"rc" : 373,	"message" : "Translation service returned an error"},
+	"ERR_AI_SERVICE_UNAVAILABLE"						: {"rc" : 374,	"message" : "AI service is not available"},
+	"ERR_AI_TEXT_TOO_LONG"								: {"rc" : 375,	"message" : "Text exceeds maximum length"},
+	"ERR_AI_INVALID_LANGUAGE_CODE"						: {"rc" : 376,	"message" : "Invalid or unsupported target language code"},
 
 	// DB
 	"ERR_DB_GENERAL_ERROR"								: {"rc" : 400,	"message" : "DB general error"},
@@ -134,11 +138,24 @@ module.exports = {
 	"ERR_DATA_TABLE_KEY_NOT_FOUND"						: {"rc" : 423,	"message" : "Data table key not found"},
 
 	// Cache
-	"ERR_CACHE_GENERAL_ERROR"							: {"rc" : 450,	"message" : "cache general error"},
-	"ERR_CACHE_INVALID_DATA_COUNT"						: {"rc" : 451,	"message" : "cache put error: invalid data count"},
-	"ERR_CACHE_WRITE_FAILED"							: {"rc" : 452,	"message" : "cache put error: failed to write file"},
-	"ERR_CACHE_READ_FAILED"								: {"rc" : 453,	"message" : "cache get error: failed to read file"},
-	"ERR_CACHE_DELETE_FAILED"							: {"rc" : 454,	"message" : "cache delete error: failed to delete file"},
+	"ERR_CACHE_GENERAL_ERROR"							: {"rc" : 440,	"message" : "cache general error"},
+	"ERR_CACHE_INVALID_DATA_COUNT"						: {"rc" : 441,	"message" : "cache put error: invalid data count"},
+	"ERR_CACHE_WRITE_FAILED"							: {"rc" : 442,	"message" : "cache put error: failed to write file"},
+	"ERR_CACHE_READ_FAILED"								: {"rc" : 443,	"message" : "cache get error: failed to read file"},
+	"ERR_CACHE_DELETE_FAILED"							: {"rc" : 444,	"message" : "cache delete error: failed to delete file"},
+
+	// Dialer
+	"ERR_DIALER_TWILIO_NOT_CONFIGURED"					: {"rc" : 460,	"message" : "Twilio credentials are not configured"},
+	"ERR_DIALER_TWIML_APP_NOT_CONFIGURED"				: {"rc" : 461,	"message" : "TwiML app SID is not configured"},
+	"ERR_DIALER_INVALID_ENTITY_IDS"						: {"rc" : 462,	"message" : "entity_ids must be a non-empty array"},
+	"ERR_DIALER_QUEUE_EXCEEDS_MAX"						: {"rc" : 463,	"message" : "queue exceeds maximum allowed size"},
+	"ERR_DIALER_SESSION_ALREADY_ACTIVE"					: {"rc" : 464,	"message" : "a dialer session is already active for this user"},
+	"ERR_DIALER_SESSION_NOT_FOUND"						: {"rc" : 465,	"message" : "dialer session not found"},
+	"ERR_DIALER_SESSION_NOT_ACTIVE"						: {"rc" : 466,	"message" : "dialer session is not active"},
+	"ERR_DIALER_SESSION_NOT_PAUSED"						: {"rc" : 467,	"message" : "dialer session is not paused"},
+	"ERR_DIALER_SESSION_ALREADY_COMPLETED"				: {"rc" : 468,	"message" : "dialer session is already completed"},
+	"ERR_DIALER_INVALID_CALL_RESULT"					: {"rc" : 469,	"message" : "invalid call result, must be: answered, no_answer, voicemail, busy, failed"},
+	"ERR_DIALER_INVALID_DIRECTION"						: {"rc" : 470,	"message" : "invalid direction, must be: outbound or inbound"},
 
 	// Content
 

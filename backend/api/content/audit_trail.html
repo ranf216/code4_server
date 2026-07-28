@@ -5,6 +5,7 @@
 	<link rel="shortcut icon" href="/favicon.ico?src=audit_trail" />
 	<script type="text/javascript" src="/public/jquery-1.8.2.mini.js"></script>
 	<script type="text/javascript" src="/public/jquery.cookie.js"></script>
+	<link rel="stylesheet" type="text/css" href="/public/tools-common.css" />
 
 	<style type="text/css">
 		html, body {height: 100%; width: 100%; margin: 0; padding:0; font-family: Arial, sans-serif;}
@@ -30,8 +31,6 @@
 		.search_row input[type="radio"] {margin: 0 5px 0 15px;}
 		.search_row button {padding: 8px 20px; background: #2196F3; color: white; border: none; border-radius: 3px; cursor: pointer; margin-left: 10px;}
 		.search_row button:hover {background: #0b7dda;}
-		
-		#logout {background-color: #f7ae66; border: #df7002 2px solid; font-weight: bold; cursor: pointer; padding: 5px 15px; {{enable_system_login}} }
 		
 		.results_table {width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 14px;}
 		.results_table th {background: #4CAF50; color: white; padding: 10px; text-align: left; position: sticky; top: 0;}
@@ -463,45 +462,6 @@
 			$(`#${tabId}_results`).html('');
 		}
 
-		function doOnLogout()
-		{
-			if (!confirm("Are you sure you want to logout?"))
-			{
-				return;
-			}
-
-			makeApiCall({"#request": "User/system_logout", "token": jQuery.cookie("system_token")}, rc =>
-			{
-				jQuery.removeCookie("system_token");
-				window.location = "system_login/audit_trail";
-			});
-		}
-
-		function makeApiCall(request, callback)
-		{
-			$.ajax({
-				url: "{{api_url}}",
-				type: "POST",
-				data: JSON.stringify(request),
-				dataType: 'json',
-				headers: { 'Content-Type': 'application/json' },
-				success: function (json)
-				{
-					if (json.rc == undefined)
-					{
-						alert(JSON.stringify(json));
-						return;
-					}
-
-					callback(json);
-				},
-				error: function()
-				{
-					alert(arguments[0].responseText);
-				}
-			});
-		}
-
 		function escapeHtml(text)
 		{
 			if (text === null || text === undefined) return '';
@@ -547,12 +507,14 @@
 			setTimeout(() => toast.remove(), 3000);
 		}
 	</script>
+	<script type="text/javascript">var API_URL = "{{api_url}}"; var TOOL_NAME = "{{tool_name}}";</script>
+	<script type="text/javascript" src="/public/tools-common.js"></script>
 </head>
 <body>
 	<div id="outer">
 		<div id="header">
 			<div>{{getWebClientMessages}}{{getWebClientEnvironment}}</div>
-			<div><input type="button" id="logout" onclick="doOnLogout()" value="Logout" /></div>
+			<div><input type="button" id="logout" style="{{enable_system_login}}" onclick="doOnLogout()" value="Logout" /></div>
 		</div>
 		<div id="tabs_container">
 			<div id="new_tab" onclick="createNewTab()">+ New Search</div>

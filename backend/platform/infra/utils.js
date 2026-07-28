@@ -1446,11 +1446,6 @@ module.exports =
 			return false;
 		}
 
-		if ($Utils.empty(phoneNumber) || phoneNumber.length != 12)
-		{
-			return false;
-		}
-
 		if (doFormat && phoneNumber.dialingCode === "1" && phoneNumber.phoneNumber.length === 10)
         {
 			const phone = phoneNumber.intlFormat;

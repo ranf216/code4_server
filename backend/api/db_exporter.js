@@ -3,23 +3,18 @@ const activeExports = {};
 
 // Configuration for export defaults
 const EXPORT_CONFIG = require('../platform/config/db_exporter.config.js');
+const $ToolPage = require("../platform/infra/tool_page.js");
 
 exports.run = function (req, res)
 {
-    if ($Config.get("enable_db_exporter") != true)
+    if (!$ToolPage.checkAccess(req, res, {configKey: "enable_db_exporter", restrictConfigKey: "restrict_db_exporter_to_ip", toolName: "db_exporter"}))
     {
-        $Utils.unauthorize();
         return;
     }
 
-    $Utils.authorizeIP($Config.get("restrict_db_exporter_to_ip"));
-
     var html = $Utils.fileGetContents(__dirname + "/content/db_exporter.html");
 
-    html = html.replace("{{getWebClientMessages}}", $Utils.getWebClientMessages())
-                .replace("{{getWebClientEnvironment}}", $Utils.getWebClientEnvironment())
-                .replace("{{environment}}", $Utils.empty($Config.get("env_name")) ? "default" : $Config.get("env_name"))
-                .replace("{{system}}", $Config.get("SYSTEM_NAME"));
+    html = $ToolPage.applyCommonReplacements(html, "db_exporter");
 
     res.send(html);
 }

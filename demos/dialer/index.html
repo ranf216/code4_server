@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{{system}} {{environment}} - Dialer Module — Demo</title>
+    <link rel="stylesheet" href="/dialer/style.css" />
+	<link rel="shortcut icon" href="/favicon.ico?src=dialer" />
+	<script type="text/javascript" src="/public/jquery-1.8.2.mini.js"></script>
+	<script type="text/javascript" src="/public/jquery.cookie.js"></script>
+	<link rel="stylesheet" type="text/css" href="/public/tools-common.css" />
+	<script type="text/javascript">var API_URL = "{{api_url}}"; var TOOL_NAME = "{{tool_name}}";</script>
+	<script type="text/javascript" src="/public/tools-common.js"></script>
+</head>
+<body>
+
+    <div>{{getWebClientMessages}}{{getWebClientEnvironment}}</div>
+    <div><input type="button" id="logout" style="{{enable_system_login}}" onclick="doOnLogout()" value="Logout" /></div>
+
+    <h1>Dialer Module Demo</h1>
+    <p class="subtitle">
+        A standalone reference showing how to integrate the reusable DialerModule.
+    </p>
+
+    <div class="sim-notice">
+        <strong>Live Mode:</strong> This demo uses the real Twilio Voice SDK and server API.
+        Calls will be placed through Twilio. Ensure your Twilio credentials are configured
+        in <code>config.js</code> and the TwiML App Voice URL points to
+        <code>/webhooks/twilio/voice</code> on this server.
+    </div>
+
+    <!-- ── Server Connection ── -->
+    <div class="card" style="margin-bottom:24px;">
+        <h2>Server Connection</h2>
+        <div class="form-row">
+            <input id="input-api-url" type="text" placeholder="API base URL" value="http://localhost:8081/api" style="flex:2;" />
+            <input id="input-auth-token" type="text" placeholder="Auth token (from login)" style="flex:2;" />
+        </div>
+        <p style="font-size:.75rem;color:var(--clr-text-sec);margin-top:6px;">
+            Provide a valid user auth token. All Dialer API calls require authentication.
+        </p>
+    </div>
+
+    <!-- ── Grid layout ── -->
+    <div class="grid">
+
+        <!-- ── 1. Initialization Card ── -->
+        <div class="card">
+            <h2>
+                1. Initialize
+                <span id="init-badge" class="badge badge-idle">Not Ready</span>
+            </h2>
+            <p style="font-size:.8125rem;color:var(--clr-text-sec);margin-bottom:12px;">
+                Fetches a Twilio token and registers the Device.
+            </p>
+            <button id="btn-init" class="btn btn-primary">Initialize Dialer</button>
+            <button id="btn-destroy" class="btn btn-outline" disabled>Destroy</button>
+        </div>
+
+        <!-- ── 2. Single Call Card ── -->
+        <div class="card">
+            <h2>
+                2. Single Call
+                <span id="call-badge" class="badge badge-idle">idle</span>
+            </h2>
+
+            <div class="form-row">
+                <input id="input-phone" type="tel" placeholder="+1 555 123 4567" value="+15551234567" />
+                <input id="input-name" type="text" placeholder="Contact name" value="Jane Doe" />
+            </div>
+
+            <div class="call-info" id="call-info" style="display:none;">
+                <div class="contact-name" id="call-contact-name"></div>
+                <div class="phone-display" id="call-phone-display"></div>
+                <div class="duration" id="call-duration">00:00</div>
+            </div>
+
+            <div class="btn-group">
+                <button id="btn-call" class="btn btn-success" disabled>Call</button>
+                <button id="btn-mute" class="btn btn-warning" disabled>Mute</button>
+                <button id="btn-hangup" class="btn btn-danger" disabled>Hang Up</button>
+            </div>
+        </div>
+
+        <!-- ── 3. Bulk Queue Card ── -->
+        <div class="card" style="grid-column: 1 / -1;">
+            <h2>
+                3. Bulk Dialing Queue
+                <span id="queue-badge" class="badge badge-idle">idle</span>
+            </h2>
+
+            <p style="font-size:.8125rem;color:var(--clr-text-sec);margin-bottom:12px;">
+                Demonstrates auto-dial loop over a list of contacts.
+            </p>
+
+            <div class="btn-group" style="margin-top:0;margin-bottom:12px;">
+                <button id="btn-start-queue" class="btn btn-primary" disabled>Start Queue (5 contacts)</button>
+                <button id="btn-pause-queue" class="btn btn-warning" disabled>Pause</button>
+                <button id="btn-resume-queue" class="btn btn-success" disabled>Resume</button>
+                <button id="btn-skip" class="btn btn-secondary" disabled>Skip</button>
+                <button id="btn-stop-queue" class="btn btn-danger" disabled>Stop Queue</button>
+            </div>
+
+            <div class="stats" id="queue-stats" style="display:none;">
+                <div class="stat-item">Total: <span id="stat-total">0</span></div>
+                <div class="stat-item">Completed: <span id="stat-completed">0</span></div>
+                <div class="stat-item">Answered: <span id="stat-answered">0</span></div>
+                <div class="stat-item">Failed: <span id="stat-failed">0</span></div>
+                <div class="stat-item">Skipped: <span id="stat-skipped">0</span></div>
+                <div class="stat-item">Remaining: <span id="stat-remaining">0</span></div>
+            </div>
+
+            <ul class="queue-list" id="queue-list"></ul>
+        </div>
+
+        <!-- ── 4. Event Log ── -->
+        <div class="card log-panel">
+            <h2>Event Log</h2>
+            <div id="event-log"></div>
+        </div>
+
+    </div>
+
+    <!-- Scripts -->
+    <!-- Real Twilio Voice SDK (comment out and use twilio-mock.js for offline testing) -->
+    <script src="/dialer/twilio.min.js"></script>
+    <!-- <script src="/dialer/twilio-mock.js"></script> -->
+    <script src="/dialer/dialer-module.js"></script>
+    <script src="/dialer/demo.js"></script>
+
+</body>
+</html>

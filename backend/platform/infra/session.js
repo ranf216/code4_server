@@ -192,7 +192,6 @@ module.exports = class
         this.userRoleAllow = user.USR_ROLE_ALLOW;
         this.userRoleDeny = user.USR_ROLE_DENY;
         this.userRoles = $Utils.getCalculatedUserRoles(this.userType, this.userRoleAllow, this.userRoleDeny);
-        this.token = null;
 
         return {...rc, ...vals};
     }

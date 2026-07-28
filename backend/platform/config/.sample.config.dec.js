@@ -17,6 +17,13 @@ module.exports = {
 												"#predef_otp_code"						: "{Predefined otp code}",		// "1234"
 											},
 
+	"twilio_dialer"							: {
+												"#auth_id"								: "{auth_id}",
+												"#auth_token"							: "{Auth token}",
+												"#api_key_sid"							: "{Twilio API Key SID}",
+												"#api_key_secret"						: "{Twilio API Key Secret}",
+											},
+
 	"cipher"								: {
 												"#secret_key"							: "{Secret Key}",
 												"#secret_iv"							: "{Secret IV}",
@@ -39,4 +46,9 @@ module.exports = {
 	"sendgrid_smtp"							: {
 												"#key"									: "{sendgrid api key}",
 											},
+
+	"openai"								: {
+												"#api_key"								: "{OpenAI API Key}",
+											},
+
 };

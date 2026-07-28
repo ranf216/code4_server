@@ -1,5 +1,25 @@
+const $ToolPage = require("../platform/infra/tool_page.js");
+
 exports.run = function (req, res)
 {
+	if ($Config.get("enable_system_login"))
+	{
+		const systemToken = req.cookies.system_token;
+		if (systemToken === undefined)
+		{
+			res.redirect("/system_login/tools");
+			return;
+		}
+
+		const encToken = $Cipher.encryptData(systemToken, "static");
+		const isExist = $Db.executeQuery(`SELECT count(*) cnt FROM \`system_user\` WHERE STU_TOKEN=?`, [encToken])[0].cnt;
+		if (!isExist)
+		{
+			res.redirect("/system_login/tools");
+			return;
+		}
+	}
+
 	const tools = [
 		{
 			name: "apiclient",
@@ -38,6 +58,12 @@ exports.run = function (req, res)
 			enabled: $Config.get("enable_socket_viewer") === true
 		},
 		{
+			name: "dialer",
+			title: "Dialer",
+			url: "/dialer",
+			enabled: $Config.get("enable_dialer") === true
+		},
+		{
 			name: "sql_formatter",
 			title: "SQL Formatter",
 			url: "/sql_formatter",
@@ -62,10 +88,7 @@ exports.run = function (req, res)
 
 	var html = $Utils.fileGetContents(__dirname + "/content/tools.html");
 
-	html = html.replace("{{getWebClientMessages}}", $Utils.getWebClientMessages())
-				.replace("{{getWebClientEnvironment}}", $Utils.getWebClientEnvironment())
-				.replace("{{environment}}", $Utils.empty($Config.get("env_name")) ? "default" : $Config.get("env_name"))
-				.replace("{{system}}", $Config.get("SYSTEM_NAME"))
+	html = $ToolPage.applyCommonReplacements(html, "tools")
 				.replace("{{tools}}", toolsJson);
 
 	res.send(html);

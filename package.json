@@ -1,6 +1,7 @@
 {
   "dependencies": {
     "@sendgrid/mail": "^7.6.2",
+    "@twilio/voice-sdk": "^2.18.3",
     "aws-sdk": "^2.1096.0",
     "content-type": "^1.0.4",
     "cookie-parser": "^1.4.6",
@@ -8,7 +9,6 @@
     "deasync": "0.1.24",
     "email-validator": "^2.0.4",
     "express": "^4.17.3",
-    "express-http-context": "^1.2.4",
     "express-useragent": "^1.0.15",
     "firebase-admin": "^12.4.0",
     "ics": "^3.5.0",

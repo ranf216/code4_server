@@ -1,0 +1,17 @@
+/*=============================================================================================*
+*
+*	Shared styles for the internal admin "tools" pages.
+*
+*=============================================================================================*/
+
+#logout {
+	background-color: #f7ae66;
+	border: #df7002 2px solid;
+	font-weight: bold;
+	cursor: pointer;
+	padding: 5px 15px;
+	border-radius: 3px;
+}
+#logout:hover {background-color: #f59e46;}
+
+.large_vspacer {height: 20px;}
