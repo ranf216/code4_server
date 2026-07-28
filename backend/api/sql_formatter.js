@@ -1,15 +1,15 @@
+const $ToolPage = require("../platform/infra/tool_page.js");
+
 exports.run = function (req, res)
 {
-	if ($Config.get("enable_sql_formatter") != true)
+	if (!$ToolPage.checkAccess(req, res, {configKey: "enable_sql_formatter", restrictConfigKey: "restrict_sql_formatter_to_ip", toolName: "sql_formatter"}))
 	{
-		$Utils.unauthorize();
 		return;
 	}
 
 	var html = $Utils.fileGetContents(__dirname + "/content/sql_formatter.html");
 
-	html = html.replace("{{environment}}", $Utils.empty($Config.get("env_name")) ? "default" : $Config.get("env_name"))
-				.replace("{{system}}", $Config.get("SYSTEM_NAME"));
+	html = $ToolPage.applyCommonReplacements(html, "sql_formatter");
 
 	res.send(html);
 }

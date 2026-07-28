@@ -1,19 +1,15 @@
+const $ToolPage = require("../platform/infra/tool_page.js");
+
 exports.run = function (req, res)
 {
-	if ($Config.get("enable_api_client") != true)
+	if (!$ToolPage.checkAccess(req, res, {configKey: "enable_api_client", restrictConfigKey: "restrict_api_client_to_ip", toolName: "apiclient"}))
 	{
-		$Utils.unauthorize();
 		return;
 	}
 
-	$Utils.authorizeIP($Config.get("restrict_api_client_to_ip"));
-
 	var html = $Utils.fileGetContents(__dirname + "/content/apiclient.html");
 
-	html = html.replace("{{getWebClientMessages}}", $Utils.getWebClientMessages())
-				.replace("{{getWebClientEnvironment}}", $Utils.getWebClientEnvironment())
-				.replace("{{environment}}", $Utils.empty($Config.get("env_name")) ? "default" : $Config.get("env_name"))
-				.replace("{{system}}", $Config.get("SYSTEM_NAME"));
+	html = $ToolPage.applyCommonReplacements(html, "apiclient");
 
 	res.send(html);
 }

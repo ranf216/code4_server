@@ -14,6 +14,10 @@ if not exist "docs\audit_trail.md" (
     mklink docs\audit_trail.md C:\Development\FuzzyClick\windsurf_cascade_brain\audit_trail.md
     echo docs/audit_trail.md >> .git/info/exclude
 )
+if not exist "docs\code_creation_flow_and_prompts.md" (
+    mklink docs\code_creation_flow_and_prompts.md C:\Development\FuzzyClick\windsurf_cascade_brain\code_creation_flow_and_prompts.md
+    echo docs/code_creation_flow_and_prompts.md >> .git/info/exclude
+)
 
 if not exist ".devin" mkdir ".devin"
 if not exist ".devin\rules" mkdir ".devin\rules"

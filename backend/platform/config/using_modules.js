@@ -11,6 +11,7 @@ module.exports =
         "mailer",
         // "mailer_queue",
         "message_queue",
+		// "openai",
         // "notes",
         // "queue_service",
         // "sendgrid",

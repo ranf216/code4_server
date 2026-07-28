@@ -1,6 +1,6 @@
 const express = require('express');
 const cookieParser = require('cookie-parser')
-$HttpContext = require('express-http-context');
+$HttpContext = require('../platform/infra/http_context.js');
 const getRawBody = require('raw-body');
 const contentType = require('content-type');
 const Session = require("../platform/infra/session.js");
@@ -47,6 +47,7 @@ app.use("/apiclient", initSession);
 app.use("/logtail", initSession);
 app.use("/sql_formatter", initSession);
 app.use("/socket_viewer", initSession);
+app.use("/dialer", initSession);
 app.use("/log_analyzer", initSession);
 app.use("/audit_trail", initSession);
 app.use("/otp_viewer", initSession);
@@ -56,6 +57,7 @@ app.use("/db_exporter/export", initSession);
 app.use("/db_exporter/stop", initSession);
 app.use("/doc_library", initSession);
 app.use("/doc_library/file", initSession);
+app.use("/doc_library/image/:imageName", initSession);
 app.use("/restore_password", initSession);
 app.use("/public/jsapi.js", initSession);
 app.use("/files/a/:filedata", initSession);
@@ -149,6 +151,19 @@ app.post('/api', function (req, res)
         
         doApiCall(req, res);
     });
+});
+
+// ── Twilio Voice Webhooks ──
+app.post('/webhooks/twilio/voice', express.urlencoded({ extended: false }), function (req, res)
+{
+    const TwilioWebhooks = require("./twilio_webhooks.js");
+    TwilioWebhooks.voice(req, res);
+});
+
+app.post('/webhooks/twilio/status', express.urlencoded({ extended: false }), function (req, res)
+{
+    const TwilioWebhooks = require("./twilio_webhooks.js");
+    TwilioWebhooks.status(req, res);
 });
 
 app.get('/system_login/:location', function (req, res)
@@ -298,6 +313,14 @@ app.get('/doc_library/file', function (req, res)
     $HttpContext.get("session").closeDb();
 });
 
+app.get('/doc_library/image/:imageName', function (req, res)
+{
+    const DocLibrary = require("./doc_library.js");
+    DocLibrary.getImage(req, res);
+
+    $HttpContext.get("session").closeDb();
+});
+
 app.get('/public/jsapi.js', function (req, res)
 {
     const jsapi = require(path.join(infraRoot, req.path));
@@ -318,6 +341,32 @@ app.get('/restore_password', function (req, res)
 
     $HttpContext.get("session").closeDb();
 });
+
+app.use('/dialer', function (req, res, next)
+{
+    const $ToolPage = require("../platform/infra/tool_page.js");
+
+    if (!$ToolPage.checkAccess(req, res, {configKey: "enable_dialer", restrictConfigKey: "restrict_dialer_to_ip", toolName: "dialer", skipHeaders: true}))
+    {
+        return;
+    }
+
+    next();
+});
+
+app.get(['/dialer', '/dialer/'], function (req, res)
+{
+    const Dialer = require("./dialer.js");
+    Dialer.run(req, res);
+
+    $HttpContext.get("session").closeDb();
+});
+
+app.get('/dialer/twilio.min.js', function (req, res)
+{
+    res.sendFile(path.join(infraRoot, "..", "node_modules", "@twilio", "voice-sdk", "dist", "twilio.min.js"));
+});
+app.use('/dialer', express.static(path.join(infraRoot, "..", "demos", "dialer")));
 
 
 app.get('/favicon.ico', function (req, res)
@@ -482,6 +531,39 @@ app.get('/favicon.ico', function (req, res)
                                                                     [2, 3, 16, 17],
                                                                     [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17],
                                                                     [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17],
+                                                                    [], []]);
+    }
+    else if (req.query.src == "dialer")
+    {
+        img.setPixelsToColor($Config.get("env_text_color"), null, [ [], [],
+                                                                    [4, 5],
+                                                                    [3, 4, 5, 6],
+                                                                    [3, 4, 5, 6, 7],
+                                                                    [2, 3, 4, 5, 6, 7, 8],
+                                                                    [2, 3, 4, 5, 6, 7, 8, 9],
+                                                                    [2, 3, 4, 5, 6, 7, 8, 9, 10],
+                                                                    [2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
+                                                                    [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+                                                                    [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+                                                                    [3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+                                                                    [3, 4, 5, 6, 7, 8, 9, 10, 11],
+                                                                    [3, 4, 5, 6, 7, 8, 9],
+                                                                    [3, 4, 5, 6, 7, 8],
+                                                                    [4, 5, 6, 7, 8, 9],
+                                                                    [4, 5, 6, 7, 8, 9],
+                                                                    [4, 5, 6, 7, 8, 9, 10],
+                                                                    [5, 6, 7, 8, 9, 10, 11],
+                                                                    [6, 7, 8, 9, 10, 11, 12, 20, 21, 22],
+                                                                    [6, 7, 8, 9, 10, 11, 12, 13, 19, 20, 21, 22, 23],
+                                                                    [7, 8, 9, 10, 11, 12, 13, 14, 19, 20, 21, 22, 23, 24],
+                                                                    [8, 9, 10, 11, 12, 13, 14, 15, 16, 18, 19, 20, 21, 22, 23, 24, 25],
+                                                                    [9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26],
+                                                                    [10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27],
+                                                                    [11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28],
+                                                                    [13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29],
+                                                                    [15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29],
+                                                                    [17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28],
+                                                                    [21, 22, 23, 24, 25, 26],
                                                                     [], []]);
     }
     else if (req.query.src == "doc_library")

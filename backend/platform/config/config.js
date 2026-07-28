@@ -1,7 +1,7 @@
 module.exports = {
 	// Version
 	"api_version"							: "1",
-	"infra_version"							: "3.12.7",
+	"infra_version"							: "3.13.2",
 
 	// Server online - If set to false, no API is able to run!!!
 	"api_server_active"						: true,
@@ -21,6 +21,7 @@ module.exports = {
 	"enable_api_client"						: true,
 	"enable_logtail"						: true,
 	"enable_socket_viewer"					: true,
+	"enable_dialer"							: true,
 	"enable_log_analyzer"					: true,
 	"enable_audit_trail"					: true,
 	"enable_otp_viewer"						: true,
@@ -34,10 +35,13 @@ module.exports = {
 	"restrict_api_client_to_ip"				: [],
 	"restrict_logtail_to_ip"				: [],
 	"restrict_socket_viewer_to_ip"			: [],
+	"restrict_dialer_to_ip"					: [],
 	"restrict_log_analyzer_to_ip"			: [],
 	"restrict_audit_trail_to_ip"			: [],
 	"restrict_otp_viewer_to_ip"				: [],
 	"restrict_db_exporter_to_ip"			: [],
+	"restrict_sql_formatter_to_ip"			: [],
+	"restrict_doc_library_to_ip"			: [],
 
 	// Basic
 	"ignore_ssl_cert"						: true,
@@ -206,6 +210,18 @@ module.exports = {
 												"#predef_otp_code"						: "{Predefined otp code}",
 											},
 
+	"twilio_dialer"							: {
+												"#auth_id"								: "{auth_id}",
+												"#auth_token"							: "{Auth token}",
+												"twiml_app_sid"							: "{TwiML App SID}",
+												"#api_key_sid"							: "{API Key SID}",
+												"#api_key_secret"						: "{API Key Secret}",
+												"caller_id"								: "{Caller Id (phone number)}",
+												"token_ttl_sec"							: 3600,
+												"auto_advance_delay_ms"					: 2000,
+												"max_queue_size"						: 200,
+											},
+
 	"avatar"								: {
 												"size"									: 300,
 												"default_font_file"						: "typewriter.ttf",
@@ -276,6 +292,18 @@ module.exports = {
 												"#key"									: "{sendgrid api key}",
 												"log_file"								: $Const.INFRA_ROOT + "/runtime/log/sendgrid.log",
 												"is_debug_mode"							: true,
+											},
+
+	"openai"								: {
+												"#api_key"								: "{OpenAI API Key}",
+												"timeout_ms"							: 15000,
+
+												"translation"							: {
+													"model"								: "gpt-4o-mini",
+													"temperature"						: 0.3,
+													"max_text_length"					: 5000,
+													"system_prompt"						: "You are a professional translator. Translate the following text to {target_language}. Rules:\n1. Preserve all tokens that start with # (e.g., #user_name, #address) exactly as-is — do NOT translate them.\n2. Preserve any HTML tags exactly as-is.\n3. Maintain the same tone and formatting.\n4. Return ONLY the translated text, no explanations.",
+												},
 											},
 
 };

@@ -6,6 +6,10 @@
 		<link rel="shortcut icon" href="/favicon.ico?src=doc_library" />
 
 		<script type="text/javascript" src="/public/jquery-1.8.2.mini.js"></script>
+		<script type="text/javascript" src="/public/jquery.cookie.js"></script>
+		<link rel="stylesheet" type="text/css" href="/public/tools-common.css" />
+		<script type="text/javascript">var API_URL = "{{api_url}}"; var TOOL_NAME = "{{tool_name}}";</script>
+		<script type="text/javascript" src="/public/tools-common.js"></script>
 		
 		<style type="text/css">
 			* {
@@ -18,10 +22,16 @@
 				background: #f5f5f5;
 				height: 100vh;
 				overflow: hidden;
+				display: flex;
+				flex-direction: column;
+			}
+			#header {
+				flex-shrink: 0;
 			}
 			.layout {
 				display: flex;
-				height: 100vh;
+				flex: 1;
+				min-height: 0;
 			}
 			.sidebar {
 				width: 280px;
@@ -45,18 +55,52 @@
 				padding: 0;
 			}
 			.sidebar-list li {
-				padding: 12px 20px;
 				cursor: pointer;
-				border-bottom: 1px solid #34495e;
 				font-size: 13px;
 				transition: background 0.15s;
 			}
-			.sidebar-list li:hover {
+			.sidebar-list li.file-item {
+				padding: 10px 20px;
+				border-bottom: 1px solid #34495e;
+			}
+			.sidebar-list li.file-item:hover {
 				background: #34495e;
 			}
-			.sidebar-list li.active {
+			.sidebar-list li.file-item.active {
 				background: #2980b9;
 				color: #fff;
+			}
+			.sidebar-list .folder-label {
+				padding: 10px 20px;
+				border-bottom: 1px solid #34495e;
+				font-size: 13px;
+				font-weight: bold;
+				color: #bdc3c7;
+				cursor: pointer;
+				user-select: none;
+				transition: background 0.15s;
+			}
+			.sidebar-list .folder-label:hover {
+				background: #34495e;
+			}
+			.sidebar-list .folder-label .folder-arrow {
+				display: inline-block;
+				width: 12px;
+				margin-right: 4px;
+				font-size: 10px;
+				transition: transform 0.15s;
+			}
+			.sidebar-list .folder-label.collapsed .folder-arrow {
+				transform: rotate(-90deg);
+			}
+			.sidebar-list .folder-children {
+				list-style: none;
+				margin: 0;
+				padding: 0;
+				padding-left: 14px;
+			}
+			.sidebar-list .folder-children.hidden {
+				display: none;
 			}
 			.main-content {
 				flex: 1;
@@ -178,6 +222,7 @@
 					if (item.length)
 					{
 						item.addClass("active");
+						expandPathToFile(item);
 						loadFile(fileParam);
 					}
 				}
@@ -185,15 +230,89 @@
 
 			function renderSidebar()
 			{
+				var tree = buildTree(FILES);
 				var list = $(".sidebar-list");
-				for (var i = 0; i < FILES.length; i++)
+				renderTreeLevel(tree, list);
+			}
+
+			function formatDisplayName(name)
+			{
+				name = name.replace(/[-_]/g, " ");
+				name = name.replace(/\b\w/g, function(c) { return c.toUpperCase(); });
+				return name;
+			}
+
+			function buildTree(files)
+			{
+				var root = { _children: {}, _files: [] };
+				for (var i = 0; i < files.length; i++)
 				{
-					var li = $("<li></li>");
-					li.text(FILES[i].display);
-					li.attr("data-filename", FILES[i].filename);
-					li.click(onFileClick);
-					list.append(li);
+					var file = files[i];
+					var parts = (file.treeFilename || file.filename).replace(/\.md$/, "").split("~");
+					if (parts.length === 1)
+					{
+						root._files.push(file);
+					}
+					else
+					{
+						var node = root;
+						for (var p = 0; p < parts.length - 1; p++)
+						{
+							var folderName = parts[p];
+							if (!node._children[folderName])
+							{
+								node._children[folderName] = { _children: {}, _files: [] };
+							}
+							node = node._children[folderName];
+						}
+						var leafName = parts[parts.length - 1];
+						node._files.push({ filename: file.filename, display: file.display, leafDisplay: formatDisplayName(leafName) });
+					}
 				}
+				return root;
+			}
+
+			function renderTreeLevel(node, parentEl)
+			{
+				var folderNames = Object.keys(node._children).sort();
+				var files = node._files.slice().sort(function(a, b) {
+					var nameA = a.leafDisplay || a.display;
+					var nameB = b.leafDisplay || b.display;
+					return nameA.localeCompare(nameB);
+				});
+
+				for (var i = 0; i < folderNames.length; i++)
+				{
+					var folderLi = $("<li></li>");
+					var label = $("<div class='folder-label collapsed'><span class='folder-arrow'>&#9660;</span>" + escapeHtml(formatDisplayName(folderNames[i])) + "</div>");
+					var childrenUl = $("<ul class='folder-children hidden'></ul>");
+					label.click(function() {
+						var $this = $(this);
+						$this.toggleClass("collapsed");
+						$this.next(".folder-children").toggleClass("hidden");
+					});
+					folderLi.append(label);
+					folderLi.append(childrenUl);
+					parentEl.append(folderLi);
+					renderTreeLevel(node._children[folderNames[i]], childrenUl);
+				}
+
+				for (var i = 0; i < files.length; i++)
+				{
+					var li = $("<li class='file-item'></li>");
+					li.text(files[i].leafDisplay || files[i].display);
+					li.attr("data-filename", files[i].filename);
+					li.click(onFileClick);
+					parentEl.append(li);
+				}
+			}
+
+			function expandPathToFile(fileItem)
+			{
+				fileItem.parents(".folder-children").each(function() {
+					$(this).removeClass("hidden");
+					$(this).prev(".folder-label").removeClass("collapsed");
+				});
 			}
 
 			function onFileClick()
@@ -238,6 +357,8 @@
 				text = text.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
 				text = text.replace(/\*([^*]+)\*/g, "<em>$1</em>");
 				text = text.replace(/`([^`]+)`/g, "<code>$1</code>");
+				text = text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank">$1</a>');
+				text = text.replace(/~~([^~]+)~~/g, "<del>$1</del>");
 				return text;
 			}
 
@@ -369,6 +490,10 @@
 
     </head>
     <body>
+		<div id="header">
+			<div>{{getWebClientMessages}}{{getWebClientEnvironment}}</div>
+			<div><input type="button" id="logout" style="{{enable_system_login}}" onclick="doOnLogout()" value="Logout" /></div>
+		</div>
 		<div class="layout">
 			<div class="sidebar">
 				<div class="sidebar-header">Doc Library</div>

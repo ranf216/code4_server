@@ -285,7 +285,7 @@ function overrideConfigWithPrivateConfig(configPath, confArr, privConfArr, paren
 		}
 		else
 		{
-			if (val.startsWith("file://"))
+			if (String(val).startsWith("file://"))
 			{
 				val = $Utils.fileGetContents(`${configPath}/${val.substring(7)}`).trim();
 			}
