@@ -22,6 +22,19 @@ if not exist "docs\code_creation_flow_and_prompts.md" (
 if not exist ".devin" mkdir ".devin"
 if not exist ".devin\rules" mkdir ".devin\rules"
 
+if not exist ".devin\rules\00-bootstrap.md" (
+    (
+        echo # Bootstrap — Read First
+        echo.
+        echo CRITICAL: At the start of every session, you MUST directly read ALL files in this directory ^(.devin/rules/^) using the read tool before doing anything else.
+        echo CRITICAL: Read docs/brain.md completely before generating any code.
+        echo CRITICAL: Do NOT delegate rule-reading to subagents. Read each file yourself.
+        echo CRITICAL: These files may be symbolic links — they ARE accessible. Read them directly with the read tool.
+        echo CRITICAL: Do NOT commit, push, or execute any Git commands that modify the repository history.
+    ) > .devin\rules\00-bootstrap.md
+    echo .devin/rules/00-bootstrap.md >> .git/info/exclude
+)
+
 if not exist ".devin\rules\01-workflow.md" (
     mklink .devin\rules\01-workflow.md C:\Development\FuzzyClick\windsurf_cascade_brain\devin_rules\01-workflow.md
     echo .devin/rules/01-workflow.md >> .git/info/exclude
