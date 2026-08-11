@@ -2,6 +2,7 @@ module.exports =
 [
 	"admin_user",
 	"api_test",
+	"call",
 	"community",
 	// "dialer",
 	"file",

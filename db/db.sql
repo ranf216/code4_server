@@ -426,6 +426,64 @@ CREATE TABLE `resident` (
 
 
 --
+-- Definition of table `service_call`
+--
+
+DROP TABLE IF EXISTS `service_call`;
+CREATE TABLE `service_call` (
+  `SVC_ID` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `SVC_CATEGORY` varchar(30) NOT NULL COMMENT 'medical_emergency, security_emergency, concierge_service, test, panic',
+  `SVC_SERVICE_TYPE` varchar(100) DEFAULT NULL COMMENT 'data_item service_type key (concierge only)',
+  `SVC_RES_USR_ID` varchar(128) NOT NULL COMMENT 'Creator user ID (resident or officer for panic)',
+  `SVC_OFC_USR_ID` varchar(128) DEFAULT NULL COMMENT 'Assigned/accepted officer user ID',
+  `SVC_COM_ID` bigint unsigned NOT NULL,
+  `SVC_STATUS` varchar(20) NOT NULL DEFAULT 'new' COMMENT 'new, accepted, resolved, canceled',
+  `SVC_PRIORITY` varchar(20) NOT NULL DEFAULT 'normal' COMMENT 'urgent, important, normal, low',
+  `SVC_DESCRIPTION` text,
+  `SVC_ADDRESS` varchar(500) DEFAULT NULL COMMENT 'Resident home address',
+  `SVC_CURRENT_ADDRESS` varchar(500) DEFAULT NULL COMMENT 'Current location description (emergencies)',
+  `SVC_LATITUDE` decimal(10,7) DEFAULT NULL,
+  `SVC_LONGITUDE` decimal(10,7) DEFAULT NULL,
+  `SVC_SCHEDULED_DATE` date DEFAULT NULL,
+  `SVC_SCHEDULED_TIME_FROM` time DEFAULT NULL,
+  `SVC_SCHEDULED_TIME_TO` time DEFAULT NULL,
+  `SVC_MEDIA` json DEFAULT NULL COMMENT 'Resident attached images (array of file names, max 5)',
+  `SVC_AUDIO` varchar(200) DEFAULT NULL COMMENT 'Audio recording file name',
+  `SVC_VIDEO` varchar(200) DEFAULT NULL COMMENT 'Video file name',
+  `SVC_CONFIRMATION_MEDIA` json DEFAULT NULL COMMENT 'Officer confirmation images (array of file names, max 5)',
+  `SVC_CONFIRMATION_VIDEO` varchar(200) DEFAULT NULL COMMENT 'Officer confirmation video file name',
+  `SVC_OFFICER_COMMENTS` text,
+  `SVC_REACTION` tinyint DEFAULT NULL COMMENT '1=like, -1=dislike, null=no reaction',
+  `SVC_RESIDENT_COMMENT` text,
+  `SVC_PASSED_BY` json DEFAULT NULL COMMENT 'Array of officer user IDs who passed on this call',
+  `SVC_ASSIGNED_BY` varchar(128) DEFAULT NULL COMMENT 'Admin who assigned the officer',
+  `SVC_ACCEPTED_ON` datetime DEFAULT NULL,
+  `SVC_RESOLVED_ON` datetime DEFAULT NULL,
+  `SVC_CANCELED_ON` datetime DEFAULT NULL,
+  `SVC_CREATED_ON` datetime NOT NULL,
+  `SVC_LAST_UPDATE` datetime DEFAULT NULL,
+  `SVC_DELETED_ON` datetime DEFAULT NULL,
+  PRIMARY KEY (`SVC_ID`),
+  KEY `IX_SVC_RES_USR_ID` (`SVC_RES_USR_ID`),
+  KEY `IX_SVC_OFC_USR_ID` (`SVC_OFC_USR_ID`),
+  KEY `IX_SVC_COM_ID` (`SVC_COM_ID`),
+  KEY `IX_SVC_STATUS` (`SVC_STATUS`),
+  KEY `IX_SVC_CATEGORY` (`SVC_CATEGORY`),
+  KEY `IX_SVC_CREATED_ON` (`SVC_CREATED_ON`),
+  CONSTRAINT `FK_SVC_RES_USR_ID` FOREIGN KEY (`SVC_RES_USR_ID`) REFERENCES `user` (`USR_ID`),
+  CONSTRAINT `FK_SVC_OFC_USR_ID` FOREIGN KEY (`SVC_OFC_USR_ID`) REFERENCES `user` (`USR_ID`),
+  CONSTRAINT `FK_SVC_COM_ID` FOREIGN KEY (`SVC_COM_ID`) REFERENCES `community` (`COM_ID`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+--
+-- Dumping data for table `service_call`
+--
+
+/*!40000 ALTER TABLE `service_call` DISABLE KEYS */;
+/*!40000 ALTER TABLE `service_call` ENABLE KEYS */;
+
+
+--
 -- Definition of table `file`
 --
 

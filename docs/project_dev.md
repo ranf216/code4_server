@@ -74,6 +74,11 @@ Project-specific error codes start at RC 500:
 |---|---|---|
 | `notification` | `NTF_` | In-app notification records per user (read/unread, type, payload for deep linking) |
 
+### Database Tables (V 4.4.0)
+| Table | Prefix | Description |
+|---|---|---|
+| `service_call` | `SVC_` | Service/emergency/panic calls with lifecycle tracking, media, officer assignment, and resident feedback |
+
 
 ---
 
@@ -443,6 +448,89 @@ Valid types: `new_emergency`, `new_service_call`, `call_accepted`, `call_resolve
 - **Pagination:** `get_notifications` uses LIMIT/OFFSET (passed as strings per infrastructure rules). Max page size: 100.
 - **Helper functions:** `mapNotificationRow(row)` maps DB columns to API response. `insertNotification(...)` handles single record creation. `sendPushToUser(...)` handles FCM delivery.
 - **Open items:** See `docs/notification_questions.md` for pending design decisions.
+
+---
+
+## Phase 3 — Call Management
+
+### 3.1 Call (`platform/api/call.js`, `platform/funcs/call.js`)
+
+Manages the full lifecycle of service calls, emergency calls, panic button alerts, and communication test calls. Residents create calls, officers accept and resolve them, and admins assign officers and manage the call center.
+
+#### Call Categories
+| Category | Description | Auto-Priority |
+|---|---|---|
+| `medical_emergency` | Medical emergency requiring immediate response | urgent |
+| `security_emergency` | Security emergency (intrusion, threat, etc.) | urgent |
+| `concierge_service` | Concierge/service request (welfare check, package, etc.) | user-selected |
+| `test` | Communication test (admin receives, deletable) | normal |
+| `panic` | Panic button alert (resident or officer) | urgent |
+
+#### Call Statuses
+| Status | Description |
+|---|---|
+| `new` | Just created, awaiting officer acceptance or admin assignment |
+| `accepted` | Officer assigned/accepted, work in progress |
+| `resolved` | Call completed by officer |
+| `canceled` | Service call canceled by resident or admin |
+
+#### API Endpoints
+
+| API | ACL | Description |
+|---|---|---|
+| `Call/create_call` | RESIDENT, OFFICER | Create a new call. Officers can only create panic calls. |
+| `Call/get_calls` | ALL AUTHED | Paginated list: resident→own, officer→assigned, admin→all. Filters: status, category, community_id, is_open, search_text. |
+| `Call/get_call` | ALL AUTHED | Full details of a single call with access control. |
+| `Call/update_call` | RESIDENT, OFFICER | Update call: resident edits description/media/schedule (status=new); officer edits comments/confirmation (status=accepted). |
+| `Call/cancel_call` | RESIDENT, ADMIN | Cancel a service call (new or accepted). Emergency/panic cannot be canceled. |
+| `Call/accept_call` | OFFICER | Officer accepts emergency/panic call ("on the way"). |
+| `Call/pass_call` | OFFICER | Officer passes on an emergency/panic call. Adds officer to ignore list; call disappears from their view but remains available to other officers. |
+| `Call/resolve_call` | OFFICER, ADMIN | Mark call as resolved. Officer resolves assigned calls (except panic). Panic calls: admin-only closure (duress safeguard). |
+| `Call/assign_call` | ADMIN | Assign officer to service call (sets status to accepted). |
+| `Call/add_reaction` | RESIDENT | Add like/dislike reaction to resolved call (creator only). |
+| `Call/add_comment` | RESIDENT | Add comment to resolved call (creator only). |
+| `Call/delete_test_call` | ADMIN | Soft-delete a test call. Only category=test calls can be deleted. |
+
+#### Implementation Details
+- **create_call** — Validates category, priority, community membership. For emergency calls, checks that no active emergency exists for the resident. Resolves media file IDs to file names. Auto-sets priority to `urgent` for emergency/panic. Sends push notifications: emergency→all officers in community, concierge_service→all admins (for assignment), panic→all officers in community.
+- **get_calls** — Role-based filtering (resident sees own, officer sees assigned + new emergency/panic in community minus passed, admin sees all). Supports pagination (LIMIT/OFFSET, max 100), free-text search across description/address/resident name, and sorting by created_on/status/category/priority.
+- **get_call** — Access control: residents see only own calls; officers see emergency/panic in their community OR assigned concierge/test calls; admins see all.
+- **update_call** — Role-based field restrictions. Residents can only update while status=new. Officers can only update comments/confirmation while status=accepted and assigned to them.
+- **cancel_call** — Only `concierge_service` calls can be canceled. Notifies assigned officer and (if admin cancels) the resident.
+- **accept_call** — Verifies officer is in same community. Sets `SVC_OFC_USR_ID` and status to `accepted`. Notifies resident.
+- **pass_call** — Adds officer's user ID to `SVC_PASSED_BY` JSON array. Only works on `new` emergency/panic calls in the officer's community. The `get_calls` query uses `JSON_CONTAINS()` to exclude passed calls from that officer's view.
+- **resolve_call** — Sets status to `resolved`. Officers are blocked from resolving panic calls (returns `ERR_NO_PRIVILEGES` — duress safeguard). Allows optional confirmation media/video/comments at resolution time. Notifies resident.
+- **assign_call** — Admin assigns officer. Validates officer exists and is active. Sets status to `accepted`. Notifies both officer and resident.
+- **add_reaction** — Only call creator, only after resolved. Sends `resident_like` notification to officer on like.
+- **add_comment** — Only call creator, only after resolved.
+- **delete_test_call** — Soft-delete via `SVC_DELETED_ON`. Only `category=test` calls allowed.
+
+#### Call Error Codes (560–589)
+| Code | Constant | Message |
+|---|---|---|
+| 560 | `ERR_CALL_NOT_FOUND` | call not found |
+| 561 | `ERR_CALL_ALREADY_ACCEPTED` | call has already been accepted |
+| 562 | `ERR_CALL_ALREADY_RESOLVED` | call has already been resolved |
+| 563 | `ERR_CALL_ALREADY_CANCELED` | call has already been canceled |
+| 564 | `ERR_CALL_CANNOT_ACCEPT` | call cannot be accepted in its current status |
+| 565 | `ERR_CALL_CANNOT_RESOLVE` | call cannot be resolved in its current status |
+| 566 | `ERR_CALL_CANNOT_CANCEL` | call cannot be canceled in its current status |
+| 567 | `ERR_CALL_ACTIVE_EMERGENCY_EXISTS` | an active emergency call already exists |
+| 568 | `ERR_CALL_INVALID_CATEGORY` | invalid call category |
+| 569 | `ERR_CALL_INVALID_STATUS` | invalid call status |
+| 570 | `ERR_CALL_INVALID_PRIORITY` | invalid call priority |
+| 571 | `ERR_CALL_INVALID_SERVICE_TYPE` | invalid service type |
+| 572 | `ERR_CALL_MEDIA_LIMIT_REACHED` | maximum number of media files reached |
+| 573 | `ERR_CALL_NOT_ASSIGNED_TO_OFFICER` | call is not assigned to this officer |
+| 574 | `ERR_CALL_IS_NOT_TEST` | only test calls can be deleted |
+
+#### Design Notes
+- **Soft deletion:** Uses `SVC_DELETED_ON` timestamp for test call deletion only. Regular calls are never deleted (status lifecycle: new→accepted→resolved or canceled).
+- **Media handling:** Resident media (`SVC_MEDIA`) and officer confirmation media (`SVC_CONFIRMATION_MEDIA`) are JSON arrays of file names (max 5 each). Files are uploaded separately via `File/upload_file_base64` or multipart upload; file IDs are resolved to file names at call creation/update time.
+- **Notifications:** Uses `$executeAPI` to create notifications via the Notification module. Emergency/panic→bulk to all officers in community. Service→officers. Accept/resolve/cancel→individual to affected parties.
+- **Priority override:** Emergency and panic calls always get `urgent` priority regardless of user input.
+- **Access control:** Layered — ACL restricts user types, then business logic restricts to relevant records (own calls, assigned calls, same community).
+- **Deferred features:** See `docs/deferred_requirements/03-call-enhancements.md` for ETA calculation, location-based dispatch, 2-way panic communication, export/share, and advanced analytics.
 
 ---
 
