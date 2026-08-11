@@ -58,6 +58,10 @@ module.exports = {
     FILE_ACCESS_LEVEL_LIMITED                               : "limited", // authed users with timeout
     FILE_ACCESS_LEVEL_PRIVATE                               : "private", // only owner with timeout
 
+    EXPORT_FORMAT_CSV                                       : "csv",
+    EXPORT_FORMAT_XLSX                                      : "xlsx",
+    EXPORT_FORMAT_PDF                                       : "pdf",
+
     KVS_SYSTEM_ERROR_REPORT                                 : "system_error_report",
 
     SRVID_PM2                                               : "PM2",

@@ -100,6 +100,7 @@ Full reference: `docs/api/dialer_api.md`. All calls are `POST` JSON with `#reque
 | `pause_dialer` / `resume_dialer` | Pause/resume a session. |
 | `end_dialer_session` | Finish a session early (or after the queue is exhausted); returns final stats. |
 | `get_dialer_session_status` | Fetch full session progress/stats and the itemized queue. |
+| `send_sms` | Send a standalone SMS (`phone_number`, `message`) via the platform's shared `$Sms` module — independent of any dialer session/queue. |
 
 > Unlike the web `DialerModule` (which tracks the dialing queue purely client-side), this guide's React Native implementation advances the queue via the **server** (`get_next_in_queue`) since there is no shared, pre-built RN queue controller — this keeps a single source of truth for session progress across app restarts/background kills, which matters more on mobile.
 
@@ -531,7 +532,27 @@ export function DialerScreen()
 
 ---
 
-## 10. Single Call vs. Bulk Queue
+## 10. Sending SMS
+
+`Dialer/send_sms` does not use `@twilio/voice-react-native-sdk` at all — it's a plain backend call. Use it wherever appropriate (e.g. a "Text" button next to "Call", or automatically after a missed-call outcome):
+
+```typescript
+import { callDialerApi } from '../api/dialerApi';
+
+async function sendFollowUpSms(phone: string, token: string)
+{
+    await callDialerApi('send_sms', {
+        phone_number: phone,
+        message: 'Sorry we missed you — please call us back at your convenience.'
+    }, token);
+}
+```
+
+No native setup, permissions, or Voice SDK initialization required beyond having a valid session token.
+
+---
+
+## 11. Single Call vs. Bulk Queue
 
 | | Single Call | Bulk Queue |
 |---|---|---|
@@ -542,7 +563,7 @@ export function DialerScreen()
 
 ---
 
-## 11. Error Handling
+## 12. Error Handling
 
 - **API errors:** every Dialer API call returns `{ rc, message }`. See `docs/api/dialer_api.md` for the full `rc` reference (e.g. `464` session already active, `465` session not found, `469`/`470` invalid result/direction).
 - **Voice SDK errors:** surfaced via `Voice.Event.Error` and `Call.Event.ConnectFailure`. Common causes: expired/invalid token, no network, microphone permission denied, no answer/busy handled as normal call outcomes (not SDK errors).
@@ -550,14 +571,14 @@ export function DialerScreen()
 
 ---
 
-## 12. Testing
+## 13. Testing
 
 - Use a **real device** — simulators/emulators have limited or no microphone/audio routing support for WebRTC-based calls.
 - For UI/flow testing without placing real calls, mock the `useDialer` hook's `call`/`advanceQueue` functions to simulate state transitions (`connecting` → `ringing` → `in_progress` → `disconnected`) on timers, mirroring `demos/dialer/twilio-mock.js`'s approach for the web app.
 
 ---
 
-## 13. Production Checklist
+## 14. Production Checklist
 
 - [ ] Real device testing on both iOS and Android for audio quality/permissions.
 - [ ] `NSMicrophoneUsageDescription` (iOS) and `RECORD_AUDIO` (Android) permission handling in place and tested (including the "permission denied" path).

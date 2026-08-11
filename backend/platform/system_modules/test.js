@@ -127,6 +127,10 @@ module.exports =
         let d = this.rand(28) + 1;
         let m = this.rand(12) + 1;
         let y = this.rand(endYear - startYear) + startYear;
+
+        d = (d < 10 ? `0${d}` : d);
+        m = (m < 10 ? `0${m}` : m);
+
         return `${y}-${m}-${d}`;
     },
 

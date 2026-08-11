@@ -476,4 +476,9 @@ module.exports = class
 
         return {...rc, ...vals};
     }
+
+    send_sms()
+    {
+        return $Sms.sendSms(this.$phone_number, this.$message);
+    }
 };

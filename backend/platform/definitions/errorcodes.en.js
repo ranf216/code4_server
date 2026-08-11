@@ -157,6 +157,15 @@ module.exports = {
 	"ERR_DIALER_INVALID_CALL_RESULT"					: {"rc" : 469,	"message" : "invalid call result, must be: answered, no_answer, voicemail, busy, failed"},
 	"ERR_DIALER_INVALID_DIRECTION"						: {"rc" : 470,	"message" : "invalid direction, must be: outbound or inbound"},
 
+	// Export
+	"ERR_EXPORT_INVALID_DEFINITION"						: {"rc" : 480,	"message" : "invalid export definition"},
+	"ERR_EXPORT_INVALID_COLUMNS"						: {"rc" : 481,	"message" : "invalid export columns definition"},
+	"ERR_EXPORT_NO_DATA"								: {"rc" : 482,	"message" : "no data to export"},
+	"ERR_EXPORT_TOO_MANY_ROWS"							: {"rc" : 483,	"message" : "export exceeds the maximum allowed number of rows"},
+	"ERR_EXPORT_FAILED"									: {"rc" : 484,	"message" : "failed to generate the export file"},
+	"ERR_EXPORT_NO_RENDERER"							: {"rc" : 485,	"message" : "the export definition has no renderer for this format"},
+	"ERR_EXPORT_UNSUPPORTED_FORMAT"						: {"rc" : 486,	"message" : "the export definition does not support this format"},
+
 	// Content
 
 	// =============================================
