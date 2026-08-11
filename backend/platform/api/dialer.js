@@ -62,4 +62,11 @@ module.exports =
                                             "session_id"                    : "i***dialer session ID",
                                         },
 
+    "send_sms"						    : {
+                                            "@acl"                          : $Utils.allAuthedUserTypes(),
+                                            "#token"                        : "s",
+                                            "phone_number"					: "s",
+                                            "message"					    : "s",
+                                        },
+
 };

@@ -21,6 +21,7 @@ A non-zero `rc` indicates an error. Additional data fields are merged into this 
 4. Call `get_next_in_queue` to advance to the next item in the session and repeat step 3, until `has_next` is `false` (the session auto-completes when the queue is exhausted).
 5. Optionally, call `pause_dialer` / `resume_dialer` to temporarily halt/continue a session, or `end_dialer_session` to finish it early.
 6. Call `get_dialer_session_status` at any time to fetch full session progress and a breakdown of call results.
+7. Optionally, call `send_sms` at any time to send a standalone SMS text message (e.g. a follow-up after a missed call) — independent of the dialer session/queue.
 
 A user may only have **one active session at a time**. `log_call_result` can also be used independently of a session (standalone calls) by omitting `session_id`.
 
@@ -338,6 +339,37 @@ Records the outcome of a call attempt, whether made as part of an active dialer 
 
 - **Usage & Flows:**
     Call this immediately after every call attempt to persist its outcome to the call history. When `session_id` is provided and greater than `0`, the corresponding queue item is also marked as completed with this result. Omit or pass `0` for `session_id` to log a call made outside of any dialer session.
+
+---
+
+## SMS
+
+### POST Dialer/send_sms
+Sends a standalone SMS text message. Delegates to the platform's shared `$Sms` module (`system_modules/sms.js`) — **not** the Twilio Voice SDK used for calling.
+
+- **API Parameters:**
+    | Parameter | Type | Required | Description |
+    |-----------|------|----------|-------------|
+    | `#token` | string | Yes | Session token. |
+    | `phone_number` | string | Yes | Destination phone number, in E.164 format. |
+    | `message` | string | Yes | SMS message body text. |
+
+- **Return Values:**
+    ```json
+    {
+        "rc": 0,
+        "message": "success"
+    }
+    ```
+
+- **Error Cases:**
+    | rc | Message | Scenario |
+    |----|---------|----------|
+    | 361 | failed to send sms | The SMS provider (e.g. Twilio) failed to send the message, or the client could not be created (`ERR_FAILED_TO_SEND_SMS`). |
+    | 362 | invalid sms provider | The `sms` config's `provider` setting is not set to a supported provider (e.g. `"twilio"`) (`ERR_INVALID_SMS_PROVIDER`). |
+
+- **Usage & Flows:**
+    Use this to send an ad-hoc SMS to an entity (e.g. a follow-up text after an unanswered call), independent of any dialer session. This endpoint requires the `sms` module/config to be set up separately from `twilio_dialer` (see `platform/config/using_modules.js` and the `sms` config group) — voice calling and SMS use independent Twilio credentials/config.
 
 ---
 

@@ -153,6 +153,7 @@ Full reference: `docs/api/dialer_api.md`. All calls are `POST` JSON with `#reque
 | `pause_dialer` / `resume_dialer` | Keep server-side session state in sync with `dialer.pauseQueue()` / `dialer.resumeQueue()` | Queue pause/resume button handlers |
 | `end_dialer_session` | Finish a session (also call this when the local queue completes) | `onQueueUpdate` when `state === COMPLETED`, or a "stop" button |
 | `get_dialer_session_status` | Fetch full session progress/stats (e.g. for a dashboard) | Anywhere you need a live status view |
+| `send_sms` | Send a standalone SMS (`phone_number`, `message`) via the platform's shared `$Sms` module — independent of any dialer session/queue | A "Send SMS" / follow-up-text button |
 
 > **Note:** `DialerModule` manages its own **local** queue state (used for the UI/auto-dial loop) independently from the **server-side** dialer session. You are responsible for keeping them in sync by calling `start_dialer_session` when you call `dialer.startQueue()`, and `end_dialer_session` when the queue finishes or is stopped. See the wiring example below.
 
@@ -569,7 +570,31 @@ export class DialerPanelComponent implements OnDestroy
 
 ---
 
-## 8. Single Call vs. Bulk Queue
+## 8. Sending SMS
+
+`Dialer/send_sms` is independent of calling — it does not go through `DialerModule` or the Voice SDK at all. Call it directly via your API helper wherever needed (e.g. a "Text this contact" button, or automatically after a `no_answer`/`voicemail` result):
+
+```js
+// Vue — using callDialerApi from §6.1
+await callDialerApi('send_sms', {
+    phone_number: '+15551234567',
+    message: 'Sorry we missed you — please call us back at your convenience.'
+}, auth.token);
+```
+
+```typescript
+// Angular — using DialerService.callApi (make it public, or add a wrapper method)
+await this.dialer.callApi('send_sms', {
+    phone_number: '+15551234567',
+    message: 'Sorry we missed you — please call us back at your convenience.'
+});
+```
+
+There are no client-side setup requirements beyond authentication — no Voice SDK, no microphone permission, no queue/session involved.
+
+---
+
+## 9. Single Call vs. Bulk Queue
 
 | | Single Call | Bulk Queue |
 |---|---|---|
@@ -580,7 +605,7 @@ export class DialerPanelComponent implements OnDestroy
 
 ---
 
-## 9. Error Handling
+## 10. Error Handling
 
 - **API errors:** every Dialer API call returns `{ rc, message }`. `rc !== 0` is an error — see `docs/api/dialer_api.md` for the full list of `rc` codes and scenarios (e.g. `464` session already active, `469` invalid call result, etc.). Surface `message` to the user or log it.
 - **Voice SDK errors:** surfaced via the `onError` callback with a `{ type, error, contact? }` shape. `type` is one of `"device"`, `"connect"`, `"call"`, `"token_refresh"`, `"log"`.
@@ -588,7 +613,7 @@ export class DialerPanelComponent implements OnDestroy
 
 ---
 
-## 10. Testing Offline (No Real Twilio Account Needed)
+## 11. Testing Offline (No Real Twilio Account Needed)
 
 For local development/demoing without placing real calls, swap the Voice SDK for the provided mock:
 
@@ -601,7 +626,7 @@ For local development/demoing without placing real calls, swap the Voice SDK for
 
 ---
 
-## 11. Production Checklist
+## 12. Production Checklist
 
 - [ ] App served over **HTTPS**.
 - [ ] Backend `twilio_dialer` config is fully set (Twilio Account SID/Auth Token, API Key, TwiML App SID, caller ID) — this is a backend concern, not yours, but calls will fail with `rc 460/461` if incomplete.

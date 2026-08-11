@@ -5,6 +5,7 @@ module.exports =
     	// "bulk_action",
         // "dynamic_data_tables",
         // "entity_lock",
+        // "export",
         "fcm",
         // "geolocation",
         // "json_db",

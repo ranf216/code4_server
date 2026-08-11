@@ -222,7 +222,7 @@ function resolveFileRefs(configPath, confArr)
 		const key = item[0];
 		const val = item[1];
 
-		if ((typeof val === "object" || typeof val === 'function') && (val !== null))
+		if ((typeof val === "object" || typeof val === 'function') && (val !== null) && !Array.isArray(val))
 		{
 			resolveFileRefs(configPath, val);
 		}
@@ -265,7 +265,7 @@ function validateConfigSecurity(confArr, parent = null)
 			}
 		}
 
-		if ((typeof val === "object" || typeof val === 'function') && (val !== null))
+		if ((typeof val === "object" || typeof val === 'function') && (val !== null) && !Array.isArray(val))
 		{
 			validateConfigSecurity(val, key);
 		}
@@ -279,7 +279,7 @@ function overrideConfigWithPrivateConfig(configPath, confArr, privConfArr, paren
 		const key = item[0];
 		let val = item[1];
 
-		if ((typeof val === "object" || typeof val === 'function') && (val !== null))
+		if ((typeof val === "object" || typeof val === 'function') && (val !== null) && !Array.isArray(val))
 		{
 			overrideConfigWithPrivateConfig(configPath, confArr[key], val, key);
 		}

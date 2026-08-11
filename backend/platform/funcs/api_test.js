@@ -5497,4 +5497,1759 @@ module.exports = class
 
         return {...rc, ...vals};
     }
+
+    // =====================================================================
+    // Call Module API Tests
+    // =====================================================================
+
+    test_call_apis()
+    {
+        let vals = {};
+        let rc = $ERRS.ERR_SUCCESS;
+
+        let testResults = [];
+        let adminUserId = this.$Session.userId;
+
+        let addedCommunityId = null;
+        let addedOfficerId = null;
+        let addedResidentId = null;
+        let testCallId = null;
+        let emergencyCallId = null;
+        let panicCallId = null;
+        let serviceCallId = null;
+        let testServiceTypeId = null;
+
+        try
+        {
+            testResults.push({step: "Starting Call API tests", status: "info"});
+
+            let uniqueId = $Utils.uniqueHash().substring(0, 8);
+            let testResidentFirst = `TestCallRes ${uniqueId}`;
+            let testResidentLast = `ResLast ${uniqueId}`;
+            let testResidentPhone = "+1555" + Math.floor(Math.random() * 10000000).toString().padStart(7, "0");
+            let testResidentEmail = `callres_${uniqueId}@test.com`;
+            let testOfficerFirst = `TestCallOfc ${uniqueId}`;
+            let testOfficerLast = `OfcLast ${uniqueId}`;
+            let testOfficerPhone = "+1555" + Math.floor(Math.random() * 10000000).toString().padStart(7, "0");
+            let testOfficerEmail = `callofc_${uniqueId}@test.com`;
+
+            // =================================================================
+            // Setup: Create community, officer, and resident
+            // =================================================================
+
+            testResults.push({step: "Setup: create test community", status: "running"});
+            let rv = $executeAPI(this.$Session, "Community/add_community", {
+                name: `Call Test Community ${uniqueId}`,
+                area: "Test Area",
+                is_active: true
+            });
+            if ($Err.isERR(rv))
+            {
+                testResults.push({step: "Setup: create test community", status: "failed", error: rv.message});
+                vals.test_results = testResults;
+                vals.summary = {total: 0, passed: 0, failed: 1, warnings: 0};
+                return {...rc, ...vals};
+            }
+            addedCommunityId = rv.community_id;
+            testResults.push({step: "Setup: create test community", status: "passed", community_id: addedCommunityId});
+
+            testResults.push({step: "Setup: create test officer", status: "running"});
+            rv = $executeAPI(this.$Session, "Officer/add_officer", {
+                first_name: testOfficerFirst,
+                last_name: testOfficerLast,
+                phone_num: testOfficerPhone,
+                email: testOfficerEmail,
+                community_id: addedCommunityId,
+                title: `Security Officer ${uniqueId}`,
+                address: "Test Officer Address"
+            });
+            if ($Err.isERR(rv))
+            {
+                testResults.push({step: "Setup: create test officer", status: "failed", error: rv.message});
+                vals.test_results = testResults;
+                vals.summary = {total: 0, passed: 0, failed: 1, warnings: 0};
+                return {...rc, ...vals};
+            }
+            addedOfficerId = rv.user_id;
+            testResults.push({step: "Setup: create test officer", status: "passed", user_id: addedOfficerId});
+
+            testResults.push({step: "Setup: create test resident", status: "running"});
+            rv = $executeAPI(this.$Session, "Resident/add_resident", {
+                first_name: testResidentFirst,
+                last_name: testResidentLast,
+                phone_num: testResidentPhone,
+                email: testResidentEmail,
+                community_id: addedCommunityId,
+                address: "123 Resident Lane"
+            });
+            if ($Err.isERR(rv))
+            {
+                testResults.push({step: "Setup: create test resident", status: "failed", error: rv.message});
+                vals.test_results = testResults;
+                vals.summary = {total: 0, passed: 0, failed: 1, warnings: 0};
+                return {...rc, ...vals};
+            }
+            addedResidentId = rv.user_id;
+            testResults.push({step: "Setup: create test resident", status: "passed", user_id: addedResidentId});
+
+            // Setup: create a service type for concierge tests
+            rv = $executeAPI(this.$Session, "Settings/add_service_type", {name: `Test Service ${uniqueId}`});
+            if (!$Err.isERR(rv))
+            {
+                testServiceTypeId = rv.type_id;
+            }
+
+            // =================================================================
+            // Test 1: create_call — test call (as resident)
+            // =================================================================
+
+            testResults.push({step: "Test 1: create_call (test category, as resident)", status: "running"});
+            try
+            {
+                this.$Session.impersonateAccount(addedResidentId);
+
+                rv = $executeAPI(this.$Session, "Call/create_call", {
+                    category: "test",
+                    description: `Test call ${uniqueId}`,
+                    address: "123 Resident Lane",
+                    priority: "normal"
+                });
+
+                this.$Session.accountImpersonationStack = null;
+                this.$Session.userId = adminUserId;
+                this.$Session.userType = $Const.USER_TYPE_ADMIN;
+
+                if ($Err.isERR(rv))
+                {
+                    testResults.push({step: "Test 1: create_call (test category, as resident)", status: "failed", error: rv.message});
+                }
+                else
+                {
+                    testCallId = rv.call_id;
+                    testResults.push({step: "Test 1: create_call (test category, as resident)", status: "passed", call_id: testCallId});
+                }
+            }
+            catch (impErr)
+            {
+                this.$Session.accountImpersonationStack = null;
+                this.$Session.userId = adminUserId;
+                this.$Session.userType = $Const.USER_TYPE_ADMIN;
+                testResults.push({step: "Test 1: create_call (test category, as resident)", status: "failed", error: impErr.message});
+            }
+
+            // =================================================================
+            // Test 2: create_call — security emergency (as resident)
+            // =================================================================
+
+            testResults.push({step: "Test 2: create_call (security_emergency, as resident)", status: "running"});
+            try
+            {
+                this.$Session.impersonateAccount(addedResidentId);
+
+                rv = $executeAPI(this.$Session, "Call/create_call", {
+                    category: "security_emergency",
+                    description: `Security emergency ${uniqueId}`,
+                    address: "123 Resident Lane",
+                    current_address: "Near building entrance",
+                    latitude: "32.0853000",
+                    longitude: "34.7818000"
+                });
+
+                this.$Session.accountImpersonationStack = null;
+                this.$Session.userId = adminUserId;
+                this.$Session.userType = $Const.USER_TYPE_ADMIN;
+
+                if ($Err.isERR(rv))
+                {
+                    testResults.push({step: "Test 2: create_call (security_emergency, as resident)", status: "failed", error: rv.message});
+                }
+                else
+                {
+                    emergencyCallId = rv.call_id;
+                    testResults.push({step: "Test 2: create_call (security_emergency, as resident)", status: "passed", call_id: emergencyCallId});
+                }
+            }
+            catch (impErr)
+            {
+                this.$Session.accountImpersonationStack = null;
+                this.$Session.userId = adminUserId;
+                this.$Session.userType = $Const.USER_TYPE_ADMIN;
+                testResults.push({step: "Test 2: create_call (security_emergency, as resident)", status: "failed", error: impErr.message});
+            }
+
+            // =================================================================
+            // Test 3: create_call — duplicate active emergency (expect error)
+            // =================================================================
+
+            testResults.push({step: "Test 3: create_call (duplicate emergency, expect error)", status: "running"});
+            if (emergencyCallId === null)
+            {
+                testResults.push({step: "Test 3: create_call (duplicate emergency, expect error)", status: "failed", error: "Cannot test - emergency call was not created"});
+            }
+            else
+            {
+                try
+                {
+                    this.$Session.impersonateAccount(addedResidentId);
+
+                    rv = $executeAPI(this.$Session, "Call/create_call", {
+                        category: "medical_emergency",
+                        description: "Second emergency"
+                    });
+
+                    this.$Session.accountImpersonationStack = null;
+                    this.$Session.userId = adminUserId;
+                    this.$Session.userType = $Const.USER_TYPE_ADMIN;
+
+                    if (rv.rc === 567)
+                    {
+                        testResults.push({step: "Test 3: create_call (duplicate emergency, expect error)", status: "passed", message: "correctly returned ERR_CALL_ACTIVE_EMERGENCY_EXISTS"});
+                    }
+                    else
+                    {
+                        testResults.push({step: "Test 3: create_call (duplicate emergency, expect error)", status: "warning", message: "unexpected response", rc: rv.rc});
+                    }
+                }
+                catch (impErr)
+                {
+                    this.$Session.accountImpersonationStack = null;
+                    this.$Session.userId = adminUserId;
+                    this.$Session.userType = $Const.USER_TYPE_ADMIN;
+                    testResults.push({step: "Test 3: create_call (duplicate emergency, expect error)", status: "failed", error: impErr.message});
+                }
+            }
+
+            // =================================================================
+            // Test 4: create_call — invalid category (expect error)
+            // =================================================================
+
+            testResults.push({step: "Test 4: create_call (invalid category, expect error)", status: "running"});
+            try
+            {
+                this.$Session.impersonateAccount(addedResidentId);
+
+                rv = $executeAPI(this.$Session, "Call/create_call", {
+                    category: "invalid_category"
+                });
+
+                this.$Session.accountImpersonationStack = null;
+                this.$Session.userId = adminUserId;
+                this.$Session.userType = $Const.USER_TYPE_ADMIN;
+
+                if (rv.rc === 568)
+                {
+                    testResults.push({step: "Test 4: create_call (invalid category, expect error)", status: "passed", message: "correctly returned ERR_CALL_INVALID_CATEGORY"});
+                }
+                else
+                {
+                    testResults.push({step: "Test 4: create_call (invalid category, expect error)", status: "warning", message: "unexpected response", rc: rv.rc});
+                }
+            }
+            catch (impErr)
+            {
+                this.$Session.accountImpersonationStack = null;
+                this.$Session.userId = adminUserId;
+                this.$Session.userType = $Const.USER_TYPE_ADMIN;
+                testResults.push({step: "Test 4: create_call (invalid category, expect error)", status: "failed", error: impErr.message});
+            }
+
+            // =================================================================
+            // Test 5: create_call — officer can only create panic
+            // =================================================================
+
+            testResults.push({step: "Test 5: create_call (officer creates emergency, expect error)", status: "running"});
+            try
+            {
+                this.$Session.impersonateAccount(addedOfficerId);
+
+                rv = $executeAPI(this.$Session, "Call/create_call", {
+                    category: "security_emergency",
+                    description: "Officer should not create this"
+                });
+
+                this.$Session.accountImpersonationStack = null;
+                this.$Session.userId = adminUserId;
+                this.$Session.userType = $Const.USER_TYPE_ADMIN;
+
+                if (rv.rc === 103)
+                {
+                    testResults.push({step: "Test 5: create_call (officer creates emergency, expect error)", status: "passed", message: "correctly returned ERR_NO_PRIVILEGES"});
+                }
+                else
+                {
+                    testResults.push({step: "Test 5: create_call (officer creates emergency, expect error)", status: "warning", message: "unexpected response", rc: rv.rc});
+                }
+            }
+            catch (impErr)
+            {
+                this.$Session.accountImpersonationStack = null;
+                this.$Session.userId = adminUserId;
+                this.$Session.userType = $Const.USER_TYPE_ADMIN;
+                testResults.push({step: "Test 5: create_call (officer creates emergency, expect error)", status: "failed", error: impErr.message});
+            }
+
+            // =================================================================
+            // Test 6: create_call — officer creates panic (valid)
+            // =================================================================
+
+            testResults.push({step: "Test 6: create_call (officer creates panic)", status: "running"});
+            try
+            {
+                this.$Session.impersonateAccount(addedOfficerId);
+
+                rv = $executeAPI(this.$Session, "Call/create_call", {
+                    category: "panic",
+                    current_address: "Post 3, east gate",
+                    latitude: "32.0853000",
+                    longitude: "34.7818000"
+                });
+
+                this.$Session.accountImpersonationStack = null;
+                this.$Session.userId = adminUserId;
+                this.$Session.userType = $Const.USER_TYPE_ADMIN;
+
+                if ($Err.isERR(rv))
+                {
+                    testResults.push({step: "Test 6: create_call (officer creates panic)", status: "failed", error: rv.message});
+                }
+                else
+                {
+                    panicCallId = rv.call_id;
+                    testResults.push({step: "Test 6: create_call (officer creates panic)", status: "passed", call_id: panicCallId});
+                }
+            }
+            catch (impErr)
+            {
+                this.$Session.accountImpersonationStack = null;
+                this.$Session.userId = adminUserId;
+                this.$Session.userType = $Const.USER_TYPE_ADMIN;
+                testResults.push({step: "Test 6: create_call (officer creates panic)", status: "failed", error: impErr.message});
+            }
+
+            // =================================================================
+            // Test 7: create_call — concierge service (as resident)
+            // =================================================================
+
+            testResults.push({step: "Test 7: create_call (concierge_service, as resident)", status: "running"});
+            try
+            {
+                this.$Session.impersonateAccount(addedResidentId);
+
+                rv = $executeAPI(this.$Session, "Call/create_call", {
+                    category: "concierge_service",
+                    service_type: testServiceTypeId || "general",
+                    description: `Concierge service request ${uniqueId}`,
+                    address: "123 Resident Lane",
+                    priority: "normal",
+                    scheduled_date: "2099-12-31",
+                    scheduled_time_from: "10:00",
+                    scheduled_time_to: "12:00"
+                });
+
+                this.$Session.accountImpersonationStack = null;
+                this.$Session.userId = adminUserId;
+                this.$Session.userType = $Const.USER_TYPE_ADMIN;
+
+                if ($Err.isERR(rv))
+                {
+                    testResults.push({step: "Test 7: create_call (concierge_service, as resident)", status: "failed", error: rv.message});
+                }
+                else
+                {
+                    serviceCallId = rv.call_id;
+                    testResults.push({step: "Test 7: create_call (concierge_service, as resident)", status: "passed", call_id: serviceCallId});
+                }
+            }
+            catch (impErr)
+            {
+                this.$Session.accountImpersonationStack = null;
+                this.$Session.userId = adminUserId;
+                this.$Session.userType = $Const.USER_TYPE_ADMIN;
+                testResults.push({step: "Test 7: create_call (concierge_service, as resident)", status: "failed", error: impErr.message});
+            }
+
+            // =================================================================
+            // Test 8: create_call — concierge without service_type (expect error)
+            // =================================================================
+
+            testResults.push({step: "Test 8: create_call (concierge without service_type, expect error)", status: "running"});
+            try
+            {
+                this.$Session.impersonateAccount(addedResidentId);
+
+                rv = $executeAPI(this.$Session, "Call/create_call", {
+                    category: "concierge_service",
+                    description: "Missing service type"
+                });
+
+                this.$Session.accountImpersonationStack = null;
+                this.$Session.userId = adminUserId;
+                this.$Session.userType = $Const.USER_TYPE_ADMIN;
+
+                if (rv.rc === 571)
+                {
+                    testResults.push({step: "Test 8: create_call (concierge without service_type, expect error)", status: "passed", message: "correctly returned ERR_CALL_INVALID_SERVICE_TYPE"});
+                }
+                else
+                {
+                    testResults.push({step: "Test 8: create_call (concierge without service_type, expect error)", status: "warning", message: "unexpected response", rc: rv.rc});
+                }
+            }
+            catch (impErr)
+            {
+                this.$Session.accountImpersonationStack = null;
+                this.$Session.userId = adminUserId;
+                this.$Session.userType = $Const.USER_TYPE_ADMIN;
+                testResults.push({step: "Test 8: create_call (concierge without service_type, expect error)", status: "failed", error: impErr.message});
+            }
+
+            // =================================================================
+            // Test 9: get_call (as admin, verify emergency call)
+            // =================================================================
+
+            testResults.push({step: "Test 9: get_call (verify emergency call)", status: "running"});
+            if (emergencyCallId === null)
+            {
+                testResults.push({step: "Test 9: get_call (verify emergency call)", status: "failed", error: "Cannot verify - emergency call was not created"});
+            }
+            else
+            {
+                rv = $executeAPI(this.$Session, "Call/get_call", {call_id: emergencyCallId});
+                if ($Err.isERR(rv))
+                {
+                    testResults.push({step: "Test 9: get_call (verify emergency call)", status: "failed", error: rv.message});
+                }
+                else
+                {
+                    let c = rv.call;
+                    let verified = c.call_id === emergencyCallId &&
+                                   c.category === "security_emergency" &&
+                                   c.status === "new" &&
+                                   c.priority === "urgent" &&
+                                   c.resident_user_id === addedResidentId &&
+                                   c.officer_user_id === null &&
+                                   c.community_id === addedCommunityId;
+                    if (verified)
+                    {
+                        testResults.push({step: "Test 9: get_call (verify emergency call)", status: "passed", verified: true});
+                    }
+                    else
+                    {
+                        testResults.push({step: "Test 9: get_call (verify emergency call)", status: "warning", verified: false, message: "Some fields did not match expected values", call: c});
+                    }
+                }
+            }
+
+            // =================================================================
+            // Test 10: get_calls (as admin, all calls)
+            // =================================================================
+
+            testResults.push({step: "Test 10: get_calls (as admin)", status: "running"});
+            rv = $executeAPI(this.$Session, "Call/get_calls", {is_open: true});
+            if ($Err.isERR(rv))
+            {
+                testResults.push({step: "Test 10: get_calls (as admin)", status: "failed", error: rv.message});
+            }
+            else
+            {
+                testResults.push({step: "Test 10: get_calls (as admin)", status: "passed", total_count: rv.total_count, returned: rv.calls.length});
+            }
+
+            // =================================================================
+            // Test 11: get_calls (as admin, filter by category)
+            // =================================================================
+
+            testResults.push({step: "Test 11: get_calls (filter category=panic)", status: "running"});
+            rv = $executeAPI(this.$Session, "Call/get_calls", {category: "panic", is_open: true});
+            if ($Err.isERR(rv))
+            {
+                testResults.push({step: "Test 11: get_calls (filter category=panic)", status: "failed", error: rv.message});
+            }
+            else
+            {
+                let allPanic = rv.calls.every(c => c.category === "panic");
+                if (allPanic)
+                {
+                    testResults.push({step: "Test 11: get_calls (filter category=panic)", status: "passed", count: rv.calls.length});
+                }
+                else
+                {
+                    testResults.push({step: "Test 11: get_calls (filter category=panic)", status: "warning", message: "Non-panic calls found in filtered results"});
+                }
+            }
+
+            // =================================================================
+            // Test 12: get_calls (as admin, filter by community)
+            // =================================================================
+
+            testResults.push({step: "Test 12: get_calls (filter community_id)", status: "running"});
+            rv = $executeAPI(this.$Session, "Call/get_calls", {community_id: addedCommunityId, is_open: true});
+            if ($Err.isERR(rv))
+            {
+                testResults.push({step: "Test 12: get_calls (filter community_id)", status: "failed", error: rv.message});
+            }
+            else
+            {
+                let allInCommunity = rv.calls.every(c => c.community_id === addedCommunityId);
+                if (allInCommunity)
+                {
+                    testResults.push({step: "Test 12: get_calls (filter community_id)", status: "passed", count: rv.calls.length});
+                }
+                else
+                {
+                    testResults.push({step: "Test 12: get_calls (filter community_id)", status: "warning", message: "Calls from other communities in filtered results"});
+                }
+            }
+
+            // =================================================================
+            // Test 13: get_calls (as admin, invalid status filter)
+            // =================================================================
+
+            testResults.push({step: "Test 13: get_calls (invalid status, expect error)", status: "running"});
+            rv = $executeAPI(this.$Session, "Call/get_calls", {status: "invalid_status"});
+            if (rv.rc === 569)
+            {
+                testResults.push({step: "Test 13: get_calls (invalid status, expect error)", status: "passed", message: "correctly returned ERR_CALL_INVALID_STATUS"});
+            }
+            else
+            {
+                testResults.push({step: "Test 13: get_calls (invalid status, expect error)", status: "warning", message: "unexpected response", rc: rv.rc});
+            }
+
+            // =================================================================
+            // Test 14: get_calls (as admin, search text)
+            // =================================================================
+
+            testResults.push({step: "Test 14: get_calls (search_text)", status: "running"});
+            rv = $executeAPI(this.$Session, "Call/get_calls", {search_text: uniqueId});
+            if ($Err.isERR(rv))
+            {
+                testResults.push({step: "Test 14: get_calls (search_text)", status: "failed", error: rv.message});
+            }
+            else
+            {
+                testResults.push({step: "Test 14: get_calls (search_text)", status: "passed", total_count: rv.total_count});
+            }
+
+            // =================================================================
+            // Test 15: get_calls (as admin, sorting)
+            // =================================================================
+
+            testResults.push({step: "Test 15: get_calls (sort_by=priority, sort_dir=asc)", status: "running"});
+            rv = $executeAPI(this.$Session, "Call/get_calls", {sort_by: "priority", sort_dir: "asc", community_id: addedCommunityId});
+            if ($Err.isERR(rv))
+            {
+                testResults.push({step: "Test 15: get_calls (sort_by=priority, sort_dir=asc)", status: "failed", error: rv.message});
+            }
+            else
+            {
+                testResults.push({step: "Test 15: get_calls (sort_by=priority, sort_dir=asc)", status: "passed", count: rv.calls.length});
+            }
+
+            // =================================================================
+            // Test 16: get_calls (as resident, sees own calls only)
+            // =================================================================
+
+            testResults.push({step: "Test 16: get_calls (as resident, own calls)", status: "running"});
+            try
+            {
+                this.$Session.impersonateAccount(addedResidentId);
+
+                rv = $executeAPI(this.$Session, "Call/get_calls", {is_open: true});
+
+                this.$Session.accountImpersonationStack = null;
+                this.$Session.userId = adminUserId;
+                this.$Session.userType = $Const.USER_TYPE_ADMIN;
+
+                if ($Err.isERR(rv))
+                {
+                    testResults.push({step: "Test 16: get_calls (as resident, own calls)", status: "failed", error: rv.message});
+                }
+                else
+                {
+                    let allOwn = rv.calls.every(c => c.resident_user_id === addedResidentId);
+                    if (allOwn)
+                    {
+                        testResults.push({step: "Test 16: get_calls (as resident, own calls)", status: "passed", count: rv.calls.length});
+                    }
+                    else
+                    {
+                        testResults.push({step: "Test 16: get_calls (as resident, own calls)", status: "warning", message: "Resident sees calls from other residents"});
+                    }
+                }
+            }
+            catch (impErr)
+            {
+                this.$Session.accountImpersonationStack = null;
+                this.$Session.userId = adminUserId;
+                this.$Session.userType = $Const.USER_TYPE_ADMIN;
+                testResults.push({step: "Test 16: get_calls (as resident, own calls)", status: "failed", error: impErr.message});
+            }
+
+            // =================================================================
+            // Test 17: get_call (as resident, own call)
+            // =================================================================
+
+            testResults.push({step: "Test 17: get_call (as resident, own call)", status: "running"});
+            if (emergencyCallId === null)
+            {
+                testResults.push({step: "Test 17: get_call (as resident, own call)", status: "failed", error: "Cannot test - emergency call was not created"});
+            }
+            else
+            {
+                try
+                {
+                    this.$Session.impersonateAccount(addedResidentId);
+
+                    rv = $executeAPI(this.$Session, "Call/get_call", {call_id: emergencyCallId});
+
+                    this.$Session.accountImpersonationStack = null;
+                    this.$Session.userId = adminUserId;
+                    this.$Session.userType = $Const.USER_TYPE_ADMIN;
+
+                    if ($Err.isERR(rv))
+                    {
+                        testResults.push({step: "Test 17: get_call (as resident, own call)", status: "failed", error: rv.message});
+                    }
+                    else
+                    {
+                        testResults.push({step: "Test 17: get_call (as resident, own call)", status: "passed", call_id: rv.call.call_id});
+                    }
+                }
+                catch (impErr)
+                {
+                    this.$Session.accountImpersonationStack = null;
+                    this.$Session.userId = adminUserId;
+                    this.$Session.userType = $Const.USER_TYPE_ADMIN;
+                    testResults.push({step: "Test 17: get_call (as resident, own call)", status: "failed", error: impErr.message});
+                }
+            }
+
+            // =================================================================
+            // Test 18: update_call (as resident, update description)
+            // =================================================================
+
+            testResults.push({step: "Test 18: update_call (as resident, update description)", status: "running"});
+            if (emergencyCallId === null)
+            {
+                testResults.push({step: "Test 18: update_call (as resident, update description)", status: "failed", error: "Cannot test - emergency call was not created"});
+            }
+            else
+            {
+                try
+                {
+                    this.$Session.impersonateAccount(addedResidentId);
+
+                    rv = $executeAPI(this.$Session, "Call/update_call", {
+                        call_id: emergencyCallId,
+                        description: `Updated emergency description ${uniqueId}`,
+                        priority: "urgent"
+                    });
+
+                    this.$Session.accountImpersonationStack = null;
+                    this.$Session.userId = adminUserId;
+                    this.$Session.userType = $Const.USER_TYPE_ADMIN;
+
+                    if ($Err.isERR(rv))
+                    {
+                        testResults.push({step: "Test 18: update_call (as resident, update description)", status: "failed", error: rv.message});
+                    }
+                    else
+                    {
+                        testResults.push({step: "Test 18: update_call (as resident, update description)", status: "passed"});
+                    }
+                }
+                catch (impErr)
+                {
+                    this.$Session.accountImpersonationStack = null;
+                    this.$Session.userId = adminUserId;
+                    this.$Session.userType = $Const.USER_TYPE_ADMIN;
+                    testResults.push({step: "Test 18: update_call (as resident, update description)", status: "failed", error: impErr.message});
+                }
+            }
+
+            // =================================================================
+            // Test 19: update_call (verify update via get_call)
+            // =================================================================
+
+            testResults.push({step: "Test 19: get_call (verify update)", status: "running"});
+            if (emergencyCallId === null)
+            {
+                testResults.push({step: "Test 19: get_call (verify update)", status: "failed", error: "Cannot verify - emergency call was not created"});
+            }
+            else
+            {
+                rv = $executeAPI(this.$Session, "Call/get_call", {call_id: emergencyCallId});
+                if ($Err.isERR(rv))
+                {
+                    testResults.push({step: "Test 19: get_call (verify update)", status: "failed", error: rv.message});
+                }
+                else
+                {
+                    if (rv.call.description === `Updated emergency description ${uniqueId}`)
+                    {
+                        testResults.push({step: "Test 19: get_call (verify update)", status: "passed", verified: true});
+                    }
+                    else
+                    {
+                        testResults.push({step: "Test 19: get_call (verify update)", status: "warning", verified: false, message: "Description not updated"});
+                    }
+                }
+            }
+
+            // =================================================================
+            // Test 20: accept_call (as officer, accept emergency)
+            // =================================================================
+
+            testResults.push({step: "Test 20: accept_call (as officer)", status: "running"});
+            if (emergencyCallId === null)
+            {
+                testResults.push({step: "Test 20: accept_call (as officer)", status: "failed", error: "Cannot test - emergency call was not created"});
+            }
+            else
+            {
+                try
+                {
+                    this.$Session.impersonateAccount(addedOfficerId);
+
+                    rv = $executeAPI(this.$Session, "Call/accept_call", {call_id: emergencyCallId});
+
+                    this.$Session.accountImpersonationStack = null;
+                    this.$Session.userId = adminUserId;
+                    this.$Session.userType = $Const.USER_TYPE_ADMIN;
+
+                    if ($Err.isERR(rv))
+                    {
+                        testResults.push({step: "Test 20: accept_call (as officer)", status: "failed", error: rv.message});
+                    }
+                    else
+                    {
+                        testResults.push({step: "Test 20: accept_call (as officer)", status: "passed"});
+                    }
+                }
+                catch (impErr)
+                {
+                    this.$Session.accountImpersonationStack = null;
+                    this.$Session.userId = adminUserId;
+                    this.$Session.userType = $Const.USER_TYPE_ADMIN;
+                    testResults.push({step: "Test 20: accept_call (as officer)", status: "failed", error: impErr.message});
+                }
+            }
+
+            // =================================================================
+            // Test 21: accept_call (already accepted, expect error)
+            // =================================================================
+
+            testResults.push({step: "Test 21: accept_call (already accepted, expect error)", status: "running"});
+            if (emergencyCallId === null)
+            {
+                testResults.push({step: "Test 21: accept_call (already accepted, expect error)", status: "failed", error: "Cannot test - emergency call was not created"});
+            }
+            else
+            {
+                try
+                {
+                    this.$Session.impersonateAccount(addedOfficerId);
+
+                    rv = $executeAPI(this.$Session, "Call/accept_call", {call_id: emergencyCallId});
+
+                    this.$Session.accountImpersonationStack = null;
+                    this.$Session.userId = adminUserId;
+                    this.$Session.userType = $Const.USER_TYPE_ADMIN;
+
+                    if (rv.rc === 561)
+                    {
+                        testResults.push({step: "Test 21: accept_call (already accepted, expect error)", status: "passed", message: "correctly returned ERR_CALL_ALREADY_ACCEPTED"});
+                    }
+                    else
+                    {
+                        testResults.push({step: "Test 21: accept_call (already accepted, expect error)", status: "warning", message: "unexpected response", rc: rv.rc});
+                    }
+                }
+                catch (impErr)
+                {
+                    this.$Session.accountImpersonationStack = null;
+                    this.$Session.userId = adminUserId;
+                    this.$Session.userType = $Const.USER_TYPE_ADMIN;
+                    testResults.push({step: "Test 21: accept_call (already accepted, expect error)", status: "failed", error: impErr.message});
+                }
+            }
+
+            // =================================================================
+            // Test 22: get_call (verify accepted status + officer assigned)
+            // =================================================================
+
+            testResults.push({step: "Test 22: get_call (verify accepted)", status: "running"});
+            if (emergencyCallId === null)
+            {
+                testResults.push({step: "Test 22: get_call (verify accepted)", status: "failed", error: "Cannot verify"});
+            }
+            else
+            {
+                rv = $executeAPI(this.$Session, "Call/get_call", {call_id: emergencyCallId});
+                if ($Err.isERR(rv))
+                {
+                    testResults.push({step: "Test 22: get_call (verify accepted)", status: "failed", error: rv.message});
+                }
+                else
+                {
+                    let c = rv.call;
+                    if (c.status === "accepted" && c.officer_user_id === addedOfficerId && c.accepted_on !== null)
+                    {
+                        testResults.push({step: "Test 22: get_call (verify accepted)", status: "passed", verified: true});
+                    }
+                    else
+                    {
+                        testResults.push({step: "Test 22: get_call (verify accepted)", status: "warning", verified: false, status_actual: c.status, officer_actual: c.officer_user_id});
+                    }
+                }
+            }
+
+            // =================================================================
+            // Test 23: update_call (as officer, add comments)
+            // =================================================================
+
+            testResults.push({step: "Test 23: update_call (as officer, add comments)", status: "running"});
+            if (emergencyCallId === null)
+            {
+                testResults.push({step: "Test 23: update_call (as officer, add comments)", status: "failed", error: "Cannot test"});
+            }
+            else
+            {
+                try
+                {
+                    this.$Session.impersonateAccount(addedOfficerId);
+
+                    rv = $executeAPI(this.$Session, "Call/update_call", {
+                        call_id: emergencyCallId,
+                        officer_comments: `Officer notes ${uniqueId}`
+                    });
+
+                    this.$Session.accountImpersonationStack = null;
+                    this.$Session.userId = adminUserId;
+                    this.$Session.userType = $Const.USER_TYPE_ADMIN;
+
+                    if ($Err.isERR(rv))
+                    {
+                        testResults.push({step: "Test 23: update_call (as officer, add comments)", status: "failed", error: rv.message});
+                    }
+                    else
+                    {
+                        testResults.push({step: "Test 23: update_call (as officer, add comments)", status: "passed"});
+                    }
+                }
+                catch (impErr)
+                {
+                    this.$Session.accountImpersonationStack = null;
+                    this.$Session.userId = adminUserId;
+                    this.$Session.userType = $Const.USER_TYPE_ADMIN;
+                    testResults.push({step: "Test 23: update_call (as officer, add comments)", status: "failed", error: impErr.message});
+                }
+            }
+
+            // =================================================================
+            // Test 24: update_call (as resident, cannot update accepted call)
+            // =================================================================
+
+            testResults.push({step: "Test 24: update_call (resident on accepted call, expect error)", status: "running"});
+            if (emergencyCallId === null)
+            {
+                testResults.push({step: "Test 24: update_call (resident on accepted call, expect error)", status: "failed", error: "Cannot test"});
+            }
+            else
+            {
+                try
+                {
+                    this.$Session.impersonateAccount(addedResidentId);
+
+                    rv = $executeAPI(this.$Session, "Call/update_call", {
+                        call_id: emergencyCallId,
+                        description: "Should fail"
+                    });
+
+                    this.$Session.accountImpersonationStack = null;
+                    this.$Session.userId = adminUserId;
+                    this.$Session.userType = $Const.USER_TYPE_ADMIN;
+
+                    if ($Err.isERR(rv))
+                    {
+                        testResults.push({step: "Test 24: update_call (resident on accepted call, expect error)", status: "passed", message: "correctly rejected update on accepted call", rc: rv.rc});
+                    }
+                    else
+                    {
+                        testResults.push({step: "Test 24: update_call (resident on accepted call, expect error)", status: "warning", message: "accepted update on accepted call unexpectedly"});
+                    }
+                }
+                catch (impErr)
+                {
+                    this.$Session.accountImpersonationStack = null;
+                    this.$Session.userId = adminUserId;
+                    this.$Session.userType = $Const.USER_TYPE_ADMIN;
+                    testResults.push({step: "Test 24: update_call (resident on accepted call, expect error)", status: "failed", error: impErr.message});
+                }
+            }
+
+            // =================================================================
+            // Test 25: resolve_call (as officer, resolve emergency)
+            // =================================================================
+
+            testResults.push({step: "Test 25: resolve_call (as officer)", status: "running"});
+            if (emergencyCallId === null)
+            {
+                testResults.push({step: "Test 25: resolve_call (as officer)", status: "failed", error: "Cannot test"});
+            }
+            else
+            {
+                try
+                {
+                    this.$Session.impersonateAccount(addedOfficerId);
+
+                    rv = $executeAPI(this.$Session, "Call/resolve_call", {
+                        call_id: emergencyCallId,
+                        officer_comments: `Resolved by officer ${uniqueId}`
+                    });
+
+                    this.$Session.accountImpersonationStack = null;
+                    this.$Session.userId = adminUserId;
+                    this.$Session.userType = $Const.USER_TYPE_ADMIN;
+
+                    if ($Err.isERR(rv))
+                    {
+                        testResults.push({step: "Test 25: resolve_call (as officer)", status: "failed", error: rv.message});
+                    }
+                    else
+                    {
+                        testResults.push({step: "Test 25: resolve_call (as officer)", status: "passed"});
+                    }
+                }
+                catch (impErr)
+                {
+                    this.$Session.accountImpersonationStack = null;
+                    this.$Session.userId = adminUserId;
+                    this.$Session.userType = $Const.USER_TYPE_ADMIN;
+                    testResults.push({step: "Test 25: resolve_call (as officer)", status: "failed", error: impErr.message});
+                }
+            }
+
+            // =================================================================
+            // Test 26: get_call (verify resolved status)
+            // =================================================================
+
+            testResults.push({step: "Test 26: get_call (verify resolved)", status: "running"});
+            if (emergencyCallId === null)
+            {
+                testResults.push({step: "Test 26: get_call (verify resolved)", status: "failed", error: "Cannot verify"});
+            }
+            else
+            {
+                rv = $executeAPI(this.$Session, "Call/get_call", {call_id: emergencyCallId});
+                if ($Err.isERR(rv))
+                {
+                    testResults.push({step: "Test 26: get_call (verify resolved)", status: "failed", error: rv.message});
+                }
+                else
+                {
+                    if (rv.call.status === "resolved" && rv.call.resolved_on !== null)
+                    {
+                        testResults.push({step: "Test 26: get_call (verify resolved)", status: "passed", verified: true});
+                    }
+                    else
+                    {
+                        testResults.push({step: "Test 26: get_call (verify resolved)", status: "warning", verified: false, status_actual: rv.call.status});
+                    }
+                }
+            }
+
+            // =================================================================
+            // Test 27: add_reaction (as resident, like resolved call)
+            // =================================================================
+
+            testResults.push({step: "Test 27: add_reaction (as resident, like)", status: "running"});
+            if (emergencyCallId === null)
+            {
+                testResults.push({step: "Test 27: add_reaction (as resident, like)", status: "failed", error: "Cannot test"});
+            }
+            else
+            {
+                try
+                {
+                    this.$Session.impersonateAccount(addedResidentId);
+
+                    rv = $executeAPI(this.$Session, "Call/add_reaction", {
+                        call_id: emergencyCallId,
+                        reaction: 1
+                    });
+
+                    this.$Session.accountImpersonationStack = null;
+                    this.$Session.userId = adminUserId;
+                    this.$Session.userType = $Const.USER_TYPE_ADMIN;
+
+                    if ($Err.isERR(rv))
+                    {
+                        testResults.push({step: "Test 27: add_reaction (as resident, like)", status: "failed", error: rv.message});
+                    }
+                    else
+                    {
+                        testResults.push({step: "Test 27: add_reaction (as resident, like)", status: "passed"});
+                    }
+                }
+                catch (impErr)
+                {
+                    this.$Session.accountImpersonationStack = null;
+                    this.$Session.userId = adminUserId;
+                    this.$Session.userType = $Const.USER_TYPE_ADMIN;
+                    testResults.push({step: "Test 27: add_reaction (as resident, like)", status: "failed", error: impErr.message});
+                }
+            }
+
+            // =================================================================
+            // Test 28: add_comment (as resident, comment on resolved call)
+            // =================================================================
+
+            testResults.push({step: "Test 28: add_comment (as resident)", status: "running"});
+            if (emergencyCallId === null)
+            {
+                testResults.push({step: "Test 28: add_comment (as resident)", status: "failed", error: "Cannot test"});
+            }
+            else
+            {
+                try
+                {
+                    this.$Session.impersonateAccount(addedResidentId);
+
+                    rv = $executeAPI(this.$Session, "Call/add_comment", {
+                        call_id: emergencyCallId,
+                        comment: `Great service ${uniqueId}`
+                    });
+
+                    this.$Session.accountImpersonationStack = null;
+                    this.$Session.userId = adminUserId;
+                    this.$Session.userType = $Const.USER_TYPE_ADMIN;
+
+                    if ($Err.isERR(rv))
+                    {
+                        testResults.push({step: "Test 28: add_comment (as resident)", status: "failed", error: rv.message});
+                    }
+                    else
+                    {
+                        testResults.push({step: "Test 28: add_comment (as resident)", status: "passed"});
+                    }
+                }
+                catch (impErr)
+                {
+                    this.$Session.accountImpersonationStack = null;
+                    this.$Session.userId = adminUserId;
+                    this.$Session.userType = $Const.USER_TYPE_ADMIN;
+                    testResults.push({step: "Test 28: add_comment (as resident)", status: "failed", error: impErr.message});
+                }
+            }
+
+            // =================================================================
+            // Test 29: get_call (verify reaction + comment)
+            // =================================================================
+
+            testResults.push({step: "Test 29: get_call (verify reaction + comment)", status: "running"});
+            if (emergencyCallId === null)
+            {
+                testResults.push({step: "Test 29: get_call (verify reaction + comment)", status: "failed", error: "Cannot verify"});
+            }
+            else
+            {
+                rv = $executeAPI(this.$Session, "Call/get_call", {call_id: emergencyCallId});
+                if ($Err.isERR(rv))
+                {
+                    testResults.push({step: "Test 29: get_call (verify reaction + comment)", status: "failed", error: rv.message});
+                }
+                else
+                {
+                    let c = rv.call;
+                    if (c.reaction === 1 && c.resident_comment === `Great service ${uniqueId}`)
+                    {
+                        testResults.push({step: "Test 29: get_call (verify reaction + comment)", status: "passed", verified: true});
+                    }
+                    else
+                    {
+                        testResults.push({step: "Test 29: get_call (verify reaction + comment)", status: "warning", verified: false, reaction: c.reaction, comment: c.resident_comment});
+                    }
+                }
+            }
+
+            // =================================================================
+            // Test 30: pass_call (as officer, pass on panic call)
+            // =================================================================
+
+            testResults.push({step: "Test 30: pass_call (as officer, pass panic call)", status: "running"});
+            if (panicCallId === null)
+            {
+                testResults.push({step: "Test 30: pass_call (as officer, pass panic call)", status: "failed", error: "Cannot test - panic call was not created"});
+            }
+            else
+            {
+                try
+                {
+                    this.$Session.impersonateAccount(addedOfficerId);
+
+                    rv = $executeAPI(this.$Session, "Call/pass_call", {call_id: panicCallId});
+
+                    this.$Session.accountImpersonationStack = null;
+                    this.$Session.userId = adminUserId;
+                    this.$Session.userType = $Const.USER_TYPE_ADMIN;
+
+                    if ($Err.isERR(rv))
+                    {
+                        testResults.push({step: "Test 30: pass_call (as officer, pass panic call)", status: "failed", error: rv.message});
+                    }
+                    else
+                    {
+                        testResults.push({step: "Test 30: pass_call (as officer, pass panic call)", status: "passed"});
+                    }
+                }
+                catch (impErr)
+                {
+                    this.$Session.accountImpersonationStack = null;
+                    this.$Session.userId = adminUserId;
+                    this.$Session.userType = $Const.USER_TYPE_ADMIN;
+                    testResults.push({step: "Test 30: pass_call (as officer, pass panic call)", status: "failed", error: impErr.message});
+                }
+            }
+
+            // =================================================================
+            // Test 31: get_calls (as officer, verify passed call hidden)
+            // =================================================================
+
+            testResults.push({step: "Test 31: get_calls (as officer, verify passed call hidden)", status: "running"});
+            if (panicCallId === null)
+            {
+                testResults.push({step: "Test 31: get_calls (as officer, verify passed call hidden)", status: "failed", error: "Cannot test"});
+            }
+            else
+            {
+                try
+                {
+                    this.$Session.impersonateAccount(addedOfficerId);
+
+                    rv = $executeAPI(this.$Session, "Call/get_calls", {is_open: true});
+
+                    this.$Session.accountImpersonationStack = null;
+                    this.$Session.userId = adminUserId;
+                    this.$Session.userType = $Const.USER_TYPE_ADMIN;
+
+                    if ($Err.isERR(rv))
+                    {
+                        testResults.push({step: "Test 31: get_calls (as officer, verify passed call hidden)", status: "failed", error: rv.message});
+                    }
+                    else
+                    {
+                        let found = rv.calls.find(c => c.call_id === panicCallId);
+                        if (!found)
+                        {
+                            testResults.push({step: "Test 31: get_calls (as officer, verify passed call hidden)", status: "passed", verified_hidden: true});
+                        }
+                        else
+                        {
+                            testResults.push({step: "Test 31: get_calls (as officer, verify passed call hidden)", status: "warning", message: "Passed call still visible to officer"});
+                        }
+                    }
+                }
+                catch (impErr)
+                {
+                    this.$Session.accountImpersonationStack = null;
+                    this.$Session.userId = adminUserId;
+                    this.$Session.userType = $Const.USER_TYPE_ADMIN;
+                    testResults.push({step: "Test 31: get_calls (as officer, verify passed call hidden)", status: "failed", error: impErr.message});
+                }
+            }
+
+            // =================================================================
+            // Test 32: resolve_call (officer resolves panic, expect error)
+            // =================================================================
+
+            testResults.push({step: "Test 32: resolve_call (officer resolves panic, expect ERR_NO_PRIVILEGES)", status: "running"});
+            if (panicCallId === null)
+            {
+                testResults.push({step: "Test 32: resolve_call (officer resolves panic, expect ERR_NO_PRIVILEGES)", status: "failed", error: "Cannot test"});
+            }
+            else
+            {
+                try
+                {
+                    this.$Session.impersonateAccount(addedOfficerId);
+
+                    rv = $executeAPI(this.$Session, "Call/resolve_call", {call_id: panicCallId});
+
+                    this.$Session.accountImpersonationStack = null;
+                    this.$Session.userId = adminUserId;
+                    this.$Session.userType = $Const.USER_TYPE_ADMIN;
+
+                    if (rv.rc === 565)
+                    {
+                        testResults.push({step: "Test 32: resolve_call (officer resolves panic, expect ERR_NO_PRIVILEGES)", status: "passed", message: "correctly returned ERR_CALL_CANNOT_RESOLVE"});
+                    }
+                    else
+                    {
+                        testResults.push({step: "Test 32: resolve_call (officer resolves panic, expect ERR_NO_PRIVILEGES)", status: "warning", message: "unexpected response", rc: rv.rc});
+                    }
+                }
+                catch (impErr)
+                {
+                    this.$Session.accountImpersonationStack = null;
+                    this.$Session.userId = adminUserId;
+                    this.$Session.userType = $Const.USER_TYPE_ADMIN;
+                    testResults.push({step: "Test 32: resolve_call (officer resolves panic, expect ERR_NO_PRIVILEGES)", status: "failed", error: impErr.message});
+                }
+            }
+
+            // =================================================================
+            // Test 33: resolve_call (admin resolves panic — valid)
+            // =================================================================
+
+            testResults.push({step: "Test 33: resolve_call (admin resolves panic)", status: "running"});
+            if (panicCallId === null)
+            {
+                testResults.push({step: "Test 33: resolve_call (admin resolves panic)", status: "failed", error: "Cannot test"});
+            }
+            else
+            {
+                // Admin must first assign (accept) the panic call before resolving
+                rv = $executeAPI(this.$Session, "Call/assign_call", {
+                    call_id: panicCallId,
+                    officer_user_id: addedOfficerId
+                });
+                if ($Err.isERR(rv))
+                {
+                    testResults.push({step: "Test 33: resolve_call (admin resolves panic)", status: "failed", error: "assign_call failed: " + rv.message});
+                }
+                else
+                {
+                    rv = $executeAPI(this.$Session, "Call/resolve_call", {
+                        call_id: panicCallId,
+                        officer_comments: "Verified all clear via radio."
+                    });
+                    if ($Err.isERR(rv))
+                    {
+                        testResults.push({step: "Test 33: resolve_call (admin resolves panic)", status: "failed", error: rv.message});
+                    }
+                    else
+                    {
+                        testResults.push({step: "Test 33: resolve_call (admin resolves panic)", status: "passed"});
+                    }
+                }
+            }
+
+            // =================================================================
+            // Test 34: assign_call (admin assigns officer to service call)
+            // =================================================================
+
+            testResults.push({step: "Test 34: assign_call (admin assigns officer)", status: "running"});
+            if (serviceCallId === null)
+            {
+                testResults.push({step: "Test 34: assign_call (admin assigns officer)", status: "failed", error: "Cannot test - service call was not created"});
+            }
+            else
+            {
+                rv = $executeAPI(this.$Session, "Call/assign_call", {
+                    call_id: serviceCallId,
+                    officer_user_id: addedOfficerId
+                });
+                if ($Err.isERR(rv))
+                {
+                    testResults.push({step: "Test 34: assign_call (admin assigns officer)", status: "failed", error: rv.message});
+                }
+                else
+                {
+                    testResults.push({step: "Test 34: assign_call (admin assigns officer)", status: "passed"});
+                }
+            }
+
+            // =================================================================
+            // Test 35: get_call (verify assignment)
+            // =================================================================
+
+            testResults.push({step: "Test 35: get_call (verify assignment)", status: "running"});
+            if (serviceCallId === null)
+            {
+                testResults.push({step: "Test 35: get_call (verify assignment)", status: "failed", error: "Cannot verify"});
+            }
+            else
+            {
+                rv = $executeAPI(this.$Session, "Call/get_call", {call_id: serviceCallId});
+                if ($Err.isERR(rv))
+                {
+                    testResults.push({step: "Test 35: get_call (verify assignment)", status: "failed", error: rv.message});
+                }
+                else
+                {
+                    let c = rv.call;
+                    if (c.status === "accepted" && c.officer_user_id === addedOfficerId && c.assigned_by !== null)
+                    {
+                        testResults.push({step: "Test 35: get_call (verify assignment)", status: "passed", verified: true});
+                    }
+                    else
+                    {
+                        testResults.push({step: "Test 35: get_call (verify assignment)", status: "warning", verified: false, status_actual: c.status, officer_actual: c.officer_user_id});
+                    }
+                }
+            }
+
+            // =================================================================
+            // Test 36: assign_call (already accepted, expect error)
+            // =================================================================
+
+            testResults.push({step: "Test 36: assign_call (already accepted, expect error)", status: "running"});
+            if (serviceCallId === null)
+            {
+                testResults.push({step: "Test 36: assign_call (already accepted, expect error)", status: "failed", error: "Cannot test"});
+            }
+            else
+            {
+                rv = $executeAPI(this.$Session, "Call/assign_call", {
+                    call_id: serviceCallId,
+                    officer_user_id: addedOfficerId
+                });
+                if (rv.rc === 561)
+                {
+                    testResults.push({step: "Test 36: assign_call (already accepted, expect error)", status: "passed", message: "correctly returned ERR_CALL_ALREADY_ACCEPTED"});
+                }
+                else
+                {
+                    testResults.push({step: "Test 36: assign_call (already accepted, expect error)", status: "warning", message: "unexpected response", rc: rv.rc});
+                }
+            }
+
+            // =================================================================
+            // Test 37: cancel_call — cancel emergency (expect error)
+            // =================================================================
+
+            testResults.push({step: "Test 37: cancel_call (emergency, expect error)", status: "running"});
+            if (emergencyCallId === null)
+            {
+                testResults.push({step: "Test 37: cancel_call (emergency, expect error)", status: "failed", error: "Cannot test"});
+            }
+            else
+            {
+                rv = $executeAPI(this.$Session, "Call/cancel_call", {call_id: emergencyCallId});
+                if (rv.rc === 566)
+                {
+                    testResults.push({step: "Test 37: cancel_call (emergency, expect error)", status: "passed", message: "correctly returned ERR_CALL_CANNOT_CANCEL"});
+                }
+                else
+                {
+                    testResults.push({step: "Test 37: cancel_call (emergency, expect error)", status: "warning", message: "unexpected response", rc: rv.rc});
+                }
+            }
+
+            // =================================================================
+            // Test 38: cancel_call — cancel service call (as resident)
+            // =================================================================
+
+            testResults.push({step: "Test 38: cancel_call (service call, as resident)", status: "running"});
+            if (serviceCallId === null)
+            {
+                testResults.push({step: "Test 38: cancel_call (service call, as resident)", status: "failed", error: "Cannot test"});
+            }
+            else
+            {
+                try
+                {
+                    this.$Session.impersonateAccount(addedResidentId);
+
+                    rv = $executeAPI(this.$Session, "Call/cancel_call", {call_id: serviceCallId});
+
+                    this.$Session.accountImpersonationStack = null;
+                    this.$Session.userId = adminUserId;
+                    this.$Session.userType = $Const.USER_TYPE_ADMIN;
+
+                    if ($Err.isERR(rv))
+                    {
+                        testResults.push({step: "Test 38: cancel_call (service call, as resident)", status: "failed", error: rv.message});
+                    }
+                    else
+                    {
+                        testResults.push({step: "Test 38: cancel_call (service call, as resident)", status: "passed"});
+                    }
+                }
+                catch (impErr)
+                {
+                    this.$Session.accountImpersonationStack = null;
+                    this.$Session.userId = adminUserId;
+                    this.$Session.userType = $Const.USER_TYPE_ADMIN;
+                    testResults.push({step: "Test 38: cancel_call (service call, as resident)", status: "failed", error: impErr.message});
+                }
+            }
+
+            // =================================================================
+            // Test 39: get_call (verify canceled status)
+            // =================================================================
+
+            testResults.push({step: "Test 39: get_call (verify canceled)", status: "running"});
+            if (serviceCallId === null)
+            {
+                testResults.push({step: "Test 39: get_call (verify canceled)", status: "failed", error: "Cannot verify"});
+            }
+            else
+            {
+                rv = $executeAPI(this.$Session, "Call/get_call", {call_id: serviceCallId});
+                if ($Err.isERR(rv))
+                {
+                    testResults.push({step: "Test 39: get_call (verify canceled)", status: "failed", error: rv.message});
+                }
+                else
+                {
+                    if (rv.call.status === "canceled" && rv.call.canceled_on !== null)
+                    {
+                        testResults.push({step: "Test 39: get_call (verify canceled)", status: "passed", verified: true});
+                    }
+                    else
+                    {
+                        testResults.push({step: "Test 39: get_call (verify canceled)", status: "warning", verified: false, status_actual: rv.call.status});
+                    }
+                }
+            }
+
+            // =================================================================
+            // Test 40: cancel_call — already canceled (expect error)
+            // =================================================================
+
+            testResults.push({step: "Test 40: cancel_call (already canceled, expect error)", status: "running"});
+            if (serviceCallId === null)
+            {
+                testResults.push({step: "Test 40: cancel_call (already canceled, expect error)", status: "failed", error: "Cannot test"});
+            }
+            else
+            {
+                rv = $executeAPI(this.$Session, "Call/cancel_call", {call_id: serviceCallId});
+                if (rv.rc === 563)
+                {
+                    testResults.push({step: "Test 40: cancel_call (already canceled, expect error)", status: "passed", message: "correctly returned ERR_CALL_ALREADY_CANCELED"});
+                }
+                else
+                {
+                    testResults.push({step: "Test 40: cancel_call (already canceled, expect error)", status: "warning", message: "unexpected response", rc: rv.rc});
+                }
+            }
+
+            // =================================================================
+            // Test 41: get_calls (is_open=false, verify history)
+            // =================================================================
+
+            testResults.push({step: "Test 41: get_calls (is_open=false, history)", status: "running"});
+            rv = $executeAPI(this.$Session, "Call/get_calls", {is_open: false, community_id: addedCommunityId});
+            if ($Err.isERR(rv))
+            {
+                testResults.push({step: "Test 41: get_calls (is_open=false, history)", status: "failed", error: rv.message});
+            }
+            else
+            {
+                let allClosed = rv.calls.every(c => c.status === "resolved" || c.status === "canceled");
+                if (allClosed)
+                {
+                    testResults.push({step: "Test 41: get_calls (is_open=false, history)", status: "passed", count: rv.calls.length});
+                }
+                else
+                {
+                    testResults.push({step: "Test 41: get_calls (is_open=false, history)", status: "warning", message: "Open calls found in history"});
+                }
+            }
+
+            // =================================================================
+            // Test 42: get_calls (pagination)
+            // =================================================================
+
+            testResults.push({step: "Test 42: get_calls (pagination offset=0, limit=2)", status: "running"});
+            rv = $executeAPI(this.$Session, "Call/get_calls", {offset: 0, limit: 2, community_id: addedCommunityId});
+            if ($Err.isERR(rv))
+            {
+                testResults.push({step: "Test 42: get_calls (pagination offset=0, limit=2)", status: "failed", error: rv.message});
+            }
+            else
+            {
+                if (rv.calls.length <= 2 && rv.offset === 0 && rv.limit === 2)
+                {
+                    testResults.push({step: "Test 42: get_calls (pagination offset=0, limit=2)", status: "passed", returned: rv.calls.length, total_count: rv.total_count});
+                }
+                else
+                {
+                    testResults.push({step: "Test 42: get_calls (pagination offset=0, limit=2)", status: "warning", message: "Pagination response mismatch"});
+                }
+            }
+
+            // =================================================================
+            // Test 43: get_call (non-existent call, expect error)
+            // =================================================================
+
+            testResults.push({step: "Test 43: get_call (non-existent, expect error)", status: "running"});
+            rv = $executeAPI(this.$Session, "Call/get_call", {call_id: 999999999});
+            if (rv.rc === 560)
+            {
+                testResults.push({step: "Test 43: get_call (non-existent, expect error)", status: "passed", message: "correctly returned ERR_CALL_NOT_FOUND"});
+            }
+            else
+            {
+                testResults.push({step: "Test 43: get_call (non-existent, expect error)", status: "warning", message: "unexpected response", rc: rv.rc});
+            }
+
+            // =================================================================
+            // Test 44: get_call (officer views concierge not assigned to them)
+            // =================================================================
+
+            testResults.push({step: "Test 44: get_call (officer views unassigned concierge, expect error)", status: "running"});
+            if (serviceCallId === null)
+            {
+                testResults.push({step: "Test 44: get_call (officer views unassigned concierge, expect error)", status: "failed", error: "Cannot test"});
+            }
+            else
+            {
+                // Create a second officer who is not assigned to the service call
+                let officer2Phone = "+1555" + Math.floor(Math.random() * 10000000).toString().padStart(7, "0");
+                let officer2Email = `callofc2_${uniqueId}@test.com`;
+                let addResult = $executeAPI(this.$Session, "Officer/add_officer", {
+                    first_name: `TestOfc2 ${uniqueId}`,
+                    last_name: "Unassigned",
+                    phone_num: officer2Phone,
+                    email: officer2Email,
+                    community_id: addedCommunityId,
+                    title: "Officer 2"
+                });
+
+                if ($Err.isERR(addResult))
+                {
+                    testResults.push({step: "Test 44: get_call (officer views unassigned concierge, expect error)", status: "warning", message: "Could not create second officer", error: addResult.message});
+                }
+                else
+                {
+                    let officer2Id = addResult.user_id;
+                    try
+                    {
+                        this.$Session.impersonateAccount(officer2Id);
+
+                        rv = $executeAPI(this.$Session, "Call/get_call", {call_id: serviceCallId});
+
+                        this.$Session.accountImpersonationStack = null;
+                        this.$Session.userId = adminUserId;
+                        this.$Session.userType = $Const.USER_TYPE_ADMIN;
+
+                        if (rv.rc === 560)
+                        {
+                            testResults.push({step: "Test 44: get_call (officer views unassigned concierge, expect error)", status: "passed", message: "correctly returned ERR_CALL_NOT_FOUND"});
+                        }
+                        else
+                        {
+                            testResults.push({step: "Test 44: get_call (officer views unassigned concierge, expect error)", status: "warning", message: "unexpected response", rc: rv.rc});
+                        }
+                    }
+                    catch (impErr)
+                    {
+                        this.$Session.accountImpersonationStack = null;
+                        this.$Session.userId = adminUserId;
+                        this.$Session.userType = $Const.USER_TYPE_ADMIN;
+                        testResults.push({step: "Test 44: get_call (officer views unassigned concierge, expect error)", status: "failed", error: impErr.message});
+                    }
+
+                    // Cleanup second officer
+                    $executeAPI(this.$Session, "Officer/delete_officer", {user_id: officer2Id});
+                }
+            }
+
+            // =================================================================
+            // Test 45: delete_test_call (admin deletes test call)
+            // =================================================================
+
+            testResults.push({step: "Test 45: delete_test_call (admin)", status: "running"});
+            if (testCallId === null)
+            {
+                testResults.push({step: "Test 45: delete_test_call (admin)", status: "failed", error: "Cannot test - test call was not created"});
+            }
+            else
+            {
+                rv = $executeAPI(this.$Session, "Call/delete_test_call", {call_id: testCallId});
+                if ($Err.isERR(rv))
+                {
+                    testResults.push({step: "Test 45: delete_test_call (admin)", status: "failed", error: rv.message});
+                }
+                else
+                {
+                    testResults.push({step: "Test 45: delete_test_call (admin)", status: "passed"});
+                }
+            }
+
+            // =================================================================
+            // Test 46: get_call (verify test call deleted)
+            // =================================================================
+
+            testResults.push({step: "Test 46: get_call (verify test call deleted)", status: "running"});
+            if (testCallId === null)
+            {
+                testResults.push({step: "Test 46: get_call (verify test call deleted)", status: "failed", error: "Cannot verify"});
+            }
+            else
+            {
+                rv = $executeAPI(this.$Session, "Call/get_call", {call_id: testCallId});
+                if (rv.rc === 560)
+                {
+                    testResults.push({step: "Test 46: get_call (verify test call deleted)", status: "passed", verified_deleted: true});
+                }
+                else
+                {
+                    testResults.push({step: "Test 46: get_call (verify test call deleted)", status: "warning", message: "Deleted test call still retrievable", rc: rv.rc});
+                }
+            }
+
+            // =================================================================
+            // Test 47: delete_test_call (non-test call, expect error)
+            // =================================================================
+
+            testResults.push({step: "Test 47: delete_test_call (non-test call, expect error)", status: "running"});
+            if (emergencyCallId === null)
+            {
+                testResults.push({step: "Test 47: delete_test_call (non-test call, expect error)", status: "failed", error: "Cannot test"});
+            }
+            else
+            {
+                rv = $executeAPI(this.$Session, "Call/delete_test_call", {call_id: emergencyCallId});
+                if (rv.rc === 574)
+                {
+                    testResults.push({step: "Test 47: delete_test_call (non-test call, expect error)", status: "passed", message: "correctly returned ERR_CALL_IS_NOT_TEST"});
+                }
+                else
+                {
+                    testResults.push({step: "Test 47: delete_test_call (non-test call, expect error)", status: "warning", message: "unexpected response", rc: rv.rc});
+                }
+            }
+
+            // =================================================================
+            // Test 48: resolve_call (already resolved, expect error)
+            // =================================================================
+
+            testResults.push({step: "Test 48: resolve_call (already resolved, expect error)", status: "running"});
+            if (emergencyCallId === null)
+            {
+                testResults.push({step: "Test 48: resolve_call (already resolved, expect error)", status: "failed", error: "Cannot test"});
+            }
+            else
+            {
+                rv = $executeAPI(this.$Session, "Call/resolve_call", {call_id: emergencyCallId});
+                if (rv.rc === 562)
+                {
+                    testResults.push({step: "Test 48: resolve_call (already resolved, expect error)", status: "passed", message: "correctly returned ERR_CALL_ALREADY_RESOLVED"});
+                }
+                else
+                {
+                    testResults.push({step: "Test 48: resolve_call (already resolved, expect error)", status: "warning", message: "unexpected response", rc: rv.rc});
+                }
+            }
+
+            // =================================================================
+            // Test 49: create_call (invalid priority, expect error)
+            // =================================================================
+
+            testResults.push({step: "Test 49: create_call (invalid priority, expect error)", status: "running"});
+            try
+            {
+                this.$Session.impersonateAccount(addedResidentId);
+
+                rv = $executeAPI(this.$Session, "Call/create_call", {
+                    category: "test",
+                    priority: "invalid_priority"
+                });
+
+                this.$Session.accountImpersonationStack = null;
+                this.$Session.userId = adminUserId;
+                this.$Session.userType = $Const.USER_TYPE_ADMIN;
+
+                if (rv.rc === 570)
+                {
+                    testResults.push({step: "Test 49: create_call (invalid priority, expect error)", status: "passed", message: "correctly returned ERR_CALL_INVALID_PRIORITY"});
+                }
+                else
+                {
+                    testResults.push({step: "Test 49: create_call (invalid priority, expect error)", status: "warning", message: "unexpected response", rc: rv.rc});
+                }
+            }
+            catch (impErr)
+            {
+                this.$Session.accountImpersonationStack = null;
+                this.$Session.userId = adminUserId;
+                this.$Session.userType = $Const.USER_TYPE_ADMIN;
+                testResults.push({step: "Test 49: create_call (invalid priority, expect error)", status: "failed", error: impErr.message});
+            }
+
+            // =================================================================
+            // Test 50: get_calls (as officer, sees community emergencies)
+            // =================================================================
+
+            testResults.push({step: "Test 50: get_calls (as officer, community emergencies)", status: "running"});
+            try
+            {
+                this.$Session.impersonateAccount(addedOfficerId);
+
+                rv = $executeAPI(this.$Session, "Call/get_calls", {});
+
+                this.$Session.accountImpersonationStack = null;
+                this.$Session.userId = adminUserId;
+                this.$Session.userType = $Const.USER_TYPE_ADMIN;
+
+                if ($Err.isERR(rv))
+                {
+                    testResults.push({step: "Test 50: get_calls (as officer, community emergencies)", status: "failed", error: rv.message});
+                }
+                else
+                {
+                    testResults.push({step: "Test 50: get_calls (as officer, community emergencies)", status: "passed", count: rv.calls.length});
+                }
+            }
+            catch (impErr)
+            {
+                this.$Session.accountImpersonationStack = null;
+                this.$Session.userId = adminUserId;
+                this.$Session.userType = $Const.USER_TYPE_ADMIN;
+                testResults.push({step: "Test 50: get_calls (as officer, community emergencies)", status: "failed", error: impErr.message});
+            }
+
+            // =================================================================
+            // Cleanup
+            // =================================================================
+
+            testResults.push({step: "Cleanup: soft-delete test data", status: "info"});
+
+            if (addedOfficerId !== null)
+            {
+                $executeAPI(this.$Session, "Officer/delete_officer", {user_id: addedOfficerId});
+            }
+            if (addedResidentId !== null)
+            {
+                $executeAPI(this.$Session, "Resident/delete_resident", {user_id: addedResidentId});
+            }
+            if (addedCommunityId !== null)
+            {
+                $executeAPI(this.$Session, "Community/delete_community", {community_id: addedCommunityId});
+            }
+            if (testServiceTypeId !== null)
+            {
+                $executeAPI(this.$Session, "Settings/delete_service_type", {type_id: testServiceTypeId});
+            }
+
+            testResults.push({step: "All tests completed", status: "success"});
+        }
+        catch (error)
+        {
+            testResults.push({step: "Exception occurred", status: "error", error: error.message, stack: error.stack});
+
+            if (this.$Session.accountImpersonationStack !== null)
+            {
+                this.$Session.accountImpersonationStack = null;
+                this.$Session.userId = adminUserId;
+                this.$Session.userType = $Const.USER_TYPE_ADMIN;
+            }
+        }
+
+        vals.test_results = testResults;
+        vals.summary = {
+            total: testResults.filter(r => r.status === "running").length,
+            passed: testResults.filter(r => r.status === "passed").length,
+            failed: testResults.filter(r => r.status === "failed").length,
+            warnings: testResults.filter(r => r.status === "warning").length
+        };
+
+        return {...rc, ...vals};
+    }
 }
