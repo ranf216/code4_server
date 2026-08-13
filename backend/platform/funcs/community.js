@@ -347,15 +347,10 @@ module.exports = class
             return $ERRS.ERR_COMMUNITY_HAS_ACTIVE_RESIDENTS;
         }
 
-        // TODO: Add open calls check when the call module is implemented
-        // let callCount = $Db.executeQuery(
-        //     `SELECT COUNT(*) cnt FROM \`call\`
-        //      WHERE CAL_COM_ID=? AND CAL_CLOSED_ON IS NULL AND CAL_DELETED_ON IS NULL`,
-        //     [this.$community_id]);
-        // if (callCount[0].cnt > 0)
-        // {
-        //     return $ERRS.ERR_COMMUNITY_HAS_ACTIVE_CALLS;
-        // }
+        if ($CallUtils.communityHasOpenCalls(this.$community_id))
+        {
+            return $ERRS.ERR_COMMUNITY_HAS_ACTIVE_CALLS;
+        }
 
         let now = $Utils.now();
         $Db.executeQuery(

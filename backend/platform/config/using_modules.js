@@ -25,5 +25,6 @@ module.exports =
         "user_roles",
     ],
     user: [
+        "call_utils",
     ]
 };

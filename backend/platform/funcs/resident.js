@@ -346,10 +346,11 @@ module.exports = class
                 return $ERRS.ERR_COMMUNITY_IS_NOT_ACTIVE;
             }
 
-            // TODO: Once Call module (Phase 3) is implemented, check for active calls before community change
-            // let activeCalls = $Db.executeQuery(
-            //     `SELECT CAL_ID FROM \`call\` WHERE CAL_RES_USR_ID=? AND CAL_STATUS IN (...)`, [this.$user_id]);
-            // if (activeCalls.length > 0) return $ERRS.ERR_RESIDENT_HAS_ACTIVE_CALLS;
+            // Cannot move a resident to another community while they have open calls
+            if ($CallUtils.residentHasOpenCalls(this.$user_id))
+            {
+                return $ERRS.ERR_RESIDENT_HAS_ACTIVE_CALLS;
+            }
         }
         else if (this.$community_id > 0 && this.$community_id === resident.USD_COM_ID)
         {
@@ -359,10 +360,11 @@ module.exports = class
         // Check active calls before deactivation
         if ($Utils.isset(this.$is_active) && this.$is_active === false && resident.USR_STATUS === 1)
         {
-            // TODO: Once Call module (Phase 3) is implemented, check for active calls before deactivation
-            // let activeCalls = $Db.executeQuery(
-            //     `SELECT CAL_ID FROM \`call\` WHERE CAL_RES_USR_ID=? AND CAL_STATUS IN (...)`, [this.$user_id]);
-            // if (activeCalls.length > 0) return $ERRS.ERR_RESIDENT_HAS_ACTIVE_CALLS;
+            // Cannot deactivate a resident while they have open calls
+            if ($CallUtils.residentHasOpenCalls(this.$user_id))
+            {
+                return $ERRS.ERR_RESIDENT_HAS_ACTIVE_CALLS;
+            }
         }
 
         // Handle images (uploaded separately via File/upload_file_base64 or multipart upload)
@@ -529,12 +531,13 @@ module.exports = class
             return $ERRS.ERR_RESIDENT_NOT_FOUND;
         }
 
-        // TODO: Once Call module (Phase 3) is implemented, check for ANY calls (past or present)
-        // let anyCalls = $Db.executeQuery(
-        //     `SELECT CAL_ID FROM \`call\` WHERE CAL_RES_USR_ID=? LIMIT 1`, [this.$user_id]);
-        // if (anyCalls.length > 0) return $ERRS.ERR_RESIDENT_CANNOT_DELETE;
+        // Cannot delete a resident that has any call history (past or present) — only deactivate
+        if ($CallUtils.residentHasAnyCalls(this.$user_id))
+        {
+            return $ERRS.ERR_RESIDENT_CANNOT_DELETE;
+        }
 
-        // For now, use the same pattern as officer: cannot delete if ever logged in
+        // Cannot delete if the resident has ever logged in
         if (resident.USR_LAST_LOGIN !== null)
         {
             return $ERRS.ERR_RESIDENT_CANNOT_DELETE;

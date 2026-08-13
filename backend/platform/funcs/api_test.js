@@ -7211,17 +7211,45 @@ module.exports = class
 
             testResults.push({step: "Cleanup: soft-delete test data", status: "info"});
 
+            // Soft-delete every call created for the test community first. The resident, officer and
+            // community modules block deletion while call records reference them, so this must run
+            // before the user/community cleanup below.
+            if (addedCommunityId !== null)
+            {
+                let cleanupNow = $Utils.now();
+                $Db.executeQuery(
+                    `UPDATE \`service_call\` SET SVC_DELETED_ON=?, SVC_LAST_UPDATE=?
+                     WHERE SVC_COM_ID=? AND SVC_DELETED_ON IS NULL`,
+                    [cleanupNow, cleanupNow, addedCommunityId]);
+                if ($Db.isError())
+                {
+                    testResults.push({step: "Cleanup: soft-delete test calls", status: "warning", error: $Db.lastErrorMsg()});
+                }
+            }
+
             if (addedOfficerId !== null)
             {
-                $executeAPI(this.$Session, "Officer/delete_officer", {user_id: addedOfficerId});
+                let delRv = $executeAPI(this.$Session, "Officer/delete_officer", {user_id: addedOfficerId});
+                if ($Err.isERR(delRv))
+                {
+                    testResults.push({step: "Cleanup: delete_officer", status: "warning", error: delRv.message});
+                }
             }
             if (addedResidentId !== null)
             {
-                $executeAPI(this.$Session, "Resident/delete_resident", {user_id: addedResidentId});
+                let delRv = $executeAPI(this.$Session, "Resident/delete_resident", {user_id: addedResidentId});
+                if ($Err.isERR(delRv))
+                {
+                    testResults.push({step: "Cleanup: delete_resident", status: "warning", error: delRv.message});
+                }
             }
             if (addedCommunityId !== null)
             {
-                $executeAPI(this.$Session, "Community/delete_community", {community_id: addedCommunityId});
+                let delRv = $executeAPI(this.$Session, "Community/delete_community", {community_id: addedCommunityId});
+                if ($Err.isERR(delRv))
+                {
+                    testResults.push({step: "Cleanup: delete_community", status: "warning", error: delRv.message});
+                }
             }
             if (testServiceTypeId !== null)
             {

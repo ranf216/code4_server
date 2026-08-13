@@ -28,13 +28,17 @@ These features are documented in the SDS but are **not implemented** in the init
 
 ---
 
-## 3. Emergency Call Pass/Relay (SDS 2.4.1.3.1)
+## 3. Emergency Call Pass/Relay — Targeted Relay (SDS 2.4.1.3.1)
 
-**Requirement:** If an officer cannot respond to an emergency, they can "pass" it to the next nearest officer.
+**Requirement:** If an officer cannot respond to an emergency, they can "pass" it to the **next nearest** officer.
 
-**Current behavior:** Not implemented. Officer simply doesn't accept the call; another officer can accept it since status remains `new`.
+**Current behavior:** ✅ **Partially implemented.** `Call/pass_call` is available — the officer is added to the call's `SVC_PASSED_BY` list, which removes the call from that officer's list while it remains visible and acceptable to all other officers in the community. The call status stays `new`.
+
+**Still deferred:** The *targeted* relay (explicitly routing the passed call to the next nearest officer, and re-notifying only that officer) requires GPS proximity data.
 
 **Dependencies:** GPS Tracking module for next-nearest-officer determination.
+
+**Implementation notes:** Once GPS tracking is available, extend `pass_call` to compute the nearest non-passed officer and send them a targeted `new_emergency` notification instead of relying on the community-wide broadcast.
 
 ---
 
@@ -108,12 +112,22 @@ These features are documented in the SDS but are **not implemented** in the init
 
 ---
 
-## 11. Active-Call Checks in Resident/Officer Modules
+## ~~11. Active-Call Checks in Resident/Officer/Community Modules~~ ✅ Done
 
-**Requirement:** Block resident deletion/deactivation/community-move if they have active calls. Block officer deactivation if they have active calls.
+**Requirement:** Block resident deletion/deactivation/community-move if they have active calls. Block officer deactivation/deletion/community-move if they have active calls. Block community deletion if it has active calls.
 
-**Current behavior:** TODO placeholders exist in resident.js. Now that the `service_call` table exists, these checks can be implemented.
+**Status:** ✅ **Implemented.** All TODO placeholders have been replaced with real queries against the `service_call` table.
 
-**Implementation:** Query `service_call` WHERE `SVC_RES_USR_ID=?` (or `SVC_OFC_USR_ID=?`) AND `SVC_STATUS IN ('new','accepted')`. If rows exist, return `ERR_RESIDENT_HAS_ACTIVE_CALLS` or `ERR_OFFICER_HAS_ACTIVE_CALLS`.
+**Implemented checks:**
 
-**Status:** Ready to implement — can be done as a follow-up patch to the resident and officer modules.
+| Module | Operation | Condition | Error |
+|--------|-----------|-----------|-------|
+| `resident.js` | `update_resident` (community change) | Open calls as resident | `ERR_RESIDENT_HAS_ACTIVE_CALLS` (541) |
+| `resident.js` | `update_resident` (deactivation) | Open calls as resident | `ERR_RESIDENT_HAS_ACTIVE_CALLS` (541) |
+| `resident.js` | `delete_resident` | Any call history | `ERR_RESIDENT_CANNOT_DELETE` (543) |
+| `officer.js` | `update_officer` (community change) | Open calls as assigned officer | `ERR_OFFICER_HAS_ACTIVE_CALLS` (522) |
+| `officer.js` | `update_officer` (deactivation) | Open calls as assigned officer | `ERR_OFFICER_HAS_ACTIVE_CALLS` (522) |
+| `officer.js` | `delete_officer` | Any call history | `ERR_OFFICER_CANNOT_DELETE` (526) |
+| `community.js` | `delete_community` | Any open call in the community | `ERR_COMMUNITY_HAS_ACTIVE_CALLS` (504) |
+
+"Open calls" means `SVC_STATUS IN ('new','accepted') AND SVC_DELETED_ON IS NULL`.

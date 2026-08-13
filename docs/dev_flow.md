@@ -117,14 +117,16 @@ Officers and residents are the primary actors. Calls, tasks, shifts, and all ope
 
 The primary operational workflows. This is the heart of the application.
 
-#### 3.1 Call (`platform/api/call.js`)
-- Create service/emergency/panic/test calls, accept/pass/resolve/cancel, media/document/comment management, like reaction, statistics, export
-- Complex status lifecycle: New -> Accepted -> Resolved / Canceled
-- Push notifications to officers on new calls, status changes
-- WebSocket real-time updates for panic calls
-- **DB tables:** `call`, `call_media`, `call_document`, `call_comment`
+#### ~~3.1 Call (`platform/api/call.js`)~~ ✅ Done
+- ~~Create service/emergency/panic/test calls, accept/pass/resolve/cancel, media/comment management, like reaction~~
+- ~~Complex status lifecycle: New -> Accepted -> Resolved / Canceled~~
+- ~~Push notifications to officers on new calls, status changes~~
+- ~~WebSocket real-time updates for panic calls~~
+- **DB tables:** `service_call` (single table; media, confirmation media, and passed-by lists stored as JSON columns instead of separate `call_media` / `call_document` / `call_comment` tables)
 - **Depends on:** Community, Officer, Resident, Notification
 - **Why first in Phase 3:** Calls are the central feature of the platform - emergency response, concierge services, and panic buttons. All other operational features (reports, tracking, dashboard) reference calls.
+- **Implementation:** 12 API endpoints — `create_call`, `get_calls`, `get_call`, `update_call`, `cancel_call`, `accept_call`, `pass_call`, `resolve_call`, `assign_call`, `add_reaction`, `add_comment`, `delete_test_call`. Supports 5 categories (`medical_emergency`, `security_emergency`, `concierge_service`, `test`, `panic`) with a `new -> accepted -> resolved/canceled` lifecycle, role-based visibility (residents see own calls; officers see community emergency/panic minus passed plus assigned concierge/test; admins see all), one-active-emergency-per-resident enforcement, auto-`urgent` priority for emergency/panic, dynamic `service_type` validation for concierge calls, media attachments (up to 5 images + 1 audio + 1 video, plus a separate officer confirmation set), officer pass/relay via `SVC_PASSED_BY`, admin manual assignment, resident like/dislike reaction and post-resolution comment, panic calls resolvable only by admins, soft-delete restricted to `test` calls, and 9 push-notification triggers routed through the Notification module (which also handles real-time socket delivery). Active-call guards added to `resident.js`, `officer.js`, and `community.js`.
+- **Deferred:** documents & AI transcription, share/export to PDF, statistics/analytics dashboard, GPS-based nearest-officer dispatch, ETA calculation, panic two-way chat, out-of-service-zone detection, and server-side auto-archive — see `docs/deferred_requirements/03-call-enhancements.md`.
 
 #### 3.2 Task (`platform/api/task.js`)
 - Maintenance task CRUD, status lifecycle (New -> Accepted -> Approved -> Completed / Rejected / Canceled), comments, media
