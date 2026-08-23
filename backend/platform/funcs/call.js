@@ -1,7 +1,3 @@
-const VALID_CATEGORIES = ["medical_emergency", "security_emergency", "concierge_service", "test", "panic"];
-const VALID_STATUSES = ["new", "accepted", "resolved", "canceled"];
-const VALID_PRIORITIES = ["urgent", "important", "normal", "low"];
-const OPEN_STATUSES = ["new", "accepted"];
 const MAX_MEDIA_COUNT = 5;
 
 function fetchCallRecord(callId)
@@ -202,25 +198,25 @@ module.exports = class
         let userType = this.$Session.userType;
 
         // Validate category
-        if (!VALID_CATEGORIES.includes(this.$category))
+        if (!$DataItems.isValidItemId(this.$category, "call_category"))
         {
             return $ERRS.ERR_CALL_INVALID_CATEGORY;
         }
 
         // Officers can only create panic calls
-        if (userType === $Const.USER_TYPE_OFFICER && this.$category !== "panic")
+        if (userType === $Const.USER_TYPE_OFFICER && this.$category !== $Const.CALL_CATEGORY_PANIC)
         {
             return $ERRS.ERR_NO_PRIVILEGES;
         }
 
         // Validate priority
-        if (!VALID_PRIORITIES.includes(this.$priority))
+        if (!$DataItems.isValidItemId(this.$priority, "call_priority"))
         {
             return $ERRS.ERR_CALL_INVALID_PRIORITY;
         }
 
         // Validate service_type for concierge calls
-        if (this.$category === "concierge_service")
+        if (this.$category === $Const.CALL_CATEGORY_CONCIERGE_SERVICE)
         {
             if ($Utils.empty(this.$service_type))
             {
@@ -243,14 +239,19 @@ module.exports = class
         let communityId = creatorRows[0].USD_COM_ID;
 
         // For emergency categories, check if resident already has an active emergency
-        if (this.$category === "medical_emergency" || this.$category === "security_emergency")
+        if ($CallUtils.isEmergencyCategory(this.$category))
         {
+            let emergencyCategories = $CallUtils.emergencyCategories();
+            let openStatuses = $CallUtils.openStatuses();
+
             let activeEmergency = $Db.executeQuery(
                 `SELECT SVC_ID FROM \`service_call\`
-                 WHERE SVC_RES_USR_ID=? AND SVC_CATEGORY IN ('medical_emergency','security_emergency')
-                   AND SVC_STATUS IN ('new','accepted') AND SVC_DELETED_ON IS NULL
+                 WHERE SVC_RES_USR_ID=?
+                   AND SVC_CATEGORY IN (${emergencyCategories.toPlaceholders()})
+                   AND SVC_STATUS IN (${openStatuses.toPlaceholders()})
+                   AND SVC_DELETED_ON IS NULL
                  LIMIT 1`,
-                [userId]);
+                [userId, ...emergencyCategories, ...openStatuses]);
             if (activeEmergency.length > 0)
             {
                 return $ERRS.ERR_CALL_ACTIVE_EMERGENCY_EXISTS;
@@ -292,9 +293,9 @@ module.exports = class
 
         // Determine priority based on category
         let priority = this.$priority;
-        if (this.$category === "medical_emergency" || this.$category === "security_emergency" || this.$category === "panic")
+        if ($CallUtils.forcesUrgentPriority(this.$category))
         {
-            priority = "urgent";
+            priority = $Const.CALL_PRIORITY_URGENT;
         }
 
         $Db.executeQuery(
@@ -305,10 +306,10 @@ module.exports = class
               SVC_MEDIA, SVC_AUDIO, SVC_VIDEO, SVC_CREATED_ON)
              VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
             [this.$category,
-             this.$category === "concierge_service" ? this.$service_type : null,
+             this.$category === $Const.CALL_CATEGORY_CONCIERGE_SERVICE ? this.$service_type : null,
              userId,
              communityId,
-             "new",
+             $Const.CALL_STATUS_NEW,
              priority,
              this.$description || null,
              this.$address || null,
@@ -333,7 +334,7 @@ module.exports = class
         // Send notifications based on category
         let creatorName = getUserName(userId);
 
-        if (this.$category === "medical_emergency" || this.$category === "security_emergency")
+        if ($CallUtils.isEmergencyCategory(this.$category))
         {
             // Notify all officers in community
             let officerIds = getOfficerIdsInCommunity(communityId);
@@ -349,7 +350,7 @@ module.exports = class
                 });
             }
         }
-        else if (this.$category === "concierge_service")
+        else if (this.$category === $Const.CALL_CATEGORY_CONCIERGE_SERVICE)
         {
             // Notify all active admins — concierge calls require admin assignment, not officer broadcast
             let adminIds = getActiveAdminIds();
@@ -365,7 +366,7 @@ module.exports = class
                 });
             }
         }
-        else if (this.$category === "panic")
+        else if (this.$category === $Const.CALL_CATEGORY_PANIC)
         {
             // Notify all officers in community
             let officerIds = getOfficerIdsInCommunity(communityId);
@@ -410,9 +411,12 @@ module.exports = class
             // Emergency/panic: community-wide (minus passed). Concierge/test: assigned-only.
             let officerComId = getOfficerCommunityId(userId) || 0;
 
+            let broadcastCategories = $CallUtils.broadcastCategories();
+
             conditions.push(
-                `(SVC_OFC_USR_ID=? OR (SVC_CATEGORY IN ('medical_emergency','security_emergency','panic') AND SVC_COM_ID=? AND (SVC_PASSED_BY IS NULL OR NOT JSON_CONTAINS(SVC_PASSED_BY, ?))))`);
-            params.push(userId, officerComId, JSON.stringify(userId));
+                `(SVC_OFC_USR_ID=? OR (SVC_CATEGORY IN (${broadcastCategories.toPlaceholders()})
+                   AND SVC_COM_ID=? AND (SVC_PASSED_BY IS NULL OR NOT JSON_CONTAINS(SVC_PASSED_BY, ?))))`);
+            params.push(userId, ...broadcastCategories, officerComId, JSON.stringify(userId));
         }
         else if (userType === $Const.USER_TYPE_ADMIN)
         {
@@ -426,7 +430,7 @@ module.exports = class
         // Status filter
         if (!$Utils.empty(this.$status))
         {
-            if (!VALID_STATUSES.includes(this.$status))
+            if (!$DataItems.isValidItemId(this.$status, "call_status"))
             {
                 return $ERRS.ERR_CALL_INVALID_STATUS;
             }
@@ -437,7 +441,7 @@ module.exports = class
         // Category filter
         if (!$Utils.empty(this.$category))
         {
-            if (!VALID_CATEGORIES.includes(this.$category))
+            if (!$DataItems.isValidItemId(this.$category, "call_category"))
             {
                 return $ERRS.ERR_CALL_INVALID_CATEGORY;
             }
@@ -448,14 +452,9 @@ module.exports = class
         // Open/closed filter
         if ($Utils.isset(this.$is_open))
         {
-            if (this.$is_open)
-            {
-                conditions.push("SVC_STATUS IN ('new','accepted')");
-            }
-            else
-            {
-                conditions.push("SVC_STATUS IN ('resolved','canceled')");
-            }
+            let statusSet = this.$is_open ? $CallUtils.openStatuses() : $CallUtils.closedStatuses();
+            conditions.push(`SVC_STATUS IN (${statusSet.toPlaceholders()})`);
+            params.push(...statusSet);
         }
 
         // Free-text search
@@ -573,7 +572,7 @@ module.exports = class
         // Access control: officers — emergency/panic: community-wide; concierge/test: assigned-only
         if (userType === $Const.USER_TYPE_OFFICER)
         {
-            if (call.SVC_CATEGORY === "medical_emergency" || call.SVC_CATEGORY === "security_emergency" || call.SVC_CATEGORY === "panic")
+            if ($CallUtils.isBroadcastCategory(call.SVC_CATEGORY))
             {
                 // Emergency/panic: officer must be in same community
                 let officerComId = getOfficerCommunityId(userId);
@@ -623,7 +622,7 @@ module.exports = class
             {
                 return $ERRS.ERR_CALL_NOT_FOUND;
             }
-            if (call.SVC_STATUS !== "new")
+            if (call.SVC_STATUS !== $Const.CALL_STATUS_NEW)
             {
                 return $ERRS.ERR_CALL_CANNOT_ACCEPT;
             }
@@ -635,7 +634,7 @@ module.exports = class
             }
             if (!$Utils.empty(this.$priority))
             {
-                if (!VALID_PRIORITIES.includes(this.$priority))
+                if (!$DataItems.isValidItemId(this.$priority, "call_priority"))
                 {
                     return $ERRS.ERR_CALL_INVALID_PRIORITY;
                 }
@@ -723,7 +722,7 @@ module.exports = class
             {
                 return $ERRS.ERR_CALL_NOT_ASSIGNED_TO_OFFICER;
             }
-            if (call.SVC_STATUS !== "accepted")
+            if (call.SVC_STATUS !== $Const.CALL_STATUS_ACCEPTED)
             {
                 return $ERRS.ERR_CALL_CANNOT_RESOLVE;
             }
@@ -841,7 +840,7 @@ module.exports = class
         }
 
         // Only service calls can be canceled
-        if (call.SVC_CATEGORY !== "concierge_service")
+        if (call.SVC_CATEGORY !== $Const.CALL_CATEGORY_CONCIERGE_SERVICE)
         {
             return $ERRS.ERR_CALL_CANNOT_CANCEL;
         }
@@ -853,15 +852,15 @@ module.exports = class
         }
 
         // Check status
-        if (call.SVC_STATUS === "canceled")
+        if (call.SVC_STATUS === $Const.CALL_STATUS_CANCELED)
         {
             return $ERRS.ERR_CALL_ALREADY_CANCELED;
         }
-        if (call.SVC_STATUS === "resolved")
+        if (call.SVC_STATUS === $Const.CALL_STATUS_RESOLVED)
         {
             return $ERRS.ERR_CALL_ALREADY_RESOLVED;
         }
-        if (!OPEN_STATUSES.includes(call.SVC_STATUS))
+        if (!$CallUtils.isOpenStatus(call.SVC_STATUS))
         {
             return $ERRS.ERR_CALL_CANNOT_CANCEL;
         }
@@ -869,9 +868,9 @@ module.exports = class
         let now = $Utils.now();
 
         $Db.executeQuery(
-            `UPDATE \`service_call\` SET SVC_STATUS='canceled', SVC_CANCELED_ON=?, SVC_LAST_UPDATE=?
+            `UPDATE \`service_call\` SET SVC_STATUS=?, SVC_CANCELED_ON=?, SVC_LAST_UPDATE=?
              WHERE SVC_ID=? AND SVC_DELETED_ON IS NULL`,
-            [now, now, this.$call_id]);
+            [$Const.CALL_STATUS_CANCELED, now, now, this.$call_id]);
         if ($Db.isError())
         {
             return $Err.DBError("ERR_DB_UPDATE_ERROR", $Db.lastErrorMsg());
@@ -922,18 +921,16 @@ module.exports = class
         }
 
         // Only emergency and panic calls can be accepted by officer
-        if (call.SVC_CATEGORY !== "medical_emergency" &&
-            call.SVC_CATEGORY !== "security_emergency" &&
-            call.SVC_CATEGORY !== "panic")
+        if (!$CallUtils.isBroadcastCategory(call.SVC_CATEGORY))
         {
             return $ERRS.ERR_CALL_CANNOT_ACCEPT;
         }
 
-        if (call.SVC_STATUS === "accepted")
+        if (call.SVC_STATUS === $Const.CALL_STATUS_ACCEPTED)
         {
             return $ERRS.ERR_CALL_ALREADY_ACCEPTED;
         }
-        if (call.SVC_STATUS !== "new")
+        if (call.SVC_STATUS !== $Const.CALL_STATUS_NEW)
         {
             return $ERRS.ERR_CALL_CANNOT_ACCEPT;
         }
@@ -948,9 +945,9 @@ module.exports = class
         let now = $Utils.now();
 
         $Db.executeQuery(
-            `UPDATE \`service_call\` SET SVC_STATUS='accepted', SVC_OFC_USR_ID=?, SVC_ACCEPTED_ON=?, SVC_LAST_UPDATE=?
+            `UPDATE \`service_call\` SET SVC_STATUS=?, SVC_OFC_USR_ID=?, SVC_ACCEPTED_ON=?, SVC_LAST_UPDATE=?
              WHERE SVC_ID=? AND SVC_DELETED_ON IS NULL`,
-            [userId, now, now, this.$call_id]);
+            [$Const.CALL_STATUS_ACCEPTED, userId, now, now, this.$call_id]);
         if ($Db.isError())
         {
             return $Err.DBError("ERR_DB_UPDATE_ERROR", $Db.lastErrorMsg());
@@ -986,13 +983,11 @@ module.exports = class
         }
 
         // Can only pass calls that are new (not yet accepted) and emergency/panic
-        if (call.SVC_STATUS !== "new")
+        if (call.SVC_STATUS !== $Const.CALL_STATUS_NEW)
         {
             return $ERRS.ERR_CALL_CANNOT_ACCEPT;
         }
-        if (call.SVC_CATEGORY !== "medical_emergency" &&
-            call.SVC_CATEGORY !== "security_emergency" &&
-            call.SVC_CATEGORY !== "panic")
+        if (!$CallUtils.isBroadcastCategory(call.SVC_CATEGORY))
         {
             return $ERRS.ERR_CALL_CANNOT_ACCEPT;
         }
@@ -1038,15 +1033,15 @@ module.exports = class
             return $ERRS.ERR_CALL_NOT_FOUND;
         }
 
-        if (call.SVC_STATUS === "resolved")
+        if (call.SVC_STATUS === $Const.CALL_STATUS_RESOLVED)
         {
             return $ERRS.ERR_CALL_ALREADY_RESOLVED;
         }
-        if (call.SVC_STATUS === "canceled")
+        if (call.SVC_STATUS === $Const.CALL_STATUS_CANCELED)
         {
             return $ERRS.ERR_CALL_ALREADY_CANCELED;
         }
-        if (call.SVC_STATUS !== "accepted")
+        if (call.SVC_STATUS !== $Const.CALL_STATUS_ACCEPTED)
         {
             return $ERRS.ERR_CALL_CANNOT_RESOLVE;
         }
@@ -1054,7 +1049,7 @@ module.exports = class
         // Officer can resolve only calls assigned to them — but NEVER panic calls
         if (userType === $Const.USER_TYPE_OFFICER)
         {
-            if (call.SVC_CATEGORY === "panic")
+            if (call.SVC_CATEGORY === $Const.CALL_CATEGORY_PANIC)
             {
                 return $ERRS.ERR_NO_PRIVILEGES;
             }
@@ -1095,8 +1090,8 @@ module.exports = class
         }
 
         let now = $Utils.now();
-        let setClause = "SVC_STATUS='resolved', SVC_RESOLVED_ON=?, SVC_LAST_UPDATE=?";
-        let allValues = [now, now];
+        let setClause = "SVC_STATUS=?, SVC_RESOLVED_ON=?, SVC_LAST_UPDATE=?";
+        let allValues = [$Const.CALL_STATUS_RESOLVED, now, now];
 
         if (confirmFields.length > 0)
         {
@@ -1142,9 +1137,9 @@ module.exports = class
             return $ERRS.ERR_CALL_NOT_FOUND;
         }
 
-        if (call.SVC_STATUS !== "new")
+        if (call.SVC_STATUS !== $Const.CALL_STATUS_NEW)
         {
-            if (call.SVC_STATUS === "accepted")
+            if (call.SVC_STATUS === $Const.CALL_STATUS_ACCEPTED)
             {
                 return $ERRS.ERR_CALL_ALREADY_ACCEPTED;
             }
@@ -1169,9 +1164,9 @@ module.exports = class
 
         $Db.executeQuery(
             `UPDATE \`service_call\`
-             SET SVC_STATUS='accepted', SVC_OFC_USR_ID=?, SVC_ASSIGNED_BY=?, SVC_ACCEPTED_ON=?, SVC_LAST_UPDATE=?
+             SET SVC_STATUS=?, SVC_OFC_USR_ID=?, SVC_ASSIGNED_BY=?, SVC_ACCEPTED_ON=?, SVC_LAST_UPDATE=?
              WHERE SVC_ID=? AND SVC_DELETED_ON IS NULL`,
-            [this.$officer_user_id, userId, now, now, this.$call_id]);
+            [$Const.CALL_STATUS_ACCEPTED, this.$officer_user_id, userId, now, now, this.$call_id]);
         if ($Db.isError())
         {
             return $Err.DBError("ERR_DB_UPDATE_ERROR", $Db.lastErrorMsg());
@@ -1223,7 +1218,7 @@ module.exports = class
         }
 
         // Must be resolved
-        if (call.SVC_STATUS !== "resolved")
+        if (call.SVC_STATUS !== $Const.CALL_STATUS_RESOLVED)
         {
             return $ERRS.ERR_CALL_CANNOT_RESOLVE;
         }
@@ -1281,7 +1276,7 @@ module.exports = class
         }
 
         // Must be resolved
-        if (call.SVC_STATUS !== "resolved")
+        if (call.SVC_STATUS !== $Const.CALL_STATUS_RESOLVED)
         {
             return $ERRS.ERR_CALL_CANNOT_RESOLVE;
         }
@@ -1311,7 +1306,7 @@ module.exports = class
             return $ERRS.ERR_CALL_NOT_FOUND;
         }
 
-        if (call.SVC_CATEGORY !== "test")
+        if (call.SVC_CATEGORY !== $Const.CALL_CATEGORY_TEST)
         {
             return $ERRS.ERR_CALL_IS_NOT_TEST;
         }

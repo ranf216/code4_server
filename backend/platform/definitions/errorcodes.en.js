@@ -222,6 +222,11 @@ module.exports = {
 	"ERR_TASK_CANNOT_CANCEL"							: {"rc" : 594,	"message" : "task cannot be canceled in its current status"},
 	"ERR_TASK_CANNOT_REJECT"							: {"rc" : 595,	"message" : "task cannot be rejected in its current status"},
 	"ERR_TASK_INVALID_TYPE"								: {"rc" : 596,	"message" : "invalid task type"},
+	"ERR_TASK_INVALID_PRIORITY"							: {"rc" : 597,	"message" : "invalid task priority"},
+	"ERR_TASK_MEDIA_LIMIT_REACHED"						: {"rc" : 598,	"message" : "maximum number of media files reached for this task"},
+	"ERR_TASK_CANNOT_REASSIGN"							: {"rc" : 599,	"message" : "task cannot be reassigned in its current status"},
+	"ERR_TASK_ASSIGNEE_NOT_FOUND"						: {"rc" : 600,	"message" : "assignee user not found"},
+	"ERR_TASK_COMMENT_NOT_FOUND"						: {"rc" : 601,	"message" : "task comment not found"},
 
 	// Shift (610-639)
 	"ERR_SHIFT_NOT_FOUND"								: {"rc" : 610,	"message" : "shift not found"},

@@ -7,6 +7,10 @@ if not exist "docs\.temp" (
     echo. > docs/.temp/temp.md
     echo docs/.temp >> .git/info/exclude
 )
+if not exist "docs\.notebook" (
+    mkdir "docs\.notebook"
+    echo docs/.notebook >> .git/info/exclude
+)
 
 if not exist ".devin" mkdir ".devin"
 if not exist ".devin\rules" mkdir ".devin\rules"

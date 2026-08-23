@@ -265,6 +265,7 @@ Managers can record performance evaluations for officers. Each evaluation contai
     | 504 | community not found | No active community exists with the given `community_id`. |
     | 505 | community is not active | The target community exists but is currently inactive. |
     | 520 | officer not found | No active officer exists with the given `user_id`. |
+    | 522 | cannot delete officer with active calls | The officer is assigned to open calls (status `new` or `accepted`) and is being moved to another community or deactivated. Resolve or reassign the open calls first. |
 
 - **Usage & Flows:**
     Called from the officer edit form in the management portal (SDS 4.3.3). Supports partial updates — only send the fields that changed.
@@ -304,7 +305,7 @@ Managers can record performance evaluations for officers. Each evaluation contai
     | 103 | current user does not have privileges | The caller is not an Admin. |
     | 201 | invalid user token | Invalid or expired token. |
     | 520 | officer not found | No active officer exists with the given `user_id`, or already deleted. |
-    | 526 | officer has logged in and cannot be deleted, only deactivated | The officer has logged in at least once. Use `update_officer` with `is_active: false` instead. |
+    | 526 | officer has logged in and cannot be deleted, only deactivated | The officer has logged in at least once, **or** is referenced by at least one call on record. Use `update_officer` with `is_active: false` instead. |
 
 - **Usage & Flows:**
     Called from the officer management list (SDS 4.3.4). The deletion constraint exists because once an officer has logged in, they may have associated data (calls, shifts, reports). Soft-deletion preserves historical data integrity. If the consumer receives `rc: 526`, it should display a message suggesting deactivation as an alternative. After deletion, the officer's phone number and email become available for reuse by a new officer. The deleted officer's session (if any) is terminated immediately.

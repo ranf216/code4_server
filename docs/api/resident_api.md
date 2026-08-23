@@ -256,6 +256,7 @@ Residents can register vehicle license plates. These are stored as an array of s
     | 500 | community not found | The target community does not exist. |
     | 505 | community is not active | The target community is not active. |
     | 540 | resident not found | No active resident exists with the given `user_id`. |
+    | 541 | cannot modify resident with active calls | The resident has open calls (status `new` or `accepted`) and is being moved to another community or deactivated. Resolve or cancel the open calls first. |
     | 542 | resident already exists in this community | The `community_id` matches the resident's current community. |
 
 - **Usage & Flows:**
@@ -264,7 +265,7 @@ Residents can register vehicle license plates. These are stored as an array of s
 ---
 
 ### POST Resident/delete_resident
-*Admin only.* Soft-deletes a resident. Only possible if the resident has never logged in; otherwise, deactivation via `update_resident` is required.
+*Admin only.* Soft-deletes a resident. Only possible if the resident has never logged in and has no calls on record; otherwise, deactivation via `update_resident` is required.
 
 - **API Parameters:**
     | Parameter | Type | Required | Description |
@@ -286,10 +287,10 @@ Residents can register vehicle license plates. These are stored as an array of s
     | 103 | current user does not have privileges | The caller is not an Admin. |
     | 201 | invalid user token | Invalid or expired token. |
     | 540 | resident not found | No active resident exists with the given `user_id`. |
-    | 543 | resident has activity and cannot be deleted | The resident has logged in at least once. Use deactivation instead. |
+    | 543 | resident has activity and cannot be deleted | The resident has logged in at least once, **or** has at least one call on record. Use deactivation instead. |
 
 - **Usage & Flows:**
-    Called from the management portal when an admin removes a recently-added resident who has not yet used the app. Once a resident has logged in, deletion is blocked and the admin must use `update_resident` with `is_active: false` instead.
+    Called from the management portal when an admin removes a recently-added resident who has not yet used the app. Once a resident has logged in **or has created any call**, deletion is blocked and the admin must use `update_resident` with `is_active: false` instead.
 
 ---
 

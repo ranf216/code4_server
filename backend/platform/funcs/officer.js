@@ -333,6 +333,19 @@ module.exports = class
             {
                 return $ERRS.ERR_COMMUNITY_IS_NOT_ACTIVE;
             }
+
+            // Cannot move an officer to another community while they are handling open calls
+            if ($CallUtils.officerHasOpenCalls(this.$user_id))
+            {
+                return $ERRS.ERR_OFFICER_HAS_ACTIVE_CALLS;
+            }
+        }
+
+        // Cannot deactivate an officer while they are handling open calls
+        if ($Utils.isset(this.$is_active) && this.$is_active === false && officer.USR_STATUS === 1
+            && $CallUtils.officerHasOpenCalls(this.$user_id))
+        {
+            return $ERRS.ERR_OFFICER_HAS_ACTIVE_CALLS;
         }
 
         // Handle image
@@ -498,6 +511,12 @@ module.exports = class
         if (!officer)
         {
             return $ERRS.ERR_OFFICER_NOT_FOUND;
+        }
+
+        // Cannot delete an officer that has any call history (past or present) — only deactivate
+        if ($CallUtils.officerHasAnyCalls(this.$user_id))
+        {
+            return $ERRS.ERR_OFFICER_CANNOT_DELETE;
         }
 
         // Cannot delete if officer has logged in — must deactivate instead

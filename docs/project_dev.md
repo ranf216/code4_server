@@ -1,7 +1,7 @@
 # Server Implementation Documentation
 
-**Document Version:** 1.6  
-**Last Updated:** 2026-07-10
+**Document Version:** 1.7  
+**Last Updated:** 2026-08-13
 **Purpose:** Comprehensive documentation of the project server business logic implementation
 
 ---
@@ -531,6 +531,117 @@ Manages the full lifecycle of service calls, emergency calls, panic button alert
 - **Priority override:** Emergency and panic calls always get `urgent` priority regardless of user input.
 - **Access control:** Layered — ACL restricts user types, then business logic restricts to relevant records (own calls, assigned calls, same community).
 - **Deferred features:** See `docs/deferred_requirements/03-call-enhancements.md` for ETA calculation, location-based dispatch, 2-way panic communication, export/share, and advanced analytics.
+
+### 3.2 Task (`platform/api/task.js`, `platform/funcs/task.js`)
+
+Manages maintenance tasks/work orders lifecycle. Officers and admins create tasks, assign them, and track progress through a multi-state workflow with comments and media attachments.
+
+#### Task Status Lifecycle
+| Status | Description |
+|---|---|
+| `new` | Just created, awaiting acceptance |
+| `accepted` | Assignee accepted the task |
+| `approved` | Task approved (e.g., by logistics/finance/planning) |
+| `completed` | Task completed by assignee (closed) |
+| `rejected` | Task rejected by assignee (closed) |
+| `canceled` | Task canceled by creator (closed) |
+
+**Transitions:**
+- New → Accepted (via `accept_task`)
+- New/Accepted → Rejected (via `reject_task`)
+- Accepted/Approved → Completed (via `complete_task`)
+- New → Canceled (via `cancel_task`, creator only; admins can cancel any open task)
+- Any open status → Reassigned (via `reassign_task`, keeps current status)
+
+#### Task Priorities
+| Priority | Description |
+|---|---|
+| `urgent` | Immediate attention required |
+| `important` | High priority |
+| `normal` | Standard priority (default) |
+| `low` | Low priority |
+
+#### API Endpoints
+
+| API | ACL | Description |
+|---|---|---|
+| `Task/create_task` | ADMIN, OFFICER | Create a new maintenance task with type, description, priority, assignee, and optional media |
+| `Task/get_tasks_list` | ADMIN, OFFICER | Paginated list with filters: status, type, priority, community, scope (all/assigned_to_me/created_by_me), date range, search |
+| `Task/get_task` | ADMIN, OFFICER | Full task details including comments and media |
+| `Task/update_task` | ADMIN, OFFICER | Update description, priority, address, ETA (admin only). Only while task is open. |
+| `Task/accept_task` | ADMIN, OFFICER | Accept a task (status must be new). Sets assignee to accepting user. |
+| `Task/approve_task` | ADMIN (Planning/Logistics/Finance roles) | Approve a task that requires approval (supply_request, damaged_equipment). Status must be accepted. Optionally reassigns atomically. |
+| `Task/reject_task` | ADMIN, OFFICER | Reject a task with mandatory reason comment. Status must be new or accepted. |
+| `Task/complete_task` | ADMIN, OFFICER | Complete a task with optional resolution comment and confirmation media. Status must be accepted or approved. |
+| `Task/cancel_task` | ADMIN, OFFICER | Cancel a task. Officers: only own tasks in status new. Admins: any open task. |
+| `Task/reassign_task` | ADMIN, OFFICER | Reassign task to another user. Task must be in open status. |
+| `Task/add_task_comment` | ADMIN, OFFICER | Add a comment to a task |
+| `Task/add_task_media` | ADMIN, OFFICER | Upload images (max 5), video (max 1), or documents to a task |
+| `Task/get_task_metadata` | ADMIN, OFFICER | Get task types, statuses, and priorities for dropdowns |
+
+#### Implementation Details
+- **create_task** — Validates task_type (via `$DataItems.isValidItemId`), priority. `assigned_to` is optional: if omitted, the server dynamically resolves the default assignee (community Manager → global Super Admin fallback via `USD_ROLE_ALLOW` bitmask). Determines community from officer's `user_details` or assignee. Resolves media file IDs to file names. Inserts task and media records. Notifies assignee.
+- **get_tasks_list** — Officers scoped to their community. Supports pagination (LIMIT/OFFSET, max 100), free-text search across description/address/user names, date range, status/type/priority filters, scope filter, and sorting.
+- **get_task** — Returns full task with comments and media arrays. Officers restricted to own community.
+- **update_task** — Only while in open status. ETA field is admin-only. Notifies creator and assignee.
+- **accept_task** — Sets status to `accepted`, updates `TSK_ASSIGNED_TO` and `TSK_ACCEPTED_BY` to current user. Notifies creator.
+- **approve_task** — Role-gated via `@acl` (Planning/Logistics/Finance). Verifies task type requires approval (`task_approval_types` $DataItems). Sets status from `accepted` to `approved`. Supports optional atomic reassignment back to field officer. Notifies creator and assignee.
+- **reject_task** — Adds rejection reason as comment, sets status to `rejected`. Notifies creator.
+- **complete_task** — Sets status to `completed`. Supports optional resolution comment and confirmation media. Notifies creator.
+- **cancel_task** — Officers can only cancel their own tasks in status `new`. Admins can cancel any open task. Notifies assignee.
+- **reassign_task** — Validates new assignee exists and is active. Officers can reassign only if they are current assignee or creator. Notifies new and previous assignees.
+- **add_task_comment** — Inserts comment record, updates task's `TSK_LAST_UPDATE`. Notifies creator and assignee.
+- **add_task_media** — Inserts media records (image/video/document) with optional `is_confirmation` flag. Max 5 images per upload call.
+
+#### Database Tables (V 4.5.0)
+| Table | Prefix | Description |
+|---|---|---|
+| `task` | `TSK_` | Main task records with status lifecycle |
+| `task_comment` | `TCM_` | Comments on tasks (text + commenter) |
+| `task_media` | `TMD_` | Media attachments (images, video, documents) with confirmation flag |
+
+#### $DataItems Files
+| File | Type | Description |
+|---|---|---|
+| `task_type.json` | DB-backed | Admin-managed task types (Lights, Sprinklers, etc.) |
+| `task_status.json` | Static | Task statuses with `is_open` attribute |
+| `task_priority.json` | Static | Task priorities (urgent, important, normal, low) |
+
+#### Task Error Codes (590–609)
+| Code | Constant | Message |
+|---|---|---|
+| 590 | `ERR_TASK_NOT_FOUND` | task not found |
+| 591 | `ERR_TASK_INVALID_STATUS` | invalid task status |
+| 592 | `ERR_TASK_CANNOT_ACCEPT` | task cannot be accepted in its current status |
+| 593 | `ERR_TASK_CANNOT_COMPLETE` | task cannot be completed in its current status |
+| 594 | `ERR_TASK_CANNOT_CANCEL` | task cannot be canceled in its current status |
+| 595 | `ERR_TASK_CANNOT_REJECT` | task cannot be rejected in its current status |
+| 596 | `ERR_TASK_INVALID_TYPE` | invalid task type |
+| 597 | `ERR_TASK_INVALID_PRIORITY` | invalid task priority |
+| 598 | `ERR_TASK_MEDIA_LIMIT_REACHED` | maximum number of media files reached for this task |
+| 599 | `ERR_TASK_CANNOT_REASSIGN` | task cannot be reassigned in its current status |
+| 600 | `ERR_TASK_ASSIGNEE_NOT_FOUND` | assignee user not found |
+| 601 | `ERR_TASK_COMMENT_NOT_FOUND` | task comment not found |
+
+#### Notification Types
+| Type | Trigger | Recipients |
+|---|---|---|
+| `new_task` | Task created | Assignee |
+| `task_accepted` | Task accepted | Creator |
+| `task_completed` | Task completed | Creator |
+| `task_rejected` | Task rejected | Creator |
+| `task_canceled` | Task canceled | Assignee |
+| `task_reassigned` | Task reassigned | New assignee (+ old assignee) |
+| `task_commented` | Comment added | Creator + assignee |
+| `task_update` | Task details updated | Creator + assignee |
+
+#### Design Notes
+- **Soft deletion:** Tasks use `TSK_DELETED_ON` timestamp. Comments and media use their own `*_DELETED_ON` columns.
+- **Community scoping:** Officers are restricted to tasks within their community. Admins see all.
+- **Media handling:** Media (images, video, documents) stored in separate `task_media` table (not JSON columns). This allows tracking per-file metadata (uploader, type, confirmation flag).
+- **Confirmation media:** Resolution/confirmation attachments are flagged with `TMD_IS_CONFIRMATION=1` to distinguish from initial task media.
+- **Notifications:** Uses `$executeAPI` to create bulk notifications. All status changes notify relevant parties.
+- **Deferred features:** See `docs/deferred_requirements/04-task-enhancements.md` for ETA integration with GPS, vendor assignment, task templates, and dashboard analytics.
 
 ---
 

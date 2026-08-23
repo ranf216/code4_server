@@ -484,6 +484,103 @@ CREATE TABLE `service_call` (
 
 
 --
+-- Definition of table `task`
+--
+
+DROP TABLE IF EXISTS `task`;
+CREATE TABLE `task` (
+  `TSK_ID` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `TSK_COM_ID` bigint unsigned NOT NULL COMMENT 'Community this task belongs to',
+  `TSK_TYPE` varchar(100) NOT NULL COMMENT 'data_item task_type key',
+  `TSK_STATUS` varchar(20) NOT NULL DEFAULT 'new' COMMENT 'new, accepted, approved, completed, rejected, canceled',
+  `TSK_PRIORITY` varchar(20) NOT NULL DEFAULT 'normal' COMMENT 'urgent, important, normal, low',
+  `TSK_DESCRIPTION` varchar(500) NOT NULL DEFAULT '',
+  `TSK_ADDRESS` varchar(500) DEFAULT NULL,
+  `TSK_CREATED_BY` varchar(128) NOT NULL COMMENT 'User who created the task',
+  `TSK_ASSIGNED_TO` varchar(128) NOT NULL COMMENT 'User currently assigned to the task',
+  `TSK_ACCEPTED_BY` varchar(128) DEFAULT NULL COMMENT 'User who accepted the task',
+  `TSK_ETA` datetime DEFAULT NULL COMMENT 'Scheduled ETA set by manager',
+  `TSK_ACCEPTED_ON` datetime DEFAULT NULL,
+  `TSK_COMPLETED_ON` datetime DEFAULT NULL,
+  `TSK_REJECTED_ON` datetime DEFAULT NULL,
+  `TSK_CANCELED_ON` datetime DEFAULT NULL,
+  `TSK_CREATED_ON` datetime NOT NULL,
+  `TSK_LAST_UPDATE` datetime DEFAULT NULL,
+  `TSK_DELETED_ON` datetime DEFAULT NULL,
+  PRIMARY KEY (`TSK_ID`),
+  KEY `IX_TSK_COM_ID` (`TSK_COM_ID`),
+  KEY `IX_TSK_STATUS` (`TSK_STATUS`),
+  KEY `IX_TSK_CREATED_BY` (`TSK_CREATED_BY`),
+  KEY `IX_TSK_ASSIGNED_TO` (`TSK_ASSIGNED_TO`),
+  KEY `IX_TSK_CREATED_ON` (`TSK_CREATED_ON`),
+  CONSTRAINT `FK_TSK_COM_ID` FOREIGN KEY (`TSK_COM_ID`) REFERENCES `community` (`COM_ID`),
+  CONSTRAINT `FK_TSK_CREATED_BY` FOREIGN KEY (`TSK_CREATED_BY`) REFERENCES `user` (`USR_ID`),
+  CONSTRAINT `FK_TSK_ASSIGNED_TO` FOREIGN KEY (`TSK_ASSIGNED_TO`) REFERENCES `user` (`USR_ID`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+--
+-- Dumping data for table `task`
+--
+
+/*!40000 ALTER TABLE `task` DISABLE KEYS */;
+/*!40000 ALTER TABLE `task` ENABLE KEYS */;
+
+
+--
+-- Definition of table `task_comment`
+--
+
+DROP TABLE IF EXISTS `task_comment`;
+CREATE TABLE `task_comment` (
+  `TCM_ID` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `TCM_TSK_ID` bigint unsigned NOT NULL,
+  `TCM_USR_ID` varchar(128) NOT NULL COMMENT 'User who wrote the comment',
+  `TCM_TEXT` text NOT NULL,
+  `TCM_CREATED_ON` datetime NOT NULL,
+  `TCM_DELETED_ON` datetime DEFAULT NULL,
+  PRIMARY KEY (`TCM_ID`),
+  KEY `IX_TCM_TSK_ID` (`TCM_TSK_ID`),
+  CONSTRAINT `FK_TCM_TSK_ID` FOREIGN KEY (`TCM_TSK_ID`) REFERENCES `task` (`TSK_ID`),
+  CONSTRAINT `FK_TCM_USR_ID` FOREIGN KEY (`TCM_USR_ID`) REFERENCES `user` (`USR_ID`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+--
+-- Dumping data for table `task_comment`
+--
+
+/*!40000 ALTER TABLE `task_comment` DISABLE KEYS */;
+/*!40000 ALTER TABLE `task_comment` ENABLE KEYS */;
+
+
+--
+-- Definition of table `task_media`
+--
+
+DROP TABLE IF EXISTS `task_media`;
+CREATE TABLE `task_media` (
+  `TMD_ID` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `TMD_TSK_ID` bigint unsigned NOT NULL,
+  `TMD_USR_ID` varchar(128) NOT NULL COMMENT 'User who uploaded the media',
+  `TMD_FILE_NAME` varchar(1000) NOT NULL,
+  `TMD_MEDIA_TYPE` varchar(20) NOT NULL DEFAULT 'image' COMMENT 'image, video, document',
+  `TMD_IS_CONFIRMATION` tinyint unsigned NOT NULL DEFAULT '0' COMMENT '1 if this is resolution/confirmation media',
+  `TMD_CREATED_ON` datetime NOT NULL,
+  `TMD_DELETED_ON` datetime DEFAULT NULL,
+  PRIMARY KEY (`TMD_ID`),
+  KEY `IX_TMD_TSK_ID` (`TMD_TSK_ID`),
+  CONSTRAINT `FK_TMD_TSK_ID` FOREIGN KEY (`TMD_TSK_ID`) REFERENCES `task` (`TSK_ID`),
+  CONSTRAINT `FK_TMD_USR_ID` FOREIGN KEY (`TMD_USR_ID`) REFERENCES `user` (`USR_ID`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+--
+-- Dumping data for table `task_media`
+--
+
+/*!40000 ALTER TABLE `task_media` DISABLE KEYS */;
+/*!40000 ALTER TABLE `task_media` ENABLE KEYS */;
+
+
+--
 -- Definition of table `file`
 --
 

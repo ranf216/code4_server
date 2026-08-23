@@ -1,0 +1,6 @@
+{
+    "urgent":       {"name": {"en": "Urgent"},      "define": "TASK_PRIORITY_URGENT"},
+    "important":    {"name": {"en": "Important"},   "define": "TASK_PRIORITY_IMPORTANT"},
+    "normal":       {"name": {"en": "Normal"},      "define": "TASK_PRIORITY_NORMAL"},
+    "low":          {"name": {"en": "Low"},         "define": "TASK_PRIORITY_LOW"}
+}

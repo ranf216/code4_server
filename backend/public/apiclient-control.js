@@ -775,7 +775,7 @@ var RestControl =
 
 		var searchStr = module + "/" + endpoint;
 		var escaped = searchStr.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-		var pattern = new RegExp("^###\\s+\\[?\\w+\\]?\\s+" + escaped, "m");
+		var pattern = new RegExp("^###\\s+\\[?\\w+\\]?\\s+" + escaped + "\\b", "m");
 		var match = pattern.exec(content);
 
 		if (!match) return null;

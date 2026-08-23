@@ -1,0 +1,7 @@
+{
+    "medical_emergency":    {"name": {"en": "Medical Emergency"},   "define": "CALL_CATEGORY_MEDICAL_EMERGENCY",    "is_emergency": true,   "is_broadcast": true,   "forces_urgent": true},
+    "security_emergency":   {"name": {"en": "Security Emergency"},  "define": "CALL_CATEGORY_SECURITY_EMERGENCY",   "is_emergency": true,   "is_broadcast": true,   "forces_urgent": true},
+    "concierge_service":    {"name": {"en": "Concierge Service"},   "define": "CALL_CATEGORY_CONCIERGE_SERVICE",    "is_emergency": false,  "is_broadcast": false,  "forces_urgent": false},
+    "test":                 {"name": {"en": "Test"},                "define": "CALL_CATEGORY_TEST",                 "is_emergency": false,  "is_broadcast": false,  "forces_urgent": false},
+    "panic":                {"name": {"en": "Panic"},               "define": "CALL_CATEGORY_PANIC",                "is_emergency": false,  "is_broadcast": true,   "forces_urgent": true}
+}

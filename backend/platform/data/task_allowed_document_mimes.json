@@ -1,0 +1,8 @@
+{
+    "application/pdf":                                                              {"name": {"en": "PDF Document"}},
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet":            {"name": {"en": "Excel Spreadsheet"}},
+    "text/csv":                                                                     {"name": {"en": "CSV File"}},
+    "text/plain":                                                                   {"name": {"en": "Text File"}},
+    "image/png":                                                                    {"name": {"en": "PNG Image"}},
+    "image/jpeg":                                                                   {"name": {"en": "JPEG Image"}}
+}

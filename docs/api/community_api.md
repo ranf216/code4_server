@@ -260,7 +260,7 @@ Each community may have a single featured officer banner displayed to residents 
     | 500 | community not found | No active community exists with the given `community_id`, or it was already deleted. |
     | 502 | cannot delete community with active officers | The community still has officers associated with it. Remove or reassign them first. |
     | 503 | cannot delete community with active residents | The community still has residents associated with it. Remove or reassign them first. |
-    | 504 | cannot delete community with active calls | The community still has open calls. Resolve or close them first. |
+    | 504 | cannot delete community with active calls | The community still has open calls (status `new` or `accepted`). Resolve or cancel them first. |
 
 - **Usage & Flows:**
     Called from the community management list (SDS 4.2.1.3). The community can only be deleted when it has no active officers, residents, or open calls. If the community has active associations, the consumer should display the appropriate error message and suggest deactivating the community instead. After deletion, the community name becomes available for reuse by a new community.

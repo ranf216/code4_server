@@ -1,0 +1,6 @@
+{
+    "new":          {"name": {"en": "New"},         "define": "CALL_STATUS_NEW",        "is_open": true},
+    "accepted":     {"name": {"en": "Accepted"},    "define": "CALL_STATUS_ACCEPTED",   "is_open": true},
+    "resolved":     {"name": {"en": "Resolved"},    "define": "CALL_STATUS_RESOLVED",   "is_open": false},
+    "canceled":     {"name": {"en": "Canceled"},    "define": "CALL_STATUS_CANCELED",   "is_open": false}
+}
