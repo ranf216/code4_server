@@ -12,6 +12,7 @@ module.exports =
 	"settings",
 	//"social_login",
 	"system",
+	"task",
 	"user",
 	"user_role",
 ];

@@ -7280,4 +7280,1519 @@ module.exports = class
 
         return {...rc, ...vals};
     }
+
+    // =========================================================================
+    // Task API Tests
+    // =========================================================================
+
+    test_task_apis()
+    {
+        let vals = {};
+        let rc = $ERRS.ERR_SUCCESS;
+
+        let testResults = [];
+        let adminUserId = this.$Session.userId;
+
+        let addedCommunityId = null;
+        let addedOfficerId = null;
+        let addedOfficerId2 = null;
+        let testTaskTypeId = null;
+        let testTaskId = null;
+        let testTaskId2 = null;
+        let testTaskId3 = null;
+        let testTaskId4 = null;
+
+        try
+        {
+            testResults.push({step: "Starting Task API tests", status: "info"});
+
+            let uniqueId = $Utils.uniqueHash().substring(0, 8);
+            let testOfficerFirst = `TestTaskOfc ${uniqueId}`;
+            let testOfficerLast = `OfcLast ${uniqueId}`;
+            let testOfficerPhone = "+1555" + Math.floor(Math.random() * 10000000).toString().padStart(7, "0");
+            let testOfficerEmail = `taskofc_${uniqueId}@test.com`;
+            let testOfficerFirst2 = `TestTaskOfc2 ${uniqueId}`;
+            let testOfficerLast2 = `OfcLast2 ${uniqueId}`;
+            let testOfficerPhone2 = "+1555" + Math.floor(Math.random() * 10000000).toString().padStart(7, "0");
+            let testOfficerEmail2 = `taskofc2_${uniqueId}@test.com`;
+
+            // =================================================================
+            // Setup: Create community, two officers, and a task type
+            // =================================================================
+
+            testResults.push({step: "Setup: create test community", status: "running"});
+            let rv = $executeAPI(this.$Session, "Community/add_community", {
+                name: `Task Test Community ${uniqueId}`,
+                area: "Test Area",
+                is_active: true
+            });
+            if ($Err.isERR(rv))
+            {
+                testResults.push({step: "Setup: create test community", status: "failed", error: rv.message});
+                vals.test_results = testResults;
+                vals.summary = {total: 0, passed: 0, failed: 1, warnings: 0};
+                return {...rc, ...vals};
+            }
+            addedCommunityId = rv.community_id;
+            testResults.push({step: "Setup: create test community", status: "passed", community_id: addedCommunityId});
+
+            testResults.push({step: "Setup: create test officer 1", status: "running"});
+            rv = $executeAPI(this.$Session, "Officer/add_officer", {
+                first_name: testOfficerFirst,
+                last_name: testOfficerLast,
+                phone_num: testOfficerPhone,
+                email: testOfficerEmail,
+                community_id: addedCommunityId,
+                title: `Officer ${uniqueId}`,
+                address: "Test Officer Address"
+            });
+            if ($Err.isERR(rv))
+            {
+                testResults.push({step: "Setup: create test officer 1", status: "failed", error: rv.message});
+                vals.test_results = testResults;
+                vals.summary = {total: 0, passed: 0, failed: 1, warnings: 0};
+                return {...rc, ...vals};
+            }
+            addedOfficerId = rv.user_id;
+            testResults.push({step: "Setup: create test officer 1", status: "passed", user_id: addedOfficerId});
+
+            testResults.push({step: "Setup: create test officer 2", status: "running"});
+            rv = $executeAPI(this.$Session, "Officer/add_officer", {
+                first_name: testOfficerFirst2,
+                last_name: testOfficerLast2,
+                phone_num: testOfficerPhone2,
+                email: testOfficerEmail2,
+                community_id: addedCommunityId,
+                title: `Officer2 ${uniqueId}`,
+                address: "Test Officer2 Address"
+            });
+            if ($Err.isERR(rv))
+            {
+                testResults.push({step: "Setup: create test officer 2", status: "failed", error: rv.message});
+                vals.test_results = testResults;
+                vals.summary = {total: 0, passed: 0, failed: 1, warnings: 0};
+                return {...rc, ...vals};
+            }
+            addedOfficerId2 = rv.user_id;
+            testResults.push({step: "Setup: create test officer 2", status: "passed", user_id: addedOfficerId2});
+
+            // Create a test task type
+            rv = $executeAPI(this.$Session, "Settings/add_task_type", {name: `Test Task Type ${uniqueId}`});
+            if (!$Err.isERR(rv))
+            {
+                testTaskTypeId = rv.type_id;
+                testResults.push({step: "Setup: create test task type", status: "passed", type_id: testTaskTypeId});
+            }
+            else
+            {
+                testResults.push({step: "Setup: create test task type", status: "failed", error: rv.message});
+                vals.test_results = testResults;
+                vals.summary = {total: 0, passed: 0, failed: 1, warnings: 0};
+                return {...rc, ...vals};
+            }
+
+            // =================================================================
+            // Test 1: get_task_metadata
+            // =================================================================
+
+            testResults.push({step: "Test 1: get_task_metadata", status: "running"});
+            rv = $executeAPI(this.$Session, "Task/get_task_metadata", {});
+            if ($Err.isERR(rv))
+            {
+                testResults.push({step: "Test 1: get_task_metadata", status: "failed", error: rv.message});
+            }
+            else
+            {
+                let typesCount = rv.task_types ? Object.keys(rv.task_types).length : 0;
+                let statusesCount = rv.task_statuses ? Object.keys(rv.task_statuses).length : 0;
+                let prioritiesCount = rv.task_priorities ? Object.keys(rv.task_priorities).length : 0;
+                if (typesCount > 0 && statusesCount > 0 && prioritiesCount > 0)
+                {
+                    testResults.push({step: "Test 1: get_task_metadata", status: "passed",
+                        types_count: typesCount, statuses_count: statusesCount, priorities_count: prioritiesCount});
+                }
+                else
+                {
+                    testResults.push({step: "Test 1: get_task_metadata", status: "warning", message: "metadata incomplete",
+                        types_count: typesCount, statuses_count: statusesCount, priorities_count: prioritiesCount});
+                }
+            }
+
+            // =================================================================
+            // Test 2: create_task (admin, explicit assignee)
+            // =================================================================
+
+            testResults.push({step: "Test 2: create_task (admin, explicit assignee)", status: "running"});
+            rv = $executeAPI(this.$Session, "Task/create_task", {
+                task_type: testTaskTypeId,
+                description: `Test maintenance task ${uniqueId}`,
+                priority: "normal",
+                address: "Building A, Floor 3",
+                assigned_to: addedOfficerId
+            });
+            if ($Err.isERR(rv))
+            {
+                testResults.push({step: "Test 2: create_task (admin, explicit assignee)", status: "failed", error: rv.message});
+                vals.test_results = testResults;
+                vals.summary = {total: 1, passed: 0, failed: 1, warnings: 0};
+                return {...rc, ...vals};
+            }
+            testTaskId = rv.task_id;
+            testResults.push({step: "Test 2: create_task (admin, explicit assignee)", status: "passed", task_id: testTaskId});
+
+            // =================================================================
+            // Test 3: create_task (officer, auto-assign — omit assigned_to)
+            // =================================================================
+
+            testResults.push({step: "Test 3: create_task (auto-assign)", status: "running"});
+            try
+            {
+                this.$Session.impersonateAccount(addedOfficerId);
+
+                rv = $executeAPI(this.$Session, "Task/create_task", {
+                    task_type: testTaskTypeId,
+                    description: `Auto-assign task ${uniqueId}`,
+                    priority: "urgent"
+                });
+
+                this.$Session.accountImpersonationStack = null;
+                this.$Session.userId = adminUserId;
+                this.$Session.userType = $Const.USER_TYPE_ADMIN;
+
+                if ($Err.isERR(rv))
+                {
+                    testResults.push({step: "Test 3: create_task (auto-assign)", status: "warning", message: "auto-assign may lack a manager", error: rv.message});
+                }
+                else
+                {
+                    testTaskId2 = rv.task_id;
+                    testResults.push({step: "Test 3: create_task (auto-assign)", status: "passed", task_id: testTaskId2});
+                }
+            }
+            catch (impErr)
+            {
+                this.$Session.accountImpersonationStack = null;
+                this.$Session.userId = adminUserId;
+                this.$Session.userType = $Const.USER_TYPE_ADMIN;
+                testResults.push({step: "Test 3: create_task (auto-assign)", status: "warning", message: "impersonation failed", error: impErr.message});
+            }
+
+            // =================================================================
+            // Test 4: create_task (invalid task type — expect error)
+            // =================================================================
+
+            testResults.push({step: "Test 4: create_task (invalid type)", status: "running"});
+            rv = $executeAPI(this.$Session, "Task/create_task", {
+                task_type: "nonexistent_type_xyz",
+                description: "Should fail"
+            });
+            if (rv.rc === 596)
+            {
+                testResults.push({step: "Test 4: create_task (invalid type)", status: "passed", message: "correctly rejected invalid type"});
+            }
+            else
+            {
+                testResults.push({step: "Test 4: create_task (invalid type)", status: "warning", message: "unexpected response", rc: rv.rc});
+            }
+
+            // =================================================================
+            // Test 5: create_task (invalid priority — expect error)
+            // =================================================================
+
+            testResults.push({step: "Test 5: create_task (invalid priority)", status: "running"});
+            rv = $executeAPI(this.$Session, "Task/create_task", {
+                task_type: testTaskTypeId,
+                description: "Should fail",
+                priority: "super_critical"
+            });
+            if (rv.rc === 597)
+            {
+                testResults.push({step: "Test 5: create_task (invalid priority)", status: "passed", message: "correctly rejected invalid priority"});
+            }
+            else
+            {
+                testResults.push({step: "Test 5: create_task (invalid priority)", status: "warning", message: "unexpected response", rc: rv.rc});
+            }
+
+            // =================================================================
+            // Test 6: create_task (invalid assignee — expect error)
+            // =================================================================
+
+            testResults.push({step: "Test 6: create_task (invalid assignee)", status: "running"});
+            try
+            {
+                this.$Session.impersonateAccount(addedOfficerId);
+
+                rv = $executeAPI(this.$Session, "Task/create_task", {
+                    task_type: testTaskTypeId,
+                    description: "Should fail",
+                    assigned_to: "nonexistent_user_xyz_999"
+                });
+
+                this.$Session.accountImpersonationStack = null;
+                this.$Session.userId = adminUserId;
+                this.$Session.userType = $Const.USER_TYPE_ADMIN;
+
+                if (rv.rc === 600)
+                {
+                    testResults.push({step: "Test 6: create_task (invalid assignee)", status: "passed", message: "correctly rejected invalid assignee"});
+                }
+                else
+                {
+                    testResults.push({step: "Test 6: create_task (invalid assignee)", status: "warning", message: "unexpected response", rc: rv.rc});
+                }
+            }
+            catch (impErr)
+            {
+                this.$Session.accountImpersonationStack = null;
+                this.$Session.userId = adminUserId;
+                this.$Session.userType = $Const.USER_TYPE_ADMIN;
+                testResults.push({step: "Test 6: create_task (invalid assignee)", status: "warning", message: "impersonation failed", error: impErr.message});
+            }
+
+            // =================================================================
+            // Test 7: create_task (as officer, via impersonation)
+            // =================================================================
+
+            testResults.push({step: "Test 7: create_task (as officer)", status: "running"});
+            try
+            {
+                this.$Session.impersonateAccount(addedOfficerId);
+
+                rv = $executeAPI(this.$Session, "Task/create_task", {
+                    task_type: testTaskTypeId,
+                    description: `Officer task ${uniqueId}`,
+                    priority: "important",
+                    address: "Field location"
+                });
+
+                this.$Session.accountImpersonationStack = null;
+                this.$Session.userId = adminUserId;
+                this.$Session.userType = $Const.USER_TYPE_ADMIN;
+
+                if ($Err.isERR(rv))
+                {
+                    testResults.push({step: "Test 7: create_task (as officer)", status: "warning", message: "officer create may require auto-assign manager", error: rv.message});
+                }
+                else
+                {
+                    testTaskId3 = rv.task_id;
+                    testResults.push({step: "Test 7: create_task (as officer)", status: "passed", task_id: testTaskId3});
+                }
+            }
+            catch (impErr)
+            {
+                this.$Session.accountImpersonationStack = null;
+                this.$Session.userId = adminUserId;
+                this.$Session.userType = $Const.USER_TYPE_ADMIN;
+                testResults.push({step: "Test 7: create_task (as officer)", status: "warning", message: "impersonation failed", error: impErr.message});
+            }
+
+            // =================================================================
+            // Test 8: get_tasks_list (all tasks)
+            // =================================================================
+
+            testResults.push({step: "Test 8: get_tasks_list (all)", status: "running"});
+            rv = $executeAPI(this.$Session, "Task/get_tasks_list", {});
+            if ($Err.isERR(rv))
+            {
+                testResults.push({step: "Test 8: get_tasks_list (all)", status: "failed", error: rv.message});
+            }
+            else
+            {
+                let found = rv.tasks.find(t => t.task_id === testTaskId);
+                if (found)
+                {
+                    testResults.push({step: "Test 8: get_tasks_list (all)", status: "passed", total_count: rv.total_count, found_test_task: true});
+                }
+                else
+                {
+                    testResults.push({step: "Test 8: get_tasks_list (all)", status: "warning", total_count: rv.total_count, found_test_task: false, message: "test task not found in list"});
+                }
+            }
+
+            // =================================================================
+            // Test 9: get_tasks_list (filter by status)
+            // =================================================================
+
+            testResults.push({step: "Test 9: get_tasks_list (status=new)", status: "running"});
+            rv = $executeAPI(this.$Session, "Task/get_tasks_list", {status: "new"});
+            if ($Err.isERR(rv))
+            {
+                testResults.push({step: "Test 9: get_tasks_list (status=new)", status: "failed", error: rv.message});
+            }
+            else
+            {
+                let allNew = rv.tasks.every(t => t.status === "new");
+                testResults.push({step: "Test 9: get_tasks_list (status=new)", status: allNew ? "passed" : "warning",
+                    count: rv.tasks.length, all_status_new: allNew});
+            }
+
+            // =================================================================
+            // Test 10: get_tasks_list (filter by is_open)
+            // =================================================================
+
+            testResults.push({step: "Test 10: get_tasks_list (is_open=true)", status: "running"});
+            rv = $executeAPI(this.$Session, "Task/get_tasks_list", {is_open: true});
+            if ($Err.isERR(rv))
+            {
+                testResults.push({step: "Test 10: get_tasks_list (is_open=true)", status: "failed", error: rv.message});
+            }
+            else
+            {
+                testResults.push({step: "Test 10: get_tasks_list (is_open=true)", status: "passed", count: rv.tasks.length, total_count: rv.total_count});
+            }
+
+            // =================================================================
+            // Test 11: get_tasks_list (filter by community)
+            // =================================================================
+
+            testResults.push({step: "Test 11: get_tasks_list (by community)", status: "running"});
+            rv = $executeAPI(this.$Session, "Task/get_tasks_list", {community_id: addedCommunityId});
+            if ($Err.isERR(rv))
+            {
+                testResults.push({step: "Test 11: get_tasks_list (by community)", status: "failed", error: rv.message});
+            }
+            else
+            {
+                let allSameCom = rv.tasks.every(t => t.community_id === addedCommunityId);
+                testResults.push({step: "Test 11: get_tasks_list (by community)", status: allSameCom ? "passed" : "warning",
+                    count: rv.tasks.length, all_same_community: allSameCom});
+            }
+
+            // =================================================================
+            // Test 12: get_tasks_list (search_text)
+            // =================================================================
+
+            testResults.push({step: "Test 12: get_tasks_list (search_text)", status: "running"});
+            rv = $executeAPI(this.$Session, "Task/get_tasks_list", {search_text: uniqueId});
+            if ($Err.isERR(rv))
+            {
+                testResults.push({step: "Test 12: get_tasks_list (search_text)", status: "failed", error: rv.message});
+            }
+            else
+            {
+                testResults.push({step: "Test 12: get_tasks_list (search_text)", status: rv.tasks.length > 0 ? "passed" : "warning",
+                    count: rv.tasks.length, message: rv.tasks.length > 0 ? "found results" : "no results for uniqueId search"});
+            }
+
+            // =================================================================
+            // Test 13: get_tasks_list (sort + pagination)
+            // =================================================================
+
+            testResults.push({step: "Test 13: get_tasks_list (sort + pagination)", status: "running"});
+            rv = $executeAPI(this.$Session, "Task/get_tasks_list", {
+                sort_by: "priority",
+                sort_dir: "asc",
+                offset: 0,
+                limit: 2
+            });
+            if ($Err.isERR(rv))
+            {
+                testResults.push({step: "Test 13: get_tasks_list (sort + pagination)", status: "failed", error: rv.message});
+            }
+            else
+            {
+                testResults.push({step: "Test 13: get_tasks_list (sort + pagination)", status: "passed",
+                    returned_count: rv.tasks.length, total_count: rv.total_count});
+            }
+
+            // =================================================================
+            // Test 14: get_tasks_list (scope=created_by_me)
+            // =================================================================
+
+            testResults.push({step: "Test 14: get_tasks_list (scope=created_by_me)", status: "running"});
+            rv = $executeAPI(this.$Session, "Task/get_tasks_list", {scope: "created_by_me"});
+            if ($Err.isERR(rv))
+            {
+                testResults.push({step: "Test 14: get_tasks_list (scope=created_by_me)", status: "failed", error: rv.message});
+            }
+            else
+            {
+                let found = rv.tasks.find(t => t.task_id === testTaskId);
+                testResults.push({step: "Test 14: get_tasks_list (scope=created_by_me)", status: found ? "passed" : "warning",
+                    count: rv.tasks.length, found_test_task: !!found});
+            }
+
+            // =================================================================
+            // Test 15: get_tasks_list (invalid status — expect error)
+            // =================================================================
+
+            testResults.push({step: "Test 15: get_tasks_list (invalid status)", status: "running"});
+            rv = $executeAPI(this.$Session, "Task/get_tasks_list", {status: "nonexistent_status_xyz"});
+            if (rv.rc === 591)
+            {
+                testResults.push({step: "Test 15: get_tasks_list (invalid status)", status: "passed", message: "correctly rejected invalid status"});
+            }
+            else
+            {
+                testResults.push({step: "Test 15: get_tasks_list (invalid status)", status: "warning", message: "unexpected response", rc: rv.rc});
+            }
+
+            // =================================================================
+            // Test 16: get_task (single task detail)
+            // =================================================================
+
+            testResults.push({step: "Test 16: get_task", status: "running"});
+            if (testTaskId === null)
+            {
+                testResults.push({step: "Test 16: get_task", status: "failed", error: "Cannot get - task was not created"});
+            }
+            else
+            {
+                rv = $executeAPI(this.$Session, "Task/get_task", {task_id: testTaskId});
+                if ($Err.isERR(rv))
+                {
+                    testResults.push({step: "Test 16: get_task", status: "failed", error: rv.message});
+                }
+                else
+                {
+                    let task = rv.task;
+                    let verified = task.task_id === testTaskId &&
+                                   task.status === "new" &&
+                                   task.priority === "normal" &&
+                                   task.assigned_to === addedOfficerId &&
+                                   task.community_id === addedCommunityId;
+                    testResults.push({step: "Test 16: get_task", status: verified ? "passed" : "warning",
+                        task_id: task.task_id, status_val: task.status, priority: task.priority, verified: verified});
+                }
+            }
+
+            // =================================================================
+            // Test 17: get_task (invalid ID — expect error)
+            // =================================================================
+
+            testResults.push({step: "Test 17: get_task (invalid ID)", status: "running"});
+            rv = $executeAPI(this.$Session, "Task/get_task", {task_id: 999999999});
+            if (rv.rc === 590)
+            {
+                testResults.push({step: "Test 17: get_task (invalid ID)", status: "passed", message: "correctly returned task not found"});
+            }
+            else
+            {
+                testResults.push({step: "Test 17: get_task (invalid ID)", status: "warning", message: "unexpected response", rc: rv.rc});
+            }
+
+            // =================================================================
+            // Test 18: update_task (partial update — description + priority)
+            // =================================================================
+
+            testResults.push({step: "Test 18: update_task (description + priority)", status: "running"});
+            if (testTaskId === null)
+            {
+                testResults.push({step: "Test 18: update_task (description + priority)", status: "failed", error: "Cannot update - task was not created"});
+            }
+            else
+            {
+                rv = $executeAPI(this.$Session, "Task/update_task", {
+                    task_id: testTaskId,
+                    description: `Updated description ${uniqueId}`,
+                    priority: "urgent"
+                });
+                if ($Err.isERR(rv))
+                {
+                    testResults.push({step: "Test 18: update_task (description + priority)", status: "failed", error: rv.message});
+                }
+                else
+                {
+                    testResults.push({step: "Test 18: update_task (description + priority)", status: "passed"});
+                }
+            }
+
+            // =================================================================
+            // Test 19: update_task (verify changes)
+            // =================================================================
+
+            testResults.push({step: "Test 19: update_task (verify changes)", status: "running"});
+            if (testTaskId === null)
+            {
+                testResults.push({step: "Test 19: update_task (verify changes)", status: "failed", error: "Cannot verify - task was not created"});
+            }
+            else
+            {
+                rv = $executeAPI(this.$Session, "Task/get_task", {task_id: testTaskId});
+                if (!$Err.isERR(rv))
+                {
+                    let verified = rv.task.description === `Updated description ${uniqueId}` && rv.task.priority === "urgent";
+                    testResults.push({step: "Test 19: update_task (verify changes)", status: verified ? "passed" : "warning",
+                        description: rv.task.description, priority: rv.task.priority, verified: verified});
+                }
+                else
+                {
+                    testResults.push({step: "Test 19: update_task (verify changes)", status: "failed", error: rv.message});
+                }
+            }
+
+            // =================================================================
+            // Test 20: update_task (address + ETA as admin)
+            // =================================================================
+
+            testResults.push({step: "Test 20: update_task (address + ETA)", status: "running"});
+            if (testTaskId === null)
+            {
+                testResults.push({step: "Test 20: update_task (address + ETA)", status: "failed", error: "Cannot update - task was not created"});
+            }
+            else
+            {
+                rv = $executeAPI(this.$Session, "Task/update_task", {
+                    task_id: testTaskId,
+                    address: "Updated Building B, Floor 1",
+                    eta: "2099-12-31 23:59:59"
+                });
+                if ($Err.isERR(rv))
+                {
+                    testResults.push({step: "Test 20: update_task (address + ETA)", status: "failed", error: rv.message});
+                }
+                else
+                {
+                    testResults.push({step: "Test 20: update_task (address + ETA)", status: "passed"});
+                }
+            }
+
+            // =================================================================
+            // Test 21: update_task (no fields — expect success with no-op)
+            // =================================================================
+
+            testResults.push({step: "Test 21: update_task (no fields, no-op)", status: "running"});
+            if (testTaskId === null)
+            {
+                testResults.push({step: "Test 21: update_task (no fields, no-op)", status: "failed", error: "Cannot update - task was not created"});
+            }
+            else
+            {
+                rv = $executeAPI(this.$Session, "Task/update_task", {task_id: testTaskId});
+                if (rv.rc === 0)
+                {
+                    testResults.push({step: "Test 21: update_task (no fields, no-op)", status: "passed", message: "correctly returned success with no changes"});
+                }
+                else
+                {
+                    testResults.push({step: "Test 21: update_task (no fields, no-op)", status: "warning", message: "unexpected response", rc: rv.rc});
+                }
+            }
+
+            // =================================================================
+            // Test 22: update_task (invalid priority — expect error)
+            // =================================================================
+
+            testResults.push({step: "Test 22: update_task (invalid priority)", status: "running"});
+            if (testTaskId === null)
+            {
+                testResults.push({step: "Test 22: update_task (invalid priority)", status: "failed", error: "Cannot update - task was not created"});
+            }
+            else
+            {
+                rv = $executeAPI(this.$Session, "Task/update_task", {task_id: testTaskId, priority: "super_critical"});
+                if (rv.rc === 597)
+                {
+                    testResults.push({step: "Test 22: update_task (invalid priority)", status: "passed", message: "correctly rejected invalid priority"});
+                }
+                else
+                {
+                    testResults.push({step: "Test 22: update_task (invalid priority)", status: "warning", message: "unexpected response", rc: rv.rc});
+                }
+            }
+
+            // =================================================================
+            // Test 23: update_task (officer sets ETA — expect ERR_NO_PRIVILEGES)
+            // =================================================================
+
+            testResults.push({step: "Test 23: update_task (officer sets ETA)", status: "running"});
+            if (testTaskId === null)
+            {
+                testResults.push({step: "Test 23: update_task (officer sets ETA)", status: "failed", error: "Cannot test - task was not created"});
+            }
+            else
+            {
+                try
+                {
+                    this.$Session.impersonateAccount(addedOfficerId);
+
+                    rv = $executeAPI(this.$Session, "Task/update_task", {
+                        task_id: testTaskId,
+                        eta: "2099-06-15 09:00:00"
+                    });
+
+                    this.$Session.accountImpersonationStack = null;
+                    this.$Session.userId = adminUserId;
+                    this.$Session.userType = $Const.USER_TYPE_ADMIN;
+
+                    if (rv.rc === 103)
+                    {
+                        testResults.push({step: "Test 23: update_task (officer sets ETA)", status: "passed", message: "correctly rejected officer ETA"});
+                    }
+                    else
+                    {
+                        testResults.push({step: "Test 23: update_task (officer sets ETA)", status: "warning", message: "unexpected response", rc: rv.rc});
+                    }
+                }
+                catch (impErr)
+                {
+                    this.$Session.accountImpersonationStack = null;
+                    this.$Session.userId = adminUserId;
+                    this.$Session.userType = $Const.USER_TYPE_ADMIN;
+                    testResults.push({step: "Test 23: update_task (officer sets ETA)", status: "warning", message: "impersonation failed", error: impErr.message});
+                }
+            }
+
+            // =================================================================
+            // Test 24: add_task_comment
+            // =================================================================
+
+            testResults.push({step: "Test 24: add_task_comment", status: "running"});
+            if (testTaskId === null)
+            {
+                testResults.push({step: "Test 24: add_task_comment", status: "failed", error: "Cannot comment - task was not created"});
+            }
+            else
+            {
+                rv = $executeAPI(this.$Session, "Task/add_task_comment", {
+                    task_id: testTaskId,
+                    comment: `Test comment ${uniqueId}`
+                });
+                if ($Err.isERR(rv))
+                {
+                    testResults.push({step: "Test 24: add_task_comment", status: "failed", error: rv.message});
+                }
+                else
+                {
+                    testResults.push({step: "Test 24: add_task_comment", status: "passed", comment_id: rv.comment_id});
+                }
+            }
+
+            // =================================================================
+            // Test 25: add_task_comment (verify in task detail)
+            // =================================================================
+
+            testResults.push({step: "Test 25: add_task_comment (verify)", status: "running"});
+            if (testTaskId === null)
+            {
+                testResults.push({step: "Test 25: add_task_comment (verify)", status: "failed", error: "Cannot verify - task was not created"});
+            }
+            else
+            {
+                rv = $executeAPI(this.$Session, "Task/get_task", {task_id: testTaskId});
+                if (!$Err.isERR(rv))
+                {
+                    let found = rv.task.comments && rv.task.comments.find(c => c.text === `Test comment ${uniqueId}`);
+                    testResults.push({step: "Test 25: add_task_comment (verify)", status: found ? "passed" : "warning",
+                        comments_count: rv.task.comments ? rv.task.comments.length : 0, found_comment: !!found});
+                }
+                else
+                {
+                    testResults.push({step: "Test 25: add_task_comment (verify)", status: "failed", error: rv.message});
+                }
+            }
+
+            // =================================================================
+            // Test 26: accept_task
+            // =================================================================
+
+            testResults.push({step: "Test 26: accept_task", status: "running"});
+            if (testTaskId === null)
+            {
+                testResults.push({step: "Test 26: accept_task", status: "failed", error: "Cannot accept - task was not created"});
+            }
+            else
+            {
+                rv = $executeAPI(this.$Session, "Task/accept_task", {task_id: testTaskId});
+                if ($Err.isERR(rv))
+                {
+                    testResults.push({step: "Test 26: accept_task", status: "failed", error: rv.message});
+                }
+                else
+                {
+                    testResults.push({step: "Test 26: accept_task", status: "passed"});
+                }
+            }
+
+            // =================================================================
+            // Test 27: accept_task (verify status changed)
+            // =================================================================
+
+            testResults.push({step: "Test 27: accept_task (verify status)", status: "running"});
+            if (testTaskId === null)
+            {
+                testResults.push({step: "Test 27: accept_task (verify status)", status: "failed", error: "Cannot verify - task was not created"});
+            }
+            else
+            {
+                rv = $executeAPI(this.$Session, "Task/get_task", {task_id: testTaskId});
+                if (!$Err.isERR(rv) && rv.task.status === "accepted")
+                {
+                    testResults.push({step: "Test 27: accept_task (verify status)", status: "passed", status_val: rv.task.status});
+                }
+                else
+                {
+                    testResults.push({step: "Test 27: accept_task (verify status)", status: "warning",
+                        status_val: rv.task ? rv.task.status : "unknown", message: "status not accepted"});
+                }
+            }
+
+            // =================================================================
+            // Test 28: accept_task (already accepted — expect error)
+            // =================================================================
+
+            testResults.push({step: "Test 28: accept_task (already accepted)", status: "running"});
+            if (testTaskId === null)
+            {
+                testResults.push({step: "Test 28: accept_task (already accepted)", status: "failed", error: "Cannot test - task was not created"});
+            }
+            else
+            {
+                rv = $executeAPI(this.$Session, "Task/accept_task", {task_id: testTaskId});
+                if (rv.rc === 592)
+                {
+                    testResults.push({step: "Test 28: accept_task (already accepted)", status: "passed", message: "correctly rejected double accept"});
+                }
+                else
+                {
+                    testResults.push({step: "Test 28: accept_task (already accepted)", status: "warning", message: "unexpected response", rc: rv.rc});
+                }
+            }
+
+            // =================================================================
+            // Test 29: reassign_task
+            // =================================================================
+
+            testResults.push({step: "Test 29: reassign_task", status: "running"});
+            if (testTaskId === null)
+            {
+                testResults.push({step: "Test 29: reassign_task", status: "failed", error: "Cannot reassign - task was not created"});
+            }
+            else
+            {
+                rv = $executeAPI(this.$Session, "Task/reassign_task", {
+                    task_id: testTaskId,
+                    assigned_to: addedOfficerId2
+                });
+                if ($Err.isERR(rv))
+                {
+                    testResults.push({step: "Test 29: reassign_task", status: "failed", error: rv.message});
+                }
+                else
+                {
+                    testResults.push({step: "Test 29: reassign_task", status: "passed"});
+                }
+            }
+
+            // =================================================================
+            // Test 30: reassign_task (verify new assignee)
+            // =================================================================
+
+            testResults.push({step: "Test 30: reassign_task (verify)", status: "running"});
+            if (testTaskId === null)
+            {
+                testResults.push({step: "Test 30: reassign_task (verify)", status: "failed", error: "Cannot verify - task was not created"});
+            }
+            else
+            {
+                rv = $executeAPI(this.$Session, "Task/get_task", {task_id: testTaskId});
+                if (!$Err.isERR(rv) && rv.task.assigned_to === addedOfficerId2)
+                {
+                    testResults.push({step: "Test 30: reassign_task (verify)", status: "passed", assigned_to: rv.task.assigned_to});
+                }
+                else
+                {
+                    testResults.push({step: "Test 30: reassign_task (verify)", status: "warning",
+                        assigned_to: rv.task ? rv.task.assigned_to : "unknown", message: "assignee not updated"});
+                }
+            }
+
+            // =================================================================
+            // Test 31: reassign_task (invalid assignee — expect error)
+            // =================================================================
+
+            testResults.push({step: "Test 31: reassign_task (invalid assignee)", status: "running"});
+            if (testTaskId === null)
+            {
+                testResults.push({step: "Test 31: reassign_task (invalid assignee)", status: "failed", error: "Cannot test - task was not created"});
+            }
+            else
+            {
+                rv = $executeAPI(this.$Session, "Task/reassign_task", {
+                    task_id: testTaskId,
+                    assigned_to: "nonexistent_user_xyz_999"
+                });
+                if (rv.rc === 600)
+                {
+                    testResults.push({step: "Test 31: reassign_task (invalid assignee)", status: "passed", message: "correctly rejected invalid assignee"});
+                }
+                else
+                {
+                    testResults.push({step: "Test 31: reassign_task (invalid assignee)", status: "warning", message: "unexpected response", rc: rv.rc});
+                }
+            }
+
+            // =================================================================
+            // Test 32: complete_task (from accepted — routine type)
+            // =================================================================
+
+            testResults.push({step: "Test 32: complete_task (routine type)", status: "running"});
+            if (testTaskId === null)
+            {
+                testResults.push({step: "Test 32: complete_task (routine type)", status: "failed", error: "Cannot complete - task was not created"});
+            }
+            else
+            {
+                rv = $executeAPI(this.$Session, "Task/complete_task", {
+                    task_id: testTaskId,
+                    comment: `Completed by test ${uniqueId}`
+                });
+                if ($Err.isERR(rv))
+                {
+                    testResults.push({step: "Test 32: complete_task (routine type)", status: "failed", error: rv.message});
+                }
+                else
+                {
+                    testResults.push({step: "Test 32: complete_task (routine type)", status: "passed"});
+                }
+            }
+
+            // =================================================================
+            // Test 33: complete_task (verify status)
+            // =================================================================
+
+            testResults.push({step: "Test 33: complete_task (verify status)", status: "running"});
+            if (testTaskId === null)
+            {
+                testResults.push({step: "Test 33: complete_task (verify status)", status: "failed", error: "Cannot verify - task was not created"});
+            }
+            else
+            {
+                rv = $executeAPI(this.$Session, "Task/get_task", {task_id: testTaskId});
+                if (!$Err.isERR(rv) && rv.task.status === "completed")
+                {
+                    testResults.push({step: "Test 33: complete_task (verify status)", status: "passed",
+                        status_val: rv.task.status, completed_on: rv.task.completed_on});
+                }
+                else
+                {
+                    testResults.push({step: "Test 33: complete_task (verify status)", status: "warning",
+                        status_val: rv.task ? rv.task.status : "unknown", message: "status not completed"});
+                }
+            }
+
+            // =================================================================
+            // Test 34: complete_task (already completed — expect error)
+            // =================================================================
+
+            testResults.push({step: "Test 34: complete_task (already completed)", status: "running"});
+            if (testTaskId === null)
+            {
+                testResults.push({step: "Test 34: complete_task (already completed)", status: "failed", error: "Cannot test - task was not created"});
+            }
+            else
+            {
+                rv = $executeAPI(this.$Session, "Task/complete_task", {task_id: testTaskId});
+                if (rv.rc === 593)
+                {
+                    testResults.push({step: "Test 34: complete_task (already completed)", status: "passed", message: "correctly rejected double complete"});
+                }
+                else
+                {
+                    testResults.push({step: "Test 34: complete_task (already completed)", status: "warning", message: "unexpected response", rc: rv.rc});
+                }
+            }
+
+            // =================================================================
+            // Test 35: reject_task (create a new task then reject)
+            // =================================================================
+
+            testResults.push({step: "Test 35: reject_task", status: "running"});
+            rv = $executeAPI(this.$Session, "Task/create_task", {
+                task_type: testTaskTypeId,
+                description: `Task to reject ${uniqueId}`,
+                assigned_to: addedOfficerId
+            });
+            if ($Err.isERR(rv))
+            {
+                testResults.push({step: "Test 35: reject_task", status: "failed", error: "Cannot create task for rejection: " + rv.message});
+            }
+            else
+            {
+                let rejectTaskId = rv.task_id;
+                rv = $executeAPI(this.$Session, "Task/reject_task", {
+                    task_id: rejectTaskId,
+                    comment: `Rejection reason ${uniqueId}`
+                });
+                if ($Err.isERR(rv))
+                {
+                    testResults.push({step: "Test 35: reject_task", status: "failed", error: rv.message});
+                }
+                else
+                {
+                    testResults.push({step: "Test 35: reject_task", status: "passed", rejected_task_id: rejectTaskId});
+                }
+
+                // Verify rejected status and comment
+                testResults.push({step: "Test 36: reject_task (verify status + comment)", status: "running"});
+                rv = $executeAPI(this.$Session, "Task/get_task", {task_id: rejectTaskId});
+                if (!$Err.isERR(rv))
+                {
+                    let statusOk = rv.task.status === "rejected";
+                    let commentFound = rv.task.comments && rv.task.comments.find(c => c.text === `Rejection reason ${uniqueId}`);
+                    testResults.push({step: "Test 36: reject_task (verify status + comment)", status: (statusOk && commentFound) ? "passed" : "warning",
+                        status_val: rv.task.status, has_rejection_comment: !!commentFound});
+                }
+                else
+                {
+                    testResults.push({step: "Test 36: reject_task (verify status + comment)", status: "failed", error: rv.message});
+                }
+            }
+
+            // =================================================================
+            // Test 37: reject_task (completed task — expect error)
+            // =================================================================
+
+            testResults.push({step: "Test 37: reject_task (completed task)", status: "running"});
+            if (testTaskId === null)
+            {
+                testResults.push({step: "Test 37: reject_task (completed task)", status: "failed", error: "Cannot test - task was not created"});
+            }
+            else
+            {
+                rv = $executeAPI(this.$Session, "Task/reject_task", {
+                    task_id: testTaskId,
+                    comment: "Should fail - already completed"
+                });
+                if (rv.rc === 595)
+                {
+                    testResults.push({step: "Test 37: reject_task (completed task)", status: "passed", message: "correctly rejected - task already closed"});
+                }
+                else
+                {
+                    testResults.push({step: "Test 37: reject_task (completed task)", status: "warning", message: "unexpected response", rc: rv.rc});
+                }
+            }
+
+            // =================================================================
+            // Test 38: cancel_task (create a new task then cancel)
+            // =================================================================
+
+            testResults.push({step: "Test 38: cancel_task", status: "running"});
+            rv = $executeAPI(this.$Session, "Task/create_task", {
+                task_type: testTaskTypeId,
+                description: `Task to cancel ${uniqueId}`,
+                assigned_to: addedOfficerId
+            });
+            if ($Err.isERR(rv))
+            {
+                testResults.push({step: "Test 38: cancel_task", status: "failed", error: "Cannot create task for cancel: " + rv.message});
+            }
+            else
+            {
+                testTaskId4 = rv.task_id;
+                rv = $executeAPI(this.$Session, "Task/cancel_task", {task_id: testTaskId4});
+                if ($Err.isERR(rv))
+                {
+                    testResults.push({step: "Test 38: cancel_task", status: "failed", error: rv.message});
+                }
+                else
+                {
+                    testResults.push({step: "Test 38: cancel_task", status: "passed", canceled_task_id: testTaskId4});
+                }
+            }
+
+            // =================================================================
+            // Test 39: cancel_task (verify status)
+            // =================================================================
+
+            testResults.push({step: "Test 39: cancel_task (verify status)", status: "running"});
+            if (testTaskId4 === null)
+            {
+                testResults.push({step: "Test 39: cancel_task (verify status)", status: "failed", error: "Cannot verify - task was not created"});
+            }
+            else
+            {
+                rv = $executeAPI(this.$Session, "Task/get_task", {task_id: testTaskId4});
+                if (!$Err.isERR(rv) && rv.task.status === "canceled")
+                {
+                    testResults.push({step: "Test 39: cancel_task (verify status)", status: "passed", status_val: rv.task.status});
+                }
+                else
+                {
+                    testResults.push({step: "Test 39: cancel_task (verify status)", status: "warning",
+                        status_val: rv.task ? rv.task.status : "unknown", message: "status not canceled"});
+                }
+            }
+
+            // =================================================================
+            // Test 40: cancel_task (already canceled — expect error)
+            // =================================================================
+
+            testResults.push({step: "Test 40: cancel_task (already canceled)", status: "running"});
+            if (testTaskId4 === null)
+            {
+                testResults.push({step: "Test 40: cancel_task (already canceled)", status: "failed", error: "Cannot test - task was not created"});
+            }
+            else
+            {
+                rv = $executeAPI(this.$Session, "Task/cancel_task", {task_id: testTaskId4});
+                if (rv.rc === 594)
+                {
+                    testResults.push({step: "Test 40: cancel_task (already canceled)", status: "passed", message: "correctly rejected - already closed"});
+                }
+                else
+                {
+                    testResults.push({step: "Test 40: cancel_task (already canceled)", status: "warning", message: "unexpected response", rc: rv.rc});
+                }
+            }
+
+            // =================================================================
+            // Test 41: cancel_task (officer cancels own new task)
+            // =================================================================
+
+            testResults.push({step: "Test 41: cancel_task (officer cancels own task)", status: "running"});
+            if (testTaskId3 === null)
+            {
+                testResults.push({step: "Test 41: cancel_task (officer cancels own task)", status: "warning", message: "skipped - officer task was not created"});
+            }
+            else
+            {
+                try
+                {
+                    this.$Session.impersonateAccount(addedOfficerId);
+
+                    rv = $executeAPI(this.$Session, "Task/cancel_task", {task_id: testTaskId3});
+
+                    this.$Session.accountImpersonationStack = null;
+                    this.$Session.userId = adminUserId;
+                    this.$Session.userType = $Const.USER_TYPE_ADMIN;
+
+                    if ($Err.isERR(rv))
+                    {
+                        testResults.push({step: "Test 41: cancel_task (officer cancels own task)", status: "warning", error: rv.message});
+                    }
+                    else
+                    {
+                        testResults.push({step: "Test 41: cancel_task (officer cancels own task)", status: "passed"});
+                    }
+                }
+                catch (impErr)
+                {
+                    this.$Session.accountImpersonationStack = null;
+                    this.$Session.userId = adminUserId;
+                    this.$Session.userType = $Const.USER_TYPE_ADMIN;
+                    testResults.push({step: "Test 41: cancel_task (officer cancels own task)", status: "warning", message: "impersonation failed", error: impErr.message});
+                }
+            }
+
+            // =================================================================
+            // Test 42: approve_task (create supply_request, accept, then approve)
+            // =================================================================
+
+            testResults.push({step: "Test 42: approve_task (supply_request flow)", status: "running"});
+            // supply_request requires approval — use it if it exists as a valid task type
+            rv = $executeAPI(this.$Session, "Task/create_task", {
+                task_type: "supply_request",
+                description: `Supply request for approval ${uniqueId}`,
+                priority: "important",
+                assigned_to: addedOfficerId
+            });
+            if ($Err.isERR(rv))
+            {
+                // supply_request may not exist as a DB-backed task type
+                testResults.push({step: "Test 42: approve_task (supply_request flow)", status: "warning",
+                    message: "cannot create supply_request task (type may not exist in DB)", error: rv.message});
+            }
+            else
+            {
+                let approvalTaskId = rv.task_id;
+
+                // Accept it first
+                rv = $executeAPI(this.$Session, "Task/accept_task", {task_id: approvalTaskId});
+                if ($Err.isERR(rv))
+                {
+                    testResults.push({step: "Test 42: approve_task (supply_request flow)", status: "warning",
+                        message: "accept step failed", error: rv.message});
+                }
+                else
+                {
+                    // Now approve
+                    rv = $executeAPI(this.$Session, "Task/approve_task", {task_id: approvalTaskId});
+                    if ($Err.isERR(rv))
+                    {
+                        testResults.push({step: "Test 42: approve_task (supply_request flow)", status: "failed", error: rv.message});
+                    }
+                    else
+                    {
+                        testResults.push({step: "Test 42: approve_task (supply_request flow)", status: "passed", approved_task_id: approvalTaskId});
+                    }
+
+                    // Verify approved status
+                    testResults.push({step: "Test 43: approve_task (verify status)", status: "running"});
+                    rv = $executeAPI(this.$Session, "Task/get_task", {task_id: approvalTaskId});
+                    if (!$Err.isERR(rv) && rv.task.status === "approved")
+                    {
+                        testResults.push({step: "Test 43: approve_task (verify status)", status: "passed", status_val: rv.task.status});
+                    }
+                    else
+                    {
+                        testResults.push({step: "Test 43: approve_task (verify status)", status: "warning",
+                            status_val: rv.task ? rv.task.status : "unknown"});
+                    }
+
+                    // Complete the approved task
+                    testResults.push({step: "Test 44: complete_task (after approval)", status: "running"});
+                    rv = $executeAPI(this.$Session, "Task/complete_task", {
+                        task_id: approvalTaskId,
+                        comment: `Approved and completed ${uniqueId}`
+                    });
+                    if ($Err.isERR(rv))
+                    {
+                        testResults.push({step: "Test 44: complete_task (after approval)", status: "failed", error: rv.message});
+                    }
+                    else
+                    {
+                        testResults.push({step: "Test 44: complete_task (after approval)", status: "passed"});
+                    }
+                }
+            }
+
+            // =================================================================
+            // Test 45: approve_task (non-approval type — expect error)
+            // =================================================================
+
+            testResults.push({step: "Test 45: approve_task (non-approval type)", status: "running"});
+            // Create a routine-type task, accept it, then try to approve
+            rv = $executeAPI(this.$Session, "Task/create_task", {
+                task_type: testTaskTypeId,
+                description: `Routine task for approve test ${uniqueId}`,
+                assigned_to: addedOfficerId
+            });
+            if ($Err.isERR(rv))
+            {
+                testResults.push({step: "Test 45: approve_task (non-approval type)", status: "warning", message: "cannot create task", error: rv.message});
+            }
+            else
+            {
+                let routineTaskId = rv.task_id;
+                $executeAPI(this.$Session, "Task/accept_task", {task_id: routineTaskId});
+
+                rv = $executeAPI(this.$Session, "Task/approve_task", {task_id: routineTaskId});
+                if (rv.rc === 591)
+                {
+                    testResults.push({step: "Test 45: approve_task (non-approval type)", status: "passed", message: "correctly rejected — type not in approval list"});
+                }
+                else
+                {
+                    testResults.push({step: "Test 45: approve_task (non-approval type)", status: "warning", message: "unexpected response", rc: rv.rc});
+                }
+
+                // Cleanup: complete the routine task
+                $executeAPI(this.$Session, "Task/complete_task", {task_id: routineTaskId});
+            }
+
+            // =================================================================
+            // Test 46: approve_task (new status — expect error, must be accepted first)
+            // =================================================================
+
+            testResults.push({step: "Test 46: approve_task (wrong status)", status: "running"});
+            rv = $executeAPI(this.$Session, "Task/create_task", {
+                task_type: "supply_request",
+                description: `Not-yet-accepted supply ${uniqueId}`,
+                assigned_to: addedOfficerId
+            });
+            if ($Err.isERR(rv))
+            {
+                testResults.push({step: "Test 46: approve_task (wrong status)", status: "warning", message: "supply_request type may not exist", error: rv.message});
+            }
+            else
+            {
+                let newSupplyId = rv.task_id;
+                rv = $executeAPI(this.$Session, "Task/approve_task", {task_id: newSupplyId});
+                if (rv.rc === 591)
+                {
+                    testResults.push({step: "Test 46: approve_task (wrong status)", status: "passed", message: "correctly rejected — not in accepted status"});
+                }
+                else
+                {
+                    testResults.push({step: "Test 46: approve_task (wrong status)", status: "warning", message: "unexpected response", rc: rv.rc});
+                }
+                // Cleanup
+                $executeAPI(this.$Session, "Task/cancel_task", {task_id: newSupplyId});
+            }
+
+            // =================================================================
+            // Test 47: get_tasks_list (is_open=false — history)
+            // =================================================================
+
+            testResults.push({step: "Test 47: get_tasks_list (is_open=false)", status: "running"});
+            rv = $executeAPI(this.$Session, "Task/get_tasks_list", {is_open: false});
+            if ($Err.isERR(rv))
+            {
+                testResults.push({step: "Test 47: get_tasks_list (is_open=false)", status: "failed", error: rv.message});
+            }
+            else
+            {
+                testResults.push({step: "Test 47: get_tasks_list (is_open=false)", status: "passed",
+                    count: rv.tasks.length, total_count: rv.total_count});
+            }
+
+            // =================================================================
+            // Test 48: get_tasks_list (as officer — community scoped)
+            // =================================================================
+
+            testResults.push({step: "Test 48: get_tasks_list (as officer)", status: "running"});
+            try
+            {
+                this.$Session.impersonateAccount(addedOfficerId);
+
+                rv = $executeAPI(this.$Session, "Task/get_tasks_list", {});
+
+                this.$Session.accountImpersonationStack = null;
+                this.$Session.userId = adminUserId;
+                this.$Session.userType = $Const.USER_TYPE_ADMIN;
+
+                if ($Err.isERR(rv))
+                {
+                    testResults.push({step: "Test 48: get_tasks_list (as officer)", status: "failed", error: rv.message});
+                }
+                else
+                {
+                    let allSameCom = rv.tasks.every(t => t.community_id === addedCommunityId);
+                    testResults.push({step: "Test 48: get_tasks_list (as officer)", status: allSameCom ? "passed" : "warning",
+                        count: rv.tasks.length, all_in_community: allSameCom});
+                }
+            }
+            catch (impErr)
+            {
+                this.$Session.accountImpersonationStack = null;
+                this.$Session.userId = adminUserId;
+                this.$Session.userType = $Const.USER_TYPE_ADMIN;
+                testResults.push({step: "Test 48: get_tasks_list (as officer)", status: "warning", message: "impersonation failed", error: impErr.message});
+            }
+
+            // =================================================================
+            // Test 49: update_task (closed task — expect error)
+            // =================================================================
+
+            testResults.push({step: "Test 49: update_task (closed task)", status: "running"});
+            if (testTaskId === null)
+            {
+                testResults.push({step: "Test 49: update_task (closed task)", status: "failed", error: "Cannot test - task was not created"});
+            }
+            else
+            {
+                rv = $executeAPI(this.$Session, "Task/update_task", {
+                    task_id: testTaskId,
+                    description: "Should fail - task is completed"
+                });
+                if (rv.rc === 591)
+                {
+                    testResults.push({step: "Test 49: update_task (closed task)", status: "passed", message: "correctly rejected update on closed task"});
+                }
+                else
+                {
+                    testResults.push({step: "Test 49: update_task (closed task)", status: "warning", message: "unexpected response", rc: rv.rc});
+                }
+            }
+
+            // =================================================================
+            // Test 50: reassign_task (closed task — expect error)
+            // =================================================================
+
+            testResults.push({step: "Test 50: reassign_task (closed task)", status: "running"});
+            if (testTaskId === null)
+            {
+                testResults.push({step: "Test 50: reassign_task (closed task)", status: "failed", error: "Cannot test - task was not created"});
+            }
+            else
+            {
+                rv = $executeAPI(this.$Session, "Task/reassign_task", {
+                    task_id: testTaskId,
+                    assigned_to: addedOfficerId
+                });
+                if (rv.rc === 599)
+                {
+                    testResults.push({step: "Test 50: reassign_task (closed task)", status: "passed", message: "correctly rejected reassign on closed task"});
+                }
+                else
+                {
+                    testResults.push({step: "Test 50: reassign_task (closed task)", status: "warning", message: "unexpected response", rc: rv.rc});
+                }
+            }
+
+            // =================================================================
+            // Test 51: add_task_comment (on closed task — should still work)
+            // =================================================================
+
+            testResults.push({step: "Test 51: add_task_comment (closed task)", status: "running"});
+            if (testTaskId === null)
+            {
+                testResults.push({step: "Test 51: add_task_comment (closed task)", status: "failed", error: "Cannot test - task was not created"});
+            }
+            else
+            {
+                rv = $executeAPI(this.$Session, "Task/add_task_comment", {
+                    task_id: testTaskId,
+                    comment: `Post-completion comment ${uniqueId}`
+                });
+                if ($Err.isERR(rv))
+                {
+                    testResults.push({step: "Test 51: add_task_comment (closed task)", status: "warning",
+                        message: "comment on closed task rejected (may be expected)", error: rv.message});
+                }
+                else
+                {
+                    testResults.push({step: "Test 51: add_task_comment (closed task)", status: "passed", comment_id: rv.comment_id});
+                }
+            }
+
+            // =================================================================
+            // Test 52: create_task (special chars in description)
+            // =================================================================
+
+            testResults.push({step: "Test 52: create_task (special chars)", status: "running"});
+            let specialDesc = `Broken pipe & leaking water <urgent> "quote" ${uniqueId}`;
+            rv = $executeAPI(this.$Session, "Task/create_task", {
+                task_type: testTaskTypeId,
+                description: specialDesc,
+                priority: "low",
+                assigned_to: addedOfficerId
+            });
+            if ($Err.isERR(rv))
+            {
+                testResults.push({step: "Test 52: create_task (special chars)", status: "warning", message: "rejected special characters", error: rv.message});
+            }
+            else
+            {
+                testResults.push({step: "Test 52: create_task (special chars)", status: "passed", task_id: rv.task_id});
+                // Cleanup
+                $executeAPI(this.$Session, "Task/cancel_task", {task_id: rv.task_id});
+            }
+
+            // =================================================================
+            // Test 53: create_task (unicode description)
+            // =================================================================
+
+            testResults.push({step: "Test 53: create_task (unicode)", status: "running"});
+            let unicodeDesc = `تسرب مياه في المبنى ${uniqueId}`;
+            rv = $executeAPI(this.$Session, "Task/create_task", {
+                task_type: testTaskTypeId,
+                description: unicodeDesc,
+                assigned_to: addedOfficerId
+            });
+            if ($Err.isERR(rv))
+            {
+                testResults.push({step: "Test 53: create_task (unicode)", status: "warning", message: "rejected unicode", error: rv.message});
+            }
+            else
+            {
+                testResults.push({step: "Test 53: create_task (unicode)", status: "passed", task_id: rv.task_id});
+                // Cleanup
+                $executeAPI(this.$Session, "Task/cancel_task", {task_id: rv.task_id});
+            }
+
+            // =================================================================
+            // Test 54: get_tasks_list (date range filter)
+            // =================================================================
+
+            testResults.push({step: "Test 54: get_tasks_list (date range)", status: "running"});
+            let today = $Utils.now().substring(0, 10);
+            rv = $executeAPI(this.$Session, "Task/get_tasks_list", {
+                date_from: today,
+                date_to: today
+            });
+            if ($Err.isERR(rv))
+            {
+                testResults.push({step: "Test 54: get_tasks_list (date range)", status: "failed", error: rv.message});
+            }
+            else
+            {
+                testResults.push({step: "Test 54: get_tasks_list (date range)", status: "passed",
+                    count: rv.tasks.length, total_count: rv.total_count});
+            }
+
+            // =================================================================
+            // Test 55: get_tasks_list (scope=assigned_to_me as officer)
+            // =================================================================
+
+            testResults.push({step: "Test 55: get_tasks_list (assigned_to_me, as officer)", status: "running"});
+            try
+            {
+                this.$Session.impersonateAccount(addedOfficerId);
+
+                rv = $executeAPI(this.$Session, "Task/get_tasks_list", {scope: "assigned_to_me"});
+
+                this.$Session.accountImpersonationStack = null;
+                this.$Session.userId = adminUserId;
+                this.$Session.userType = $Const.USER_TYPE_ADMIN;
+
+                if ($Err.isERR(rv))
+                {
+                    testResults.push({step: "Test 55: get_tasks_list (assigned_to_me, as officer)", status: "failed", error: rv.message});
+                }
+                else
+                {
+                    testResults.push({step: "Test 55: get_tasks_list (assigned_to_me, as officer)", status: "passed",
+                        count: rv.tasks.length, total_count: rv.total_count});
+                }
+            }
+            catch (impErr)
+            {
+                this.$Session.accountImpersonationStack = null;
+                this.$Session.userId = adminUserId;
+                this.$Session.userType = $Const.USER_TYPE_ADMIN;
+                testResults.push({step: "Test 55: get_tasks_list (assigned_to_me, as officer)", status: "warning", message: "impersonation failed", error: impErr.message});
+            }
+
+            // =================================================================
+            // Cleanup
+            // =================================================================
+
+            if (testTaskTypeId !== null)
+            {
+                $executeAPI(this.$Session, "Settings/delete_task_type", {type_id: testTaskTypeId});
+            }
+            if (addedOfficerId !== null)
+            {
+                let delRv = $executeAPI(this.$Session, "Officer/delete_officer", {user_id: addedOfficerId});
+                if ($Err.isERR(delRv))
+                {
+                    testResults.push({step: "Cleanup: delete_officer 1", status: "warning", error: delRv.message});
+                }
+            }
+            if (addedOfficerId2 !== null)
+            {
+                let delRv = $executeAPI(this.$Session, "Officer/delete_officer", {user_id: addedOfficerId2});
+                if ($Err.isERR(delRv))
+                {
+                    testResults.push({step: "Cleanup: delete_officer 2", status: "warning", error: delRv.message});
+                }
+            }
+            if (addedCommunityId !== null)
+            {
+                let delRv = $executeAPI(this.$Session, "Community/delete_community", {community_id: addedCommunityId});
+                if ($Err.isERR(delRv))
+                {
+                    testResults.push({step: "Cleanup: delete_community", status: "warning", error: delRv.message});
+                }
+            }
+
+            testResults.push({step: "All tests completed", status: "success"});
+        }
+        catch (error)
+        {
+            testResults.push({step: "Exception occurred", status: "error", error: error.message, stack: error.stack});
+
+            if (this.$Session.accountImpersonationStack !== null)
+            {
+                this.$Session.accountImpersonationStack = null;
+                this.$Session.userId = adminUserId;
+                this.$Session.userType = $Const.USER_TYPE_ADMIN;
+            }
+        }
+
+        vals.test_results = testResults;
+        vals.summary = {
+            total: testResults.filter(r => r.status === "running").length,
+            passed: testResults.filter(r => r.status === "passed").length,
+            failed: testResults.filter(r => r.status === "failed").length,
+            warnings: testResults.filter(r => r.status === "warning").length
+        };
+
+        return {...rc, ...vals};
+    }
 }

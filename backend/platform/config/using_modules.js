@@ -26,5 +26,6 @@ module.exports =
     ],
     user: [
         "call_utils",
+        "task_utils",
     ]
 };

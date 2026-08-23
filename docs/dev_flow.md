@@ -128,11 +128,12 @@ The primary operational workflows. This is the heart of the application.
 - **Implementation:** 12 API endpoints — `create_call`, `get_calls`, `get_call`, `update_call`, `cancel_call`, `accept_call`, `pass_call`, `resolve_call`, `assign_call`, `add_reaction`, `add_comment`, `delete_test_call`. Supports 5 categories (`medical_emergency`, `security_emergency`, `concierge_service`, `test`, `panic`) with a `new -> accepted -> resolved/canceled` lifecycle, role-based visibility (residents see own calls; officers see community emergency/panic minus passed plus assigned concierge/test; admins see all), one-active-emergency-per-resident enforcement, auto-`urgent` priority for emergency/panic, dynamic `service_type` validation for concierge calls, media attachments (up to 5 images + 1 audio + 1 video, plus a separate officer confirmation set), officer pass/relay via `SVC_PASSED_BY`, admin manual assignment, resident like/dislike reaction and post-resolution comment, panic calls resolvable only by admins, soft-delete restricted to `test` calls, and 9 push-notification triggers routed through the Notification module (which also handles real-time socket delivery). Active-call guards added to `resident.js`, `officer.js`, and `community.js`.
 - **Deferred:** documents & AI transcription, share/export to PDF, statistics/analytics dashboard, GPS-based nearest-officer dispatch, ETA calculation, panic two-way chat, out-of-service-zone detection, and server-side auto-archive — see `docs/deferred_requirements/03-call-enhancements.md`.
 
-#### 3.2 Task (`platform/api/task.js`)
-- Maintenance task CRUD, status lifecycle (New -> Accepted -> Approved -> Completed / Rejected / Canceled), comments, media
+#### ~~3.2 Task (`platform/api/task.js`)~~ ✅ Done
+- ~~Maintenance task CRUD, status lifecycle (New -> Accepted -> Approved -> Completed / Rejected / Canceled), comments, media~~
 - **DB tables:** `task`, `task_comment`, `task_media`
 - **Depends on:** Community, Officer, Notification, Settings (task_type)
 - **Can be parallel with:** Call (3.1) - no direct dependency
+- **Implementation:** 12 API endpoints — `create_task`, `get_tasks_list`, `get_task`, `update_task`, `accept_task`, `reject_task`, `complete_task`, `cancel_task`, `reassign_task`, `add_task_comment`, `add_task_media`, `get_task_metadata`. Supports free-text search, pagination, status/type/priority/community/date/scope filters, media attachments (images/video/documents), confirmation media, comments, push notifications on all status changes, and community scoping for officers.
 
 ---
 

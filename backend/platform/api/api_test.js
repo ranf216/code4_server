@@ -49,4 +49,11 @@ module.exports =
                                                 "#token"                        : "s",
                                             },
 
+    "test_task_apis"                        : {
+                                                "@acl"                          : [$ACL.USER_TYPE_ADMIN],
+                                                "@doc"                          : "Test all Task module APIs (create, get, list, update, accept, approve, reject, complete, cancel, reassign, comment, media, metadata)",
+                                                "@mode"                         : "test",
+                                                "#token"                        : "s",
+                                            },
+
 };

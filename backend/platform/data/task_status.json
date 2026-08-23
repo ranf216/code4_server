@@ -1,0 +1,8 @@
+{
+    "new":          {"name": {"en": "New"},         "define": "TASK_STATUS_NEW",        "is_open": true},
+    "accepted":     {"name": {"en": "Accepted"},    "define": "TASK_STATUS_ACCEPTED",   "is_open": true},
+    "approved":     {"name": {"en": "Approved"},    "define": "TASK_STATUS_APPROVED",   "is_open": true},
+    "completed":    {"name": {"en": "Completed"},   "define": "TASK_STATUS_COMPLETED",  "is_open": false},
+    "rejected":     {"name": {"en": "Rejected"},    "define": "TASK_STATUS_REJECTED",   "is_open": false},
+    "canceled":     {"name": {"en": "Canceled"},    "define": "TASK_STATUS_CANCELED",   "is_open": false}
+}
