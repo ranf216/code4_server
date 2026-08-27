@@ -93,6 +93,12 @@ function resolveDefaultAssignee(communityId)
 		}
 	}
 
+	// 3. Final fallback: oldest active admin in the system (regardless of role)
+	if (rows.length > 0)
+	{
+		return rows[0].USD_USR_ID;
+	}
+
 	return null;
 }
 

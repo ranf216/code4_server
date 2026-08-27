@@ -3,14 +3,17 @@ const path = require("path");
 
 const docsRoot = path.join(__dirname, "..", "docs");
 const outputDir = path.join(docsRoot, ".notebook");
-const sourceFolders = ["modules", "library", "issues-questions", "code-reviews", "api"];
+const sourceFolders = ["modules", "library", "issues-questions", "code-reviews", "api", "changes-summary"];
 const deferredFolder = "deferred_requirements";
 
 function usage()
 {
-    console.log("\x1b[33m\x1b[1m%s\x1b[0m", "build_module_doc <module name> | -deferred | -general");
+    console.log("\x1b[33m\x1b[1m%s\x1b[0m", "build_module_doc <module name> | -combine <output name> <module> [<module> ...] | -deferred | -general");
     console.log("  <module name>  e.g. user-mgmt, job, service_catalog");
     console.log("                 output: docs/.notebook/<module>-module.md");
+    console.log("  -combine       combines several module prefixes into a single document");
+    console.log("                 e.g. -combine dispatch job vehicle employee");
+    console.log("                 output: docs/.notebook/<output name>-module.md");
     console.log("  -deferred      combines docs/deferred_requirements");
     console.log("                 output: docs/.notebook/deferred_requirements.md");
     console.log("  -general       copies docs/*.md and docs/.rules/brain.md as-is");
@@ -108,16 +111,49 @@ if (arg.toLowerCase() === "-general")
     return;
 }
 
+const isCombine = arg.toLowerCase() === "-combine";
 const isDeferred = arg.toLowerCase() === "-deferred";
-const moduleName = normalize(arg);
 
-const files = isDeferred
-    ? listMarkdownFiles(deferredFolder).filter((file) => !isQaFile(file.name))
-    : collectFiles(moduleName);
+const combineArgs = process.argv.slice(3).map((value) => value.trim()).filter((value) => value.length > 0);
+if (isCombine && combineArgs.length < 2)
+{
+    usage();
+    return;
+}
+
+const moduleName = normalize(isCombine ? combineArgs[0] : arg);
+const modulePrefixes = isCombine ? combineArgs.slice(1).map(normalize) : [moduleName];
+
+let files = [];
+if (isDeferred)
+{
+    files = listMarkdownFiles(deferredFolder).filter((file) => !isQaFile(file.name));
+}
+else
+{
+    const seen = new Set();
+    for (const prefix of modulePrefixes)
+    {
+        const found = collectFiles(prefix);
+        if (found.length === 0)
+        {
+            console.log("\x1b[33m\x1b[1m%s\x1b[0m", `Warning: no documentation files found for module "${prefix}"`);
+        }
+
+        for (const file of found)
+        {
+            if (!seen.has(file.full))
+            {
+                seen.add(file.full);
+                files.push(file);
+            }
+        }
+    }
+}
 
 if (files.length === 0)
 {
-    console.log("\x1b[31m\x1b[1m%s\x1b[0m", `No documentation files found for module "${arg}"`);
+    console.log("\x1b[31m\x1b[1m%s\x1b[0m", `No documentation files found for "${isCombine ? modulePrefixes.join(", ") : arg}"`);
     return;
 }
 
