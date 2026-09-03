@@ -56,4 +56,11 @@ module.exports =
                                                 "#token"                        : "s",
                                             },
 
+    "test_asset_apis"                       : {
+                                                "@acl"                          : [$ACL.USER_TYPE_ADMIN],
+                                                "@doc"                          : "Test all Asset module APIs (asset CRUD, batch create, post CRUD, map zone CRUD, metadata, map upload)",
+                                                "@mode"                         : "test",
+                                                "#token"                        : "s",
+                                            },
+
 };

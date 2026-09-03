@@ -1,0 +1,4 @@
+{
+    "entry_exit":       {"name": {"en": "Entry/Exit Point"},    "define": "MAP_ZONE_TYPE_ENTRY_EXIT"},
+    "high_priority":    {"name": {"en": "High Priority Zone"},  "define": "MAP_ZONE_TYPE_HIGH_PRIORITY"}
+}

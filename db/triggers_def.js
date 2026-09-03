@@ -119,6 +119,15 @@ module.exports =
     },
 /*---------------------------------------------------------------*/
     {
+        name: "asset",
+        id: "AST_ID",
+        insert_fields: ["AST_TYPE", "AST_SHAPE", "AST_LOCATION", "AST_DESCRIPTION", "AST_ACRES", "AST_INSTALLATION_DATE", "AST_REPLACEMENT_DATE", "AST_LAST_UPDATE", "AST_DELETED_ON"],
+        update_fields: ["AST_TYPE", "AST_SHAPE", "AST_LOCATION", "AST_DESCRIPTION", "AST_ACRES", "AST_INSTALLATION_DATE", "AST_REPLACEMENT_DATE", "AST_LAST_UPDATE", "AST_DELETED_ON"],
+        insert_custom: null,
+        update_custom: null,
+        log_delete: false,
+    },
+    {
         name: "community",
         id: "COM_ID",
         insert_fields: ["COM_NAME", "COM_AREA", "COM_LATITUDE", "COM_LONGITUDE", "COM_LOCATION_NAME", "COM_TIMEZONE", "COM_MAP_IMAGE", "COM_MAP_BOUNDARIES", "COM_IS_ACTIVE", "COM_LAST_UPDATE", "COM_DELETED_ON"],
@@ -146,6 +155,15 @@ module.exports =
         log_delete: false,
     },
     {
+        name: "map_zone",
+        id: "MZN_ID",
+        insert_fields: ["MZN_TYPE", "MZN_NAME", "MZN_LOCATION", "MZN_LAST_UPDATE", "MZN_DELETED_ON"],
+        update_fields: ["MZN_TYPE", "MZN_NAME", "MZN_LOCATION", "MZN_LAST_UPDATE", "MZN_DELETED_ON"],
+        insert_custom: null,
+        update_custom: null,
+        log_delete: false,
+    },
+    {
         name: "officer",
         id: "OFC_USR_ID",
         insert_fields: ["OFC_TITLE", "OFC_DESCRIPTION", "OFC_ADDRESS", "OFC_ROLES", "OFC_CERTIFICATION_BADGES", "OFC_LAST_UPDATE", "OFC_DELETED_ON"],
@@ -161,6 +179,15 @@ module.exports =
         update_fields: ["OFE_TEXT", "OFE_DATE", "OFE_EVALUATOR_NAME", "OFE_DELETED_ON"],
         insert_custom: null, // Optional code to run after the insertion to change_log
         update_custom: null, // Optional code to run after the insertion to change_log
+        log_delete: false,
+    },
+    {
+        name: "post",
+        id: "PST_ID",
+        insert_fields: ["PST_NAME", "PST_DESCRIPTION", "PST_PRIORITY", "PST_SHAPE", "PST_LOCATION", "PST_EQUIPMENT", "PST_PERMISSIONS", "PST_IS_ACTIVE", "PST_LAST_UPDATE", "PST_DELETED_ON"],
+        update_fields: ["PST_NAME", "PST_DESCRIPTION", "PST_PRIORITY", "PST_SHAPE", "PST_LOCATION", "PST_EQUIPMENT", "PST_PERMISSIONS", "PST_IS_ACTIVE", "PST_LAST_UPDATE", "PST_DELETED_ON"],
+        insert_custom: null,
+        update_custom: null,
         log_delete: false,
     },
     {

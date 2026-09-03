@@ -17,6 +17,8 @@ module.exports =
 	},
 
 	"NOTIFICATION_MAX_PAGE_SIZE"										: 100,
+	"ASSETS_LIST_PAGE_SIZE"												: 50,
+	"POSTS_LIST_PAGE_SIZE"												: 50,
 
 	"SETTINGS_DEFAULTS"													: {
 		"gps": {

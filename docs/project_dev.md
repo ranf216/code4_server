@@ -645,6 +645,94 @@ Manages maintenance tasks/work orders lifecycle. Officers and admins create task
 
 ---
 
+## Phase 4 — Map & Physical Infrastructure
+
+### 4.1 Asset (`platform/api/asset.js`, `platform/funcs/asset.js`)
+
+The Asset module manages physical infrastructure on community maps: assets (cameras, doors, gates, etc.), posts (guard stations where officers are assigned during shifts), map zones (entry/exit points, high-priority zones), and community map image upload.
+
+#### Database Tables (V 4.6.0)
+
+| Table | Prefix | Purpose |
+|-------|--------|---------|
+| `post` | `PST_` | Named guard posts within a community. Unique name per community. Has `PST_IS_ACTIVE` for soft deactivation. `PST_PERMISSIONS` (JSON) stores scheduling allocation requirements. FK to `community` and `user`. |
+| `asset` | `AST_` | Physical infrastructure items (cameras, doors, etc.) placed on the community map. `AST_ACRES` stores server-calculated area. FK to `community` and `user`. |
+| `map_zone` | `MZN_` | Entry/exit points and high-priority zones drawn on the community map. FK to `community` and `user`. |
+
+All three tables use the standard soft-delete pattern (`*_DELETED_ON`).
+
+#### $DataItems Files
+
+| File | Defines | Constants |
+|------|---------|-----------|
+| `asset_type.json` | DB-backed lookup (`source: "db"`) | Managed via Settings CRUD |
+| `asset_shape.json` | `place`, `circle`, `line` | `$Const.ASSET_SHAPE_PLACE`, `$Const.ASSET_SHAPE_CIRCLE`, `$Const.ASSET_SHAPE_LINE` |
+| `post_priority.json` | `urgent`, `important`, `normal`, `low` | `$Const.POST_PRIORITY_URGENT`, `$Const.POST_PRIORITY_IMPORTANT`, `$Const.POST_PRIORITY_NORMAL`, `$Const.POST_PRIORITY_LOW` |
+| `map_zone_type.json` | `entry_exit`, `high_priority` | `$Const.MAP_ZONE_TYPE_ENTRY_EXIT`, `$Const.MAP_ZONE_TYPE_HIGH_PRIORITY` |
+
+#### API Endpoints
+
+| Endpoint | ACL | Description |
+|----------|-----|-------------|
+| `Asset/get_assets_list` | ADMIN | Paginated asset list with type/search filters |
+| `Asset/get_asset` | ADMIN | Get single asset details |
+| `Asset/create_asset` | ADMIN | Create asset on map |
+| `Asset/create_assets_batch` | ADMIN | Batch-create up to 100 assets with shared metadata |
+| `Asset/update_asset` | ADMIN | Edit asset details |
+| `Asset/delete_asset` | ADMIN | Soft-delete an asset |
+| `Asset/get_posts_list` | ADMIN, OFFICER | Paginated post list (officers: own community only) |
+| `Asset/get_post` | ADMIN, OFFICER | Get single post details |
+| `Asset/create_post` | ADMIN | Create a named post (unique within community) |
+| `Asset/update_post` | ADMIN | Edit post details (name, priority, shape, location, equipment, active status) |
+| `Asset/delete_post` | ADMIN | Delete post (blocked if used in shifts — use deactivation instead) |
+| `Asset/get_map_zones` | ADMIN, OFFICER | Get entry/exit points and high-priority zones |
+| `Asset/create_map_zone` | ADMIN | Create a map zone |
+| `Asset/update_map_zone` | ADMIN | Edit a map zone |
+| `Asset/delete_map_zone` | ADMIN | Soft-delete a map zone |
+| `Asset/upload_community_map` | ADMIN | Upload or replace the 2D community map image |
+| `Asset/get_asset_metadata` | ADMIN, OFFICER | Get dropdowns: asset types, shapes, post priorities, zone types |
+
+#### Implementation Details
+
+- **Shapes:** All map elements (assets, posts) support three shapes: `place` (single point), `circle` (centre + radius), `line` (array of coordinates). Validated via `$DataItems.isValidItemId()` against `asset_shape`.
+- **Acres calculation:** `AST_ACRES` is calculated server-side on every insert/update: place=0, line=0, circle=`π×r²/4046.86` (radius in meters from location JSON). Ensures consistent values across all clients.
+- **Location storage:** Coordinates are stored as JSON in `*_LOCATION` columns. The server accepts and returns parsed JSON objects.
+- **Post uniqueness:** Post names must be unique within a community. Enforced both at DB level (`UQ_PST_COM_NAME`) and in application code.
+- **Post permissions:** `PST_PERMISSIONS` (JSON, nullable) stores scheduling allocation requirements: `{required_roles:[], required_badges:[], required_equipment:[]}`. Phase 4.1 stores and retrieves only; Phase 5.1 (Shift) will validate officer eligibility against these requirements during shift assignment (non-blocking warnings with manager override).
+- **Post deletion guard:** Posts that have been referenced by the Shift module (`shift_post` table) cannot be deleted — they can only be deactivated (`PST_IS_ACTIVE=0`). The guard uses `information_schema` to check if the `shift_post` table exists (graceful when Shift module is not yet deployed).
+- **Map item limit:** All creation endpoints enforce a configurable per-community cap (default 1,000) on total map items (assets + posts + zones). Configurable via `settings:asset → max_map_items_per_community` in `key_value`. Error: `ERR_MAP_ITEM_LIMIT_EXCEEDED` (762).
+- **Batch asset creation:** `create_assets_batch` creates up to 100 assets in a single transaction, sharing asset type, shape, description, and dates across all items. Each asset gets its own location from the `locations` array. The map item limit check validates `current_count + batch_size` before inserting.
+- **Community map upload:** Uses `$Utils.saveNewImageOrKeepOld()` to save the map image, updates `community.COM_MAP_IMAGE`, and returns the resolved URL via `$Files.SQL` + `$Files.getUrl()`.
+- **Officer access:** Officers can view posts and map zones in their own community. Community ID is auto-resolved from `user_details.USD_COM_ID`.
+
+#### Asset & Post Error Codes (750–769)
+
+| RC | Constant | Message |
+|----|----------|---------|
+| 750 | `ERR_ASSET_NOT_FOUND` | asset not found |
+| 751 | `ERR_ASSET_INVALID_TYPE` | invalid asset type |
+| 752 | `ERR_POST_NOT_FOUND` | post not found |
+| 753 | `ERR_POST_NAME_ALREADY_EXISTS` | a post with this name already exists in this community |
+| 754 | `ERR_MAP_ZONE_NOT_FOUND` | map zone not found |
+| 755 | `ERR_ASSET_INVALID_SHAPE` | invalid asset shape |
+| 756 | `ERR_POST_INVALID_PRIORITY` | invalid post priority |
+| 757 | `ERR_POST_INVALID_SHAPE` | invalid post shape |
+| 758 | `ERR_MAP_ZONE_INVALID_TYPE` | invalid map zone type |
+| 759 | `ERR_POST_HAS_SHIFT_HISTORY` | post has been used in a shift and cannot be deleted, only deactivated |
+| 760 | `ERR_ASSET_BATCH_EMPTY` | batch asset list is empty |
+| 761 | `ERR_ASSET_BATCH_LIMIT_EXCEEDED` | batch asset list exceeds maximum allowed size |
+| 762 | `ERR_MAP_ITEM_LIMIT_EXCEEDED` | maximum number of map items reached for this community |
+
+#### Design Notes
+
+- **No notifications:** The Asset module does not trigger notifications. Notifications for post-related events (e.g., post order updates, shift changes) are handled by the Post Order and Shift modules respectively.
+- **No status lifecycle:** Assets and map zones do not have a status field. Posts use `PST_IS_ACTIVE` as a simple boolean toggle rather than a multi-state lifecycle.
+- **Post Orders link:** Posts serve as the anchor for Post Orders (Phase 6.1). The `post_order` table will reference `PST_ID` as a foreign key.
+- **Shift dependency:** Posts are used as waypoints and officer assignments in shifts (Phase 5.1). The `shift_post` table will reference `PST_ID`.
+- **Deferred features:** See `docs/deferred_requirements/05-asset-enhancements.md` for map item grouping/clustering, acres calculation, permissions per post, and the 1,000-item limit enforcement.
+
+---
+
 ## Development Best Practices
 
 For comprehensive development best practices, including database code guidelines, implementation checklists, and common patterns, see the **"Critical Rules & Best Practices"** section in `docs/brain.md`.
