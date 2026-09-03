@@ -8795,4 +8795,9 @@ module.exports = class
 
         return {...rc, ...vals};
     }
+
+    test_asset_apis()
+    {
+        return $TestApiAsset.test_asset_apis(this.$Session);
+    }
 }

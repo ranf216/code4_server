@@ -291,6 +291,15 @@ module.exports = {
 	"ERR_POST_NOT_FOUND"								: {"rc" : 752,	"message" : "post not found"},
 	"ERR_POST_NAME_ALREADY_EXISTS"						: {"rc" : 753,	"message" : "a post with this name already exists in this community"},
 	"ERR_MAP_ZONE_NOT_FOUND"							: {"rc" : 754,	"message" : "map zone not found"},
+	"ERR_ASSET_INVALID_SHAPE"							: {"rc" : 755,	"message" : "invalid asset shape"},
+	"ERR_POST_INVALID_PRIORITY"							: {"rc" : 756,	"message" : "invalid post priority"},
+	"ERR_POST_INVALID_SHAPE"							: {"rc" : 757,	"message" : "invalid post shape"},
+	"ERR_MAP_ZONE_INVALID_TYPE"							: {"rc" : 758,	"message" : "invalid map zone type"},
+	"ERR_POST_HAS_SHIFT_HISTORY"						: {"rc" : 759,	"message" : "post has been used in a shift and cannot be deleted, only deactivated"},
+	"ERR_ASSET_BATCH_EMPTY"								: {"rc" : 760,	"message" : "batch asset list is empty"},
+	"ERR_ASSET_BATCH_LIMIT_EXCEEDED"					: {"rc" : 761,	"message" : "batch asset list exceeds maximum allowed size"},
+	"ERR_MAP_ITEM_LIMIT_EXCEEDED"						: {"rc" : 762,	"message" : "maximum number of map items reached for this community"},
+	"ERR_ASSET_INVALID_DATE"							: {"rc" : 763,	"message" : "invalid date format"},
 
 	// Admin User (770-779)
 	"ERR_ADMIN_USER_NOT_FOUND"							: {"rc" : 770,	"message" : "admin user not found"},

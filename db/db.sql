@@ -581,6 +581,106 @@ CREATE TABLE `task_media` (
 
 
 --
+-- Definition of table `post`
+--
+
+DROP TABLE IF EXISTS `post`;
+CREATE TABLE `post` (
+  `PST_ID` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `PST_COM_ID` bigint unsigned NOT NULL COMMENT 'Community this post belongs to',
+  `PST_NAME` varchar(60) NOT NULL COMMENT 'Unique within community',
+  `PST_DESCRIPTION` varchar(200) DEFAULT NULL,
+  `PST_PRIORITY` varchar(20) NOT NULL DEFAULT 'normal' COMMENT 'urgent, important, normal, low',
+  `PST_SHAPE` varchar(20) NOT NULL DEFAULT 'place' COMMENT 'place, circle, line',
+  `PST_LOCATION` json DEFAULT NULL COMMENT 'GeoJSON coordinates (point, circle centre+radius, line array)',
+  `PST_EQUIPMENT` text COMMENT 'Required equipment for this post',
+  `PST_PERMISSIONS` json DEFAULT NULL COMMENT 'Scheduling allocation requirements: {required_roles:[], required_badges:[], required_equipment:[]}',
+  `PST_IS_ACTIVE` tinyint unsigned NOT NULL DEFAULT '1',
+  `PST_CREATED_BY` varchar(128) NOT NULL,
+  `PST_CREATED_ON` datetime NOT NULL,
+  `PST_LAST_UPDATE` datetime DEFAULT NULL,
+  `PST_DELETED_ON` datetime DEFAULT NULL,
+  PRIMARY KEY (`PST_ID`),
+  KEY `IX_PST_COM_ID` (`PST_COM_ID`),
+  KEY `IX_PST_IS_ACTIVE` (`PST_IS_ACTIVE`),
+  UNIQUE KEY `UQ_PST_COM_NAME` (`PST_COM_ID`, `PST_NAME`),
+  CONSTRAINT `FK_PST_COM_ID` FOREIGN KEY (`PST_COM_ID`) REFERENCES `community` (`COM_ID`),
+  CONSTRAINT `FK_PST_CREATED_BY` FOREIGN KEY (`PST_CREATED_BY`) REFERENCES `user` (`USR_ID`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+--
+-- Dumping data for table `post`
+--
+
+/*!40000 ALTER TABLE `post` DISABLE KEYS */;
+/*!40000 ALTER TABLE `post` ENABLE KEYS */;
+
+
+--
+-- Definition of table `asset`
+--
+
+DROP TABLE IF EXISTS `asset`;
+CREATE TABLE `asset` (
+  `AST_ID` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `AST_COM_ID` bigint unsigned NOT NULL COMMENT 'Community this asset belongs to',
+  `AST_TYPE` varchar(100) NOT NULL COMMENT 'data_item asset_type key',
+  `AST_SHAPE` varchar(20) NOT NULL DEFAULT 'place' COMMENT 'place, circle, line',
+  `AST_LOCATION` json DEFAULT NULL COMMENT 'GeoJSON coordinates (point, circle centre+radius, line array)',
+  `AST_DESCRIPTION` varchar(500) DEFAULT NULL COMMENT 'Manufacturer, model, serial number, etc.',
+  `AST_ACRES` decimal(10,4) NOT NULL DEFAULT 0.0000 COMMENT 'Calculated area in acres (circle=pi*r^2/4046.86, place/line=0)',
+  `AST_INSTALLATION_DATE` date DEFAULT NULL,
+  `AST_REPLACEMENT_DATE` date DEFAULT NULL,
+  `AST_CREATED_BY` varchar(128) NOT NULL,
+  `AST_CREATED_ON` datetime NOT NULL,
+  `AST_LAST_UPDATE` datetime DEFAULT NULL,
+  `AST_DELETED_ON` datetime DEFAULT NULL,
+  PRIMARY KEY (`AST_ID`),
+  KEY `IX_AST_COM_ID` (`AST_COM_ID`),
+  KEY `IX_AST_TYPE` (`AST_TYPE`),
+  CONSTRAINT `FK_AST_COM_ID` FOREIGN KEY (`AST_COM_ID`) REFERENCES `community` (`COM_ID`),
+  CONSTRAINT `FK_AST_CREATED_BY` FOREIGN KEY (`AST_CREATED_BY`) REFERENCES `user` (`USR_ID`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+--
+-- Dumping data for table `asset`
+--
+
+/*!40000 ALTER TABLE `asset` DISABLE KEYS */;
+/*!40000 ALTER TABLE `asset` ENABLE KEYS */;
+
+
+--
+-- Definition of table `map_zone`
+--
+
+DROP TABLE IF EXISTS `map_zone`;
+CREATE TABLE `map_zone` (
+  `MZN_ID` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `MZN_COM_ID` bigint unsigned NOT NULL COMMENT 'Community this zone belongs to',
+  `MZN_TYPE` varchar(30) NOT NULL COMMENT 'entry_exit, high_priority',
+  `MZN_NAME` varchar(100) NOT NULL,
+  `MZN_LOCATION` json DEFAULT NULL COMMENT 'GeoJSON coordinates (point or polygon)',
+  `MZN_CREATED_BY` varchar(128) NOT NULL,
+  `MZN_CREATED_ON` datetime NOT NULL,
+  `MZN_LAST_UPDATE` datetime DEFAULT NULL,
+  `MZN_DELETED_ON` datetime DEFAULT NULL,
+  PRIMARY KEY (`MZN_ID`),
+  KEY `IX_MZN_COM_ID` (`MZN_COM_ID`),
+  KEY `IX_MZN_TYPE` (`MZN_TYPE`),
+  CONSTRAINT `FK_MZN_COM_ID` FOREIGN KEY (`MZN_COM_ID`) REFERENCES `community` (`COM_ID`),
+  CONSTRAINT `FK_MZN_CREATED_BY` FOREIGN KEY (`MZN_CREATED_BY`) REFERENCES `user` (`USR_ID`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+--
+-- Dumping data for table `map_zone`
+--
+
+/*!40000 ALTER TABLE `map_zone` DISABLE KEYS */;
+/*!40000 ALTER TABLE `map_zone` ENABLE KEYS */;
+
+
+--
 -- Definition of table `file`
 --
 

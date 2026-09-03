@@ -27,5 +27,6 @@ module.exports =
     user: [
         "call_utils",
         "task_utils",
+        "test_api_asset",
     ]
 };

@@ -1,0 +1,5 @@
+{
+    "place":        {"name": {"en": "Place"},       "define": "ASSET_SHAPE_PLACE"},
+    "circle":       {"name": {"en": "Circle"},      "define": "ASSET_SHAPE_CIRCLE"},
+    "line":         {"name": {"en": "Line"},        "define": "ASSET_SHAPE_LINE"}
+}

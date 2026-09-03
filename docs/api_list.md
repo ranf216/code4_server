@@ -245,6 +245,7 @@ This document lists all APIs required for the Code4 Security Operations Platform
 | `Asset/update_map_zone` | ADMIN | Edit a map zone |
 | `Asset/delete_map_zone` | ADMIN | Delete a map zone |
 | `Asset/upload_community_map` | ADMIN | Upload 2D community map |
+| `Asset/get_asset_metadata` | ADMIN, OFFICER | Get asset types, shapes, post priorities, zone types |
 
 ---
 
