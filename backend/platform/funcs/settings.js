@@ -300,4 +300,54 @@ module.exports = class
         if ($Err.isERR(rv)) return rv;
         return $ERRS.ERR_SUCCESS;
     }
+
+    // =========================================================================
+    // Shift Settings
+    // =========================================================================
+
+    get_shift_settings()
+    {
+        const settings = getSettings($Const.KVL_SETTINGS_SHIFT, $Config.get("SETTINGS_DEFAULTS").shift);
+        return { ...$ERRS.ERR_SUCCESS, ...settings };
+    }
+
+    update_shift_settings()
+    {
+        if (this.$max_weekly_hours !== undefined &&
+            (this.$max_weekly_hours < 20 || this.$max_weekly_hours > 80))
+        {
+            return $ERRS.ERR_INVALID_API_PARAM;
+        }
+        if (this.$min_rest_gap_hours !== undefined &&
+            (this.$min_rest_gap_hours < 4 || this.$min_rest_gap_hours > 24))
+        {
+            return $ERRS.ERR_INVALID_API_PARAM;
+        }
+        if (this.$auto_checkout_grace_mins !== undefined &&
+            (this.$auto_checkout_grace_mins < 15 || this.$auto_checkout_grace_mins > 240))
+        {
+            return $ERRS.ERR_INVALID_API_PARAM;
+        }
+        if (this.$shift_starting_soon_lead_mins !== undefined &&
+            (this.$shift_starting_soon_lead_mins < 10 || this.$shift_starting_soon_lead_mins > 120))
+        {
+            return $ERRS.ERR_INVALID_API_PARAM;
+        }
+        if (this.$early_checkin_window_mins !== undefined &&
+            (this.$early_checkin_window_mins < 0 || this.$early_checkin_window_mins > 120))
+        {
+            return $ERRS.ERR_INVALID_API_PARAM;
+        }
+
+        const values = {
+            max_weekly_hours: this.$max_weekly_hours,
+            min_rest_gap_hours: this.$min_rest_gap_hours,
+            auto_checkout_grace_mins: this.$auto_checkout_grace_mins,
+            shift_starting_soon_lead_mins: this.$shift_starting_soon_lead_mins,
+            early_checkin_window_mins: this.$early_checkin_window_mins,
+        };
+        const rv = updateSettings($Const.KVL_SETTINGS_SHIFT, $Config.get("SETTINGS_DEFAULTS").shift, values);
+        if ($Err.isERR(rv)) return rv;
+        return $ERRS.ERR_SUCCESS;
+    }
 }

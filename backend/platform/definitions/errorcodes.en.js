@@ -180,6 +180,7 @@ module.exports = {
 	"ERR_COMMUNITY_HAS_ACTIVE_CALLS"					: {"rc" : 504,	"message" : "cannot delete community with active calls"},
 	"ERR_COMMUNITY_IS_NOT_ACTIVE"						: {"rc" : 505,	"message" : "community is not active"},
 	"ERR_FEATURED_OFFICER_NOT_FOUND"					: {"rc" : 506,	"message" : "featured officer not found"},
+	"ERR_COMMUNITY_HAS_ACTIVE_SHIFTS"					: {"rc" : 507,	"message" : "cannot delete community with active shifts"},
 
 	// Officer (520-539)
 	"ERR_OFFICER_NOT_FOUND"								: {"rc" : 520,	"message" : "officer not found"},
@@ -239,6 +240,16 @@ module.exports = {
 	"ERR_SHIFT_ALREADY_CHECKED_IN"						: {"rc" : 617,	"message" : "officer has already checked in"},
 	"ERR_SHIFT_NOT_CHECKED_IN"							: {"rc" : 618,	"message" : "officer has not checked in"},
 	"ERR_SHIFT_INVALID_TIME_RANGE"						: {"rc" : 619,	"message" : "invalid shift time range"},
+	"ERR_SHIFT_CANNOT_UPDATE"							: {"rc" : 620,	"message" : "shift cannot be updated in its current status"},
+	"ERR_SHIFT_CANNOT_DELETE"							: {"rc" : 621,	"message" : "only draft shifts can be deleted"},
+	"ERR_SHIFT_POST_NOT_FOUND"							: {"rc" : 622,	"message" : "post not found or not active"},
+	"ERR_SHIFT_OFFICER_NOT_IN_COMMUNITY"				: {"rc" : 623,	"message" : "officer does not belong to the shift community"},
+	"ERR_SHIFT_INVALID_RECURRENCE"						: {"rc" : 624,	"message" : "invalid recurrence configuration"},
+	"ERR_SHIFT_SERIES_NOT_FOUND"						: {"rc" : 625,	"message" : "shift series not found"},
+	"ERR_SHIFT_ALREADY_ACTIVE"							: {"rc" : 626,	"message" : "shift is already active"},
+	"ERR_SHIFT_ALREADY_COMPLETED"						: {"rc" : 627,	"message" : "shift is already completed"},
+	"ERR_SHIFT_ALREADY_CANCELLED"						: {"rc" : 628,	"message" : "shift is already cancelled"},
+	"ERR_SHIFT_NO_OFFICERS"								: {"rc" : 629,	"message" : "shift has no allocated officers and cannot be published"},
 
 	// Route (640-659)
 	"ERR_ROUTE_NOT_FOUND"								: {"rc" : 640,	"message" : "route not found"},

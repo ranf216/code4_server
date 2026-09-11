@@ -227,4 +227,27 @@ module.exports =
                                                     "max_hours_per_day"             : "o:i:8***Maximum working hours per day for officers. Default: 8",
                                                 },
 
+
+            // =================================================================
+            // Shift Settings
+            // =================================================================
+
+            "get_shift_settings"                : {
+                                                    "@acl"                          : [$ACL.USER_TYPE_ADMIN],
+                                                    "@doc"                          : "Get shift scheduling configuration",
+                                                    "#token"                        : "s",
+                                                },
+
+
+            "update_shift_settings"             : {
+                                                    "@acl"                          : [$ACL.USER_TYPE_ADMIN],
+                                                    "@doc"                          : "Update shift scheduling configuration",
+                                                    "#token"                        : "s",
+                                                    "max_weekly_hours"              : "o:i:48***Maximum weekly hours per officer (20-80). Default: 48",
+                                                    "min_rest_gap_hours"            : "o:i:8***Minimum rest gap between shifts in hours (4-24). Default: 8",
+                                                    "auto_checkout_grace_mins"      : "o:i:60***Minutes after shift end before auto-checkout (15-240). Default: 60",
+                                                    "shift_starting_soon_lead_mins" : "o:i:30***Minutes before shift start to send reminder (10-120). Default: 30",
+                                                    "early_checkin_window_mins"     : "o:i:30***Minutes before shift start that early check-in is allowed (0-120). Default: 30",
+                                                },
+
 };

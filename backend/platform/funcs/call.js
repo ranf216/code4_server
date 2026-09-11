@@ -164,18 +164,6 @@ function getOfficerIdsInCommunity(communityId)
     return rows.map(r => r.USR_ID);
 }
 
-function getUserName(userId)
-{
-    let rows = $Db.executeQuery(
-        `SELECT USD_FIRST_NAME, USD_LAST_NAME FROM \`user_details\` WHERE USD_USR_ID=? AND USD_DELETED_ON IS NULL`,
-        [userId]);
-    if (rows.length === 0)
-    {
-        return "Unknown";
-    }
-    return (rows[0].USD_FIRST_NAME + " " + (rows[0].USD_LAST_NAME || "")).trim();
-}
-
 module.exports = class
 {
     constructor(session = null)
@@ -332,7 +320,7 @@ module.exports = class
         vals.call_id = callId;
 
         // Send notifications based on category
-        let creatorName = getUserName(userId);
+        let creatorName = $Funcs.getUserName(userId);
 
         if ($CallUtils.isEmergencyCategory(this.$category))
         {
@@ -954,7 +942,7 @@ module.exports = class
         }
 
         // Notify resident
-        let officerName = getUserName(userId);
+        let officerName = $Funcs.getUserName(userId);
         $executeAPI(this.$Session, "Notification/create_notification", {
             target_user_id: call.SVC_RES_USR_ID,
             type: "call_accepted",
@@ -1109,7 +1097,7 @@ module.exports = class
         }
 
         // Notify resident
-        let resolverName = getUserName(userId);
+        let resolverName = $Funcs.getUserName(userId);
         $executeAPI(this.$Session, "Notification/create_notification", {
             target_user_id: call.SVC_RES_USR_ID,
             type: "call_resolved",
@@ -1173,7 +1161,7 @@ module.exports = class
         }
 
         // Notify officer of assignment
-        let officerName = getUserName(this.$officer_user_id);
+        let officerName = $Funcs.getUserName(this.$officer_user_id);
         $executeAPI(this.$Session, "Notification/create_notification", {
             target_user_id: this.$officer_user_id,
             type: "call_accepted",
@@ -1240,7 +1228,7 @@ module.exports = class
         // Notify officer of like
         if (this.$reaction === 1 && call.SVC_OFC_USR_ID)
         {
-            let residentName = getUserName(userId);
+            let residentName = $Funcs.getUserName(userId);
             $executeAPI(this.$Session, "Notification/create_notification", {
                 target_user_id: call.SVC_OFC_USR_ID,
                 type: "resident_like",

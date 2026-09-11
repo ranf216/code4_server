@@ -1,0 +1,5 @@
+{
+    "end_date":         {"name": {"en": "End Date"},            "define": "SHIFT_RECURRENCE_END_DATE"},
+    "occurrences":      {"name": {"en": "Number of Occurrences"}, "define": "SHIFT_RECURRENCE_OCCURRENCES"},
+    "no_end":           {"name": {"en": "No End"},              "define": "SHIFT_RECURRENCE_NO_END"}
+}

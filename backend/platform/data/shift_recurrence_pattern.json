@@ -1,0 +1,5 @@
+{
+    "daily":            {"name": {"en": "Daily"},               "define": "SHIFT_RECURRENCE_DAILY"},
+    "specific_days":    {"name": {"en": "Specific Days"},       "define": "SHIFT_RECURRENCE_SPECIFIC_DAYS"},
+    "every_x_days":     {"name": {"en": "Every X Days"},        "define": "SHIFT_RECURRENCE_EVERY_X_DAYS"}
+}

@@ -352,6 +352,11 @@ module.exports = class
             return $ERRS.ERR_COMMUNITY_HAS_ACTIVE_CALLS;
         }
 
+        if (typeof $ShiftUtils !== 'undefined' && $ShiftUtils.communityHasActiveShifts(this.$community_id))
+        {
+            return $ERRS.ERR_COMMUNITY_HAS_ACTIVE_SHIFTS;
+        }
+
         let now = $Utils.now();
         $Db.executeQuery(
             `UPDATE \`community\` SET COM_DELETED_ON=?, COM_LAST_UPDATE=? WHERE COM_ID=? AND COM_DELETED_ON IS NULL`,

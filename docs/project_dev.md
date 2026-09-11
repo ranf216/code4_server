@@ -733,6 +733,119 @@ All three tables use the standard soft-delete pattern (`*_DELETED_ON`).
 
 ---
 
+### 5.1 Shift Management (`platform/api/shift.js`, `platform/funcs/shift.js`)
+
+The Shift Management module enables operations managers to schedule officer shifts, allocate officers, assign posts, and manage check-in/check-out. Officers view their assigned shifts, check in/out, and track working hours through the mobile app.
+
+#### Database Tables
+
+| Table | Prefix | Purpose |
+|-------|--------|---------|
+| `shift` | `SFT_` | Individual shift instances with date, time range, status, and community |
+| `shift_series` | `SFS_` | Recurring shift series metadata (pattern, end condition) |
+| `shift_officer` | `SFO_` | Many-to-many allocation of officers to shifts |
+| `shift_post` | `SHP_` | Officer-post assignments within a shift |
+| `shift_checkin` | `SFC_` | Officer check-in/check-out records with calculated hours |
+
+#### Shift Status Lifecycle
+
+| Status | Trigger | Behaviour |
+|--------|---------|-----------|
+| `draft` | Shift created | Visible to admins only. No notification. |
+| `published` | Admin clicks Publish (with `acknowledge_conflicts`) | Push notification to all allocated officers. Visible in officer app. |
+| `active` | First officer checks in | GPS tracking mandatory. Appears on live dashboard. |
+| `completed` | All officers checked out, OR auto-completed by lifecycle cron | Moved to history. Shift summary generated. |
+| `cancelled` | Admin cancels (draft or published) | Cancellation notification to allocated officers. |
+
+#### API Endpoints
+
+| Endpoint | ACL | Description |
+|----------|-----|-------------|
+| `Shift/get_shifts_calendar` | ADMIN | Get shifts for calendar view with date range, community, status, and officer filters |
+| `Shift/get_shift` | ADMIN, OFFICER | Get shift details with officers, posts, and check-in records |
+| `Shift/create_shift` | ADMIN | Create a new shift (status: draft) with optional officer allocation |
+| `Shift/update_shift` | ADMIN | Update draft/published shift details |
+| `Shift/delete_shift` | ADMIN | Soft-delete a draft shift |
+| `Shift/publish_shift` | ADMIN | Publish a draft shift (requires at least one allocated officer) |
+| `Shift/cancel_shift` | ADMIN | Cancel a draft or published shift |
+| `Shift/allocate_officer` | ADMIN | Allocate an officer to a shift |
+| `Shift/remove_officer` | ADMIN | Remove an officer (and their post assignments) from a shift |
+| `Shift/assign_post` | ADMIN | Assign a post to an allocated officer in a shift |
+| `Shift/check_in` | OFFICER | Officer checks in; transitions shift to active if first check-in |
+| `Shift/check_out` | OFFICER | Officer checks out; auto-completes shift if all officers checked out |
+| `Shift/get_my_shifts` | OFFICER | Officer views own published/active/completed shifts |
+| `Shift/get_my_hours` | OFFICER | Officer views check-in/check-out history with total hours |
+| `Shift/get_allocation_board` | ADMIN | Get available officers and shifts for allocation board (drag-and-drop) |
+| `Shift/validate_allocation` | ADMIN | Check for conflicts: double-booking, overtime (>48h/week), rest gap (<8h) |
+| `Shift/create_recurring_shifts` | ADMIN | Create a series of recurring shifts (daily, specific days, every X days) |
+| `Shift/update_recurring_shifts` | ADMIN | Update recurring shifts with scope: this only / this and future / all |
+
+#### Notifications
+
+| Type | Trigger | Recipients |
+|------|---------|------------|
+| `shift_published` | Shift published or officer newly allocated to published shift | Allocated officers |
+| `shift_updated` | Published shift details changed | Allocated officers |
+| `shift_cancelled` | Published shift cancelled or officer removed from published shift | Affected officers |
+| `shift_starting_soon` | Cron job: shift starts within configurable lead window | Unchecked-in allocated officers |
+
+Notifications use `$executeAPI(session, "Notification/create_bulk_notifications", ...)` pattern from the Task module.
+
+#### $DataItems
+
+| File | Key | Values |
+|------|-----|--------|
+| `shift_status.json` | `shift_status` | draft, published, active, completed, cancelled |
+| `shift_recurrence_pattern.json` | `shift_recurrence_pattern` | daily, specific_days, every_x_days |
+| `shift_recurrence_end_type.json` | `shift_recurrence_end_type` | end_date, occurrences, no_end |
+| `shift_update_scope.json` | `shift_update_scope` | this_only, this_and_future, all |
+
+#### Error Codes (610–639)
+
+| RC | Constant | Message |
+|----|----------|---------|
+| 610 | `ERR_SHIFT_NOT_FOUND` | shift not found |
+| 611 | `ERR_SHIFT_INVALID_STATUS` | invalid shift status |
+| 612 | `ERR_SHIFT_CANNOT_PUBLISH` | shift cannot be published in its current status |
+| 613 | `ERR_SHIFT_CANNOT_CANCEL` | shift cannot be canceled in its current status |
+| 614 | `ERR_SHIFT_OFFICER_ALREADY_ALLOCATED` | officer is already allocated to this shift |
+| 615 | `ERR_SHIFT_OFFICER_NOT_ALLOCATED` | officer is not allocated to this shift |
+| 616 | `ERR_SHIFT_OFFICER_CONFLICT` | officer has a scheduling conflict |
+| 617 | `ERR_SHIFT_ALREADY_CHECKED_IN` | officer has already checked in |
+| 618 | `ERR_SHIFT_NOT_CHECKED_IN` | officer has not checked in |
+| 619 | `ERR_SHIFT_INVALID_TIME_RANGE` | invalid shift time range |
+| 620 | `ERR_SHIFT_CANNOT_UPDATE` | shift cannot be updated in its current status |
+| 621 | `ERR_SHIFT_CANNOT_DELETE` | only draft shifts can be deleted |
+| 622 | `ERR_SHIFT_POST_NOT_FOUND` | post not found or not active |
+| 623 | `ERR_SHIFT_OFFICER_NOT_IN_COMMUNITY` | officer does not belong to the shift community |
+| 624 | `ERR_SHIFT_INVALID_RECURRENCE` | invalid recurrence configuration |
+| 625 | `ERR_SHIFT_SERIES_NOT_FOUND` | shift series not found |
+| 626 | `ERR_SHIFT_ALREADY_ACTIVE` | shift is already active |
+| 627 | `ERR_SHIFT_ALREADY_COMPLETED` | shift is already completed |
+| 628 | `ERR_SHIFT_ALREADY_CANCELLED` | shift is already cancelled |
+| 629 | `ERR_SHIFT_NO_OFFICERS` | shift has no allocated officers and cannot be published |
+
+#### Design Notes
+
+- **Overnight shifts:** `SFT_IS_OVERNIGHT` is set to 1 when end time <= start time (e.g. 22:00–06:00). Calendar and conflict queries account for this.
+- **Officer scoping:** Officers only see shifts with status `published`, `active`, or `completed` that they are allocated to. Draft and cancelled shifts are hidden.
+- **Post permissions validation:** Implemented for roles and badges via `$ShiftUtils.validatePostEligibility()`. Checks `OFC_ROLES` and `OFC_CERTIFICATION_BADGES` against `PST_PERMISSIONS.required_roles` and `required_badges`. Equipment validation deferred (column not in schema). Returns non-blocking warnings.
+- **Shift auto-completion:** When the last allocated officer checks out, the shift status automatically transitions from `active` to `completed`. Also handled by `cron_shift_lifecycle_check.js` (auto-close stale check-ins + auto-complete after configurable grace period).
+- **Shift auto-activation:** When the first officer checks in to a `published` shift, it transitions to `active`.
+- **Recurring shifts:** All shifts in a series are created as individual `draft` records linked by `SFT_SERIES_ID`. Each can be independently published, cancelled, or updated. `no_end` recurrence uses a 90-day rolling horizon (max 365 occurrences).
+- **Allocation board:** Provides officer weekly hours calculation and shift timeline for drag-and-drop allocation.
+- **Conflict validation:** `_runAllocationValidation()` returns warnings for double-booking, overtime, rest gap, and post eligibility. `allocate_officer` and `publish_shift` check conflicts and require `acknowledge_conflicts: true` to proceed. Check-in hard-blocks concurrent active check-ins on overlapping shifts.
+- **Configurable settings:** `settings:shift` in `key_value` stores: `max_weekly_hours` (default 48), `min_rest_gap_hours` (default 8), `auto_checkout_grace_mins` (default 60), `shift_starting_soon_lead_mins` (default 30), `early_checkin_window_mins` (default 30). Managed via `Settings/get_shift_settings` and `Settings/update_shift_settings`.
+- **Officer removal from active shifts:** Allowed. Auto-closes any open check-in record with a system note. Notifies the removed officer.
+- **Admin calendar scoping:** Non-super admins scoped by `USD_COM_ID`. Super Admins see all communities.
+- **Community deletion guard:** `$ShiftUtils.communityHasActiveShifts()` blocks deletion of communities with draft/published/active shifts. Error: `ERR_COMMUNITY_HAS_ACTIVE_SHIFTS (507)`.
+- **Cron jobs:** `cron_shift_lifecycle_check.js` (every 5 min — auto-close stale check-ins, auto-complete shifts). `cron_shift_reminders.js` (every 2 min — starting-soon push notifications).
+- **Soft deletion:** All shift-related tables use soft deletion via `*_DELETED_ON` columns. `shift_checkin` has no `DELETED_ON` (audit trail) but adds `SFC_AUTO_CHECKOUT` and `SFC_NOTES`.
+- **Transaction discipline:** All reads before `beginTransaction()`. Bulk inserts for officer allocations and recurring shift creation. No DB calls in loops.
+- **Deferred features:** See `docs/deferred_requirements/06-shift-enhancements.md` for AI route generation, equipment validation, allocation board drag-and-drop conflict auto-check, and active call checks.
+
+---
+
 ## Development Best Practices
 
 For comprehensive development best practices, including database code guidelines, implementation checklists, and common patterns, see the **"Critical Rules & Best Practices"** section in `docs/brain.md`.

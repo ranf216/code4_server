@@ -50,5 +50,17 @@ module.exports = {
       // Specify which folder to ignore 
       ignore_watch : [__dirname + "/.git", __dirname + "/backend/content", __dirname + "/backend/runtime", __dirname + "/backend/key_value_sets" ],
     },
+    {
+      name   : "code4_cron_shift_lifecycle",
+      script: __dirname + "/backend/platform/jobs/cron_shift_lifecycle_check.js",
+      watch_delay: 1000,
+      ignore_watch : [__dirname + "/.git", __dirname + "/backend/content", __dirname + "/backend/runtime", __dirname + "/backend/key_value_sets" ],
+    },
+    {
+      name   : "code4_cron_shift_reminders",
+      script: __dirname + "/backend/platform/jobs/cron_shift_reminders.js",
+      watch_delay: 1000,
+      ignore_watch : [__dirname + "/.git", __dirname + "/backend/content", __dirname + "/backend/runtime", __dirname + "/backend/key_value_sets" ],
+    },
   ]
 }
