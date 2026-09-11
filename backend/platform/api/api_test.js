@@ -63,4 +63,11 @@ module.exports =
                                                 "#token"                        : "s",
                                             },
 
+    "test_shift_apis"                       : {
+                                                "@acl"                          : [$ACL.USER_TYPE_ADMIN],
+                                                "@doc"                          : "Test all Shift module APIs (create, get, calendar, update, publish, cancel, delete, allocate, remove, assign_post, check_in, check_out, my_shifts, my_hours, allocation_board, validate, recurring)",
+                                                "@mode"                         : "test",
+                                                "#token"                        : "s",
+                                            },
+
 };

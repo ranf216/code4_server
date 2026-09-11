@@ -1,0 +1,7 @@
+{
+    "draft":        {"name": {"en": "Draft"},       "define": "SHIFT_STATUS_DRAFT",     "is_open": true},
+    "published":    {"name": {"en": "Published"},   "define": "SHIFT_STATUS_PUBLISHED", "is_open": true},
+    "active":       {"name": {"en": "Active"},      "define": "SHIFT_STATUS_ACTIVE",    "is_open": true},
+    "completed":    {"name": {"en": "Completed"},   "define": "SHIFT_STATUS_COMPLETED", "is_open": false},
+    "cancelled":    {"name": {"en": "Cancelled"},   "define": "SHIFT_STATUS_CANCELLED", "is_open": false}
+}

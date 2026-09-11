@@ -20,18 +20,6 @@ function fetchTaskRecord(taskId)
 	return rows.length > 0 ? rows[0] : null;
 }
 
-function getUserName(userId)
-{
-	let rows = $Db.executeQuery(
-		`SELECT USD_FIRST_NAME, USD_LAST_NAME FROM \`user_details\` WHERE USD_USR_ID=? AND USD_DELETED_ON IS NULL`,
-		[userId]);
-	if (rows.length === 0)
-	{
-		return "Unknown";
-	}
-	return (rows[0].USD_FIRST_NAME + " " + (rows[0].USD_LAST_NAME || "")).trim();
-}
-
 function getOfficerCommunityId(userId)
 {
 	let rows = $Db.executeQuery(
@@ -416,7 +404,7 @@ module.exports = class
 		$Db.commitTransaction();
 
 		// Send notification to assignee
-		let creatorName = getUserName(userId);
+		let creatorName = $Funcs.getUserName(userId);
 		let taskTypeName = $DataItems.getItemName(this.$task_type, TABLE_TYPE) || this.$task_type;
 
 		if (assignedTo !== userId)
@@ -744,7 +732,7 @@ module.exports = class
 		}
 
 		// Notify relevant parties
-		let userName = getUserName(userId);
+		let userName = $Funcs.getUserName(userId);
 		let notifyTargets = [task.TSK_CREATED_BY, task.TSK_ASSIGNED_TO].filter(id => id !== userId);
 		sendTaskNotification(this.$Session, "task_update", task,
 			{task_id: String(task.TSK_ID), user_name: userName},
@@ -796,7 +784,7 @@ module.exports = class
 		}
 
 		// Notify the creator
-		let officerName = getUserName(userId);
+		let officerName = $Funcs.getUserName(userId);
 		let notifyTargets = [task.TSK_CREATED_BY].filter(id => id !== userId);
 		sendTaskNotification(this.$Session, "task_accepted", task,
 			{task_id: String(task.TSK_ID), officer_name: officerName},
@@ -859,7 +847,7 @@ module.exports = class
 		}
 
 		// Notify relevant parties
-		let userName = getUserName(userId);
+		let userName = $Funcs.getUserName(userId);
 		let notifyTargets = [task.TSK_CREATED_BY, task.TSK_ASSIGNED_TO];
 
 		// If reassigned, also notify the new assignee
@@ -936,7 +924,7 @@ module.exports = class
 		$Db.commitTransaction();
 
 		// Notify the creator
-		let officerName = getUserName(userId);
+		let officerName = $Funcs.getUserName(userId);
 		let notifyTargets = [task.TSK_CREATED_BY].filter(id => id !== userId);
 		sendTaskNotification(this.$Session, "task_rejected", task,
 			{task_id: String(task.TSK_ID), officer_name: officerName},
@@ -1039,7 +1027,7 @@ module.exports = class
 		$Db.commitTransaction();
 
 		// Notify the creator
-		let officerName = getUserName(userId);
+		let officerName = $Funcs.getUserName(userId);
 		let notifyTargets = [task.TSK_CREATED_BY].filter(id => id !== userId);
 		sendTaskNotification(this.$Session, "task_completed", task,
 			{task_id: String(task.TSK_ID), officer_name: officerName},
@@ -1094,7 +1082,7 @@ module.exports = class
 		}
 
 		// Notify the assignee
-		let userName = getUserName(userId);
+		let userName = $Funcs.getUserName(userId);
 		let notifyTargets = [task.TSK_ASSIGNED_TO].filter(id => id !== userId);
 		sendTaskNotification(this.$Session, "task_canceled", task,
 			{task_id: String(task.TSK_ID), user_name: userName},
@@ -1151,7 +1139,7 @@ module.exports = class
 		}
 
 		// Notify the new assignee
-		let userName = getUserName(userId);
+		let userName = $Funcs.getUserName(userId);
 		let notifyTargets = [this.$assigned_to].filter(id => id !== userId);
 		sendTaskNotification(this.$Session, "task_reassigned", task,
 			{task_id: String(task.TSK_ID), user_name: userName},
@@ -1221,7 +1209,7 @@ module.exports = class
 		$Db.commitTransaction();
 
 		// Notify relevant parties
-		let userName = getUserName(userId);
+		let userName = $Funcs.getUserName(userId);
 		let notifyTargets = [task.TSK_CREATED_BY, task.TSK_ASSIGNED_TO].filter(id => id !== userId);
 		sendTaskNotification(this.$Session, "task_commented", task,
 			{task_id: String(task.TSK_ID), user_name: userName},

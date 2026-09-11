@@ -1217,6 +1217,169 @@ CREATE TABLE `user_online_status` (
 
 
 --
+-- Definition of table `shift_series`
+--
+
+DROP TABLE IF EXISTS `shift_series`;
+CREATE TABLE `shift_series` (
+  `SFS_ID` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `SFS_COM_ID` bigint unsigned NOT NULL COMMENT 'Community this series belongs to',
+  `SFS_RECURRENCE_PATTERN` varchar(30) NOT NULL COMMENT 'daily, specific_days, every_x_days',
+  `SFS_REPEAT_ON` json DEFAULT NULL COMMENT 'Array of day numbers for specific_days pattern (0=Sun..6=Sat)',
+  `SFS_INTERVAL_DAYS` int unsigned DEFAULT NULL COMMENT 'Interval for every_x_days pattern',
+  `SFS_END_TYPE` varchar(20) NOT NULL COMMENT 'end_date, occurrences, no_end',
+  `SFS_END_DATE` date DEFAULT NULL COMMENT 'End date when end_type=end_date',
+  `SFS_OCCURRENCES` int unsigned DEFAULT NULL COMMENT 'Number of occurrences when end_type=occurrences',
+  `SFS_START_TIME` time NOT NULL COMMENT 'Shift start time (24h)',
+  `SFS_END_TIME` time NOT NULL COMMENT 'Shift end time (24h)',
+  `SFS_IS_OVERNIGHT` tinyint unsigned NOT NULL DEFAULT '0' COMMENT '1 if shift crosses midnight',
+  `SFS_NOTES` varchar(500) DEFAULT NULL,
+  `SFS_CREATED_BY` varchar(128) NOT NULL,
+  `SFS_CREATED_ON` datetime NOT NULL,
+  `SFS_LAST_UPDATE` datetime DEFAULT NULL,
+  `SFS_DELETED_ON` datetime DEFAULT NULL,
+  PRIMARY KEY (`SFS_ID`),
+  KEY `IX_SFS_COM_ID` (`SFS_COM_ID`),
+  CONSTRAINT `FK_SFS_COM_ID` FOREIGN KEY (`SFS_COM_ID`) REFERENCES `community` (`COM_ID`),
+  CONSTRAINT `FK_SFS_CREATED_BY` FOREIGN KEY (`SFS_CREATED_BY`) REFERENCES `user` (`USR_ID`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+--
+-- Dumping data for table `shift_series`
+--
+
+/*!40000 ALTER TABLE `shift_series` DISABLE KEYS */;
+/*!40000 ALTER TABLE `shift_series` ENABLE KEYS */;
+
+
+--
+-- Definition of table `shift`
+--
+
+DROP TABLE IF EXISTS `shift`;
+CREATE TABLE `shift` (
+  `SFT_ID` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `SFT_COM_ID` bigint unsigned NOT NULL COMMENT 'Community this shift belongs to',
+  `SFT_SERIES_ID` bigint unsigned DEFAULT NULL COMMENT 'FK to shift_series for recurring shifts',
+  `SFT_DATE` date NOT NULL COMMENT 'Calendar date of the shift',
+  `SFT_START_TIME` time NOT NULL COMMENT 'Shift start time (24h)',
+  `SFT_END_TIME` time NOT NULL COMMENT 'Shift end time (24h)',
+  `SFT_IS_OVERNIGHT` tinyint unsigned NOT NULL DEFAULT '0' COMMENT '1 if shift end time is next day',
+  `SFT_STATUS` varchar(20) NOT NULL DEFAULT 'draft' COMMENT 'draft, published, active, completed, cancelled',
+  `SFT_NOTES` varchar(500) DEFAULT NULL COMMENT 'Free text visible to allocated officers',
+  `SFT_PUBLISHED_ON` datetime DEFAULT NULL,
+  `SFT_PUBLISHED_BY` varchar(128) DEFAULT NULL,
+  `SFT_CANCELLED_ON` datetime DEFAULT NULL,
+  `SFT_CANCELLED_BY` varchar(128) DEFAULT NULL,
+  `SFT_CREATED_BY` varchar(128) NOT NULL,
+  `SFT_CREATED_ON` datetime NOT NULL,
+  `SFT_LAST_UPDATE` datetime DEFAULT NULL,
+  `SFT_DELETED_ON` datetime DEFAULT NULL,
+  PRIMARY KEY (`SFT_ID`),
+  KEY `IX_SFT_COM_ID` (`SFT_COM_ID`),
+  KEY `IX_SFT_DATE` (`SFT_DATE`),
+  KEY `IX_SFT_STATUS` (`SFT_STATUS`),
+  KEY `IX_SFT_SERIES_ID` (`SFT_SERIES_ID`),
+  KEY `IX_SFT_CREATED_ON` (`SFT_CREATED_ON`),
+  CONSTRAINT `FK_SFT_COM_ID` FOREIGN KEY (`SFT_COM_ID`) REFERENCES `community` (`COM_ID`),
+  CONSTRAINT `FK_SFT_SERIES_ID` FOREIGN KEY (`SFT_SERIES_ID`) REFERENCES `shift_series` (`SFS_ID`),
+  CONSTRAINT `FK_SFT_CREATED_BY` FOREIGN KEY (`SFT_CREATED_BY`) REFERENCES `user` (`USR_ID`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+--
+-- Dumping data for table `shift`
+--
+
+/*!40000 ALTER TABLE `shift` DISABLE KEYS */;
+/*!40000 ALTER TABLE `shift` ENABLE KEYS */;
+
+
+--
+-- Definition of table `shift_officer`
+--
+
+DROP TABLE IF EXISTS `shift_officer`;
+CREATE TABLE `shift_officer` (
+  `SFO_ID` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `SFO_SFT_ID` bigint unsigned NOT NULL COMMENT 'FK to shift',
+  `SFO_OFC_USR_ID` varchar(128) NOT NULL COMMENT 'Officer user ID',
+  `SFO_CREATED_ON` datetime NOT NULL,
+  `SFO_DELETED_ON` datetime DEFAULT NULL,
+  PRIMARY KEY (`SFO_ID`),
+  UNIQUE KEY `UQ_SFO_SHIFT_OFFICER` (`SFO_SFT_ID`, `SFO_OFC_USR_ID`),
+  KEY `IX_SFO_OFC_USR_ID` (`SFO_OFC_USR_ID`),
+  CONSTRAINT `FK_SFO_SFT_ID` FOREIGN KEY (`SFO_SFT_ID`) REFERENCES `shift` (`SFT_ID`),
+  CONSTRAINT `FK_SFO_OFC_USR_ID` FOREIGN KEY (`SFO_OFC_USR_ID`) REFERENCES `user` (`USR_ID`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+--
+-- Dumping data for table `shift_officer`
+--
+
+/*!40000 ALTER TABLE `shift_officer` DISABLE KEYS */;
+/*!40000 ALTER TABLE `shift_officer` ENABLE KEYS */;
+
+
+--
+-- Definition of table `shift_post`
+--
+
+DROP TABLE IF EXISTS `shift_post`;
+CREATE TABLE `shift_post` (
+  `SHP_ID` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `SHP_SFT_ID` bigint unsigned NOT NULL COMMENT 'FK to shift',
+  `SHP_OFC_USR_ID` varchar(128) NOT NULL COMMENT 'Officer user ID',
+  `SHP_PST_ID` bigint unsigned NOT NULL COMMENT 'FK to post',
+  `SHP_CREATED_ON` datetime NOT NULL,
+  `SHP_DELETED_ON` datetime DEFAULT NULL,
+  PRIMARY KEY (`SHP_ID`),
+  KEY `IX_SHP_SFT_ID` (`SHP_SFT_ID`),
+  KEY `IX_SHP_OFC_USR_ID` (`SHP_OFC_USR_ID`),
+  KEY `IX_SHP_PST_ID` (`SHP_PST_ID`),
+  CONSTRAINT `FK_SHP_SFT_ID` FOREIGN KEY (`SHP_SFT_ID`) REFERENCES `shift` (`SFT_ID`),
+  CONSTRAINT `FK_SHP_OFC_USR_ID` FOREIGN KEY (`SHP_OFC_USR_ID`) REFERENCES `user` (`USR_ID`),
+  CONSTRAINT `FK_SHP_PST_ID` FOREIGN KEY (`SHP_PST_ID`) REFERENCES `post` (`PST_ID`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+--
+-- Dumping data for table `shift_post`
+--
+
+/*!40000 ALTER TABLE `shift_post` DISABLE KEYS */;
+/*!40000 ALTER TABLE `shift_post` ENABLE KEYS */;
+
+
+--
+-- Definition of table `shift_checkin`
+--
+
+DROP TABLE IF EXISTS `shift_checkin`;
+CREATE TABLE `shift_checkin` (
+  `SFC_ID` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `SFC_SFT_ID` bigint unsigned NOT NULL COMMENT 'FK to shift',
+  `SFC_OFC_USR_ID` varchar(128) NOT NULL COMMENT 'Officer user ID',
+  `SFC_CHECK_IN_ON` datetime NOT NULL,
+  `SFC_CHECK_OUT_ON` datetime DEFAULT NULL,
+  `SFC_TOTAL_HOURS` decimal(6,2) DEFAULT NULL COMMENT 'Total hours calculated at check-out',
+  `SFC_AUTO_CHECKOUT` tinyint(1) NOT NULL DEFAULT '0' COMMENT '1 if auto-closed by cron or manager removal',
+  `SFC_NOTES` varchar(500) DEFAULT NULL COMMENT 'System or manual notes on check-in record',
+  `SFC_CREATED_ON` datetime NOT NULL,
+  PRIMARY KEY (`SFC_ID`),
+  KEY `IX_SFC_SFT_ID` (`SFC_SFT_ID`),
+  KEY `IX_SFC_OFC_USR_ID` (`SFC_OFC_USR_ID`),
+  CONSTRAINT `FK_SFC_SFT_ID` FOREIGN KEY (`SFC_SFT_ID`) REFERENCES `shift` (`SFT_ID`),
+  CONSTRAINT `FK_SFC_OFC_USR_ID` FOREIGN KEY (`SFC_OFC_USR_ID`) REFERENCES `user` (`USR_ID`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+--
+-- Dumping data for table `shift_checkin`
+--
+
+/*!40000 ALTER TABLE `shift_checkin` DISABLE KEYS */;
+/*!40000 ALTER TABLE `shift_checkin` ENABLE KEYS */;
+
+
+--
 -- Definition of procedure `prc_entity_lock_acquire`
 --
 

@@ -8800,4 +8800,9 @@ module.exports = class
     {
         return $TestApiAsset.test_asset_apis(this.$Session);
     }
+
+    test_shift_apis()
+    {
+        return $TestApiShift.test_shift_apis(this.$Session);
+    }
 }

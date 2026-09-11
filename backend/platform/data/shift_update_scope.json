@@ -1,0 +1,5 @@
+{
+    "this_only":        {"name": {"en": "This Shift Only"},         "define": "SHIFT_UPDATE_THIS_ONLY"},
+    "this_and_future":  {"name": {"en": "This and Future Shifts"},  "define": "SHIFT_UPDATE_THIS_AND_FUTURE"},
+    "all":              {"name": {"en": "All Shifts in Series"},    "define": "SHIFT_UPDATE_ALL"}
+}

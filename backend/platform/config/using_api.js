@@ -11,6 +11,7 @@ module.exports =
 	"officer",
 	"resident",
 	"settings",
+	"shift",
 	//"social_login",
 	"system",
 	"task",
