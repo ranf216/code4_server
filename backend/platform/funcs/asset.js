@@ -119,6 +119,11 @@ function calculateAcres(shape, locationObj)
 	return Math.round((sqMeters / SQ_METERS_PER_ACRE) * 10000) / 10000;
 }
 
+function buildFullName(firstName, lastName)
+{
+	return ((firstName || "") + " " + (lastName || "")).trim() || null;
+}
+
 function parseLocationJson(locationStr)
 {
 	if ($Utils.empty(locationStr))
@@ -150,6 +155,7 @@ function mapAssetRow(row)
 		installation_date: row.AST_INSTALLATION_DATE || null,
 		replacement_date: row.AST_REPLACEMENT_DATE || null,
 		created_by: row.AST_CREATED_BY,
+		created_by_name: buildFullName(row.CREATOR_FIRST_NAME, row.CREATOR_LAST_NAME),
 		created_on: row.AST_CREATED_ON,
 		last_update: row.AST_LAST_UPDATE || null,
 	};
@@ -172,6 +178,7 @@ function mapPostRow(row)
 		permissions: row.PST_PERMISSIONS ? (typeof row.PST_PERMISSIONS === "string" ? JSON.parse(row.PST_PERMISSIONS) : row.PST_PERMISSIONS) : null,
 		is_active: row.PST_IS_ACTIVE === 1,
 		created_by: row.PST_CREATED_BY,
+		created_by_name: buildFullName(row.CREATOR_FIRST_NAME, row.CREATOR_LAST_NAME),
 		created_on: row.PST_CREATED_ON,
 		last_update: row.PST_LAST_UPDATE || null,
 	};
@@ -313,11 +320,17 @@ module.exports = class
 			return $ERRS.ERR_ASSET_NOT_FOUND;
 		}
 
-		// Enrich with community name
-		let rows = $Db.executeQuery(
+		// Enrich with community name and creator name
+		let comRows = $Db.executeQuery(
 			`SELECT COM_NAME FROM \`community\` WHERE COM_ID=?`,
 			[asset.AST_COM_ID]);
-		asset.COM_NAME = rows.length > 0 ? rows[0].COM_NAME : null;
+		asset.COM_NAME = comRows.length > 0 ? comRows[0].COM_NAME : null;
+
+		let creatorRows = $Db.executeQuery(
+			`SELECT USD_FIRST_NAME, USD_LAST_NAME FROM \`user_details\` WHERE USD_USR_ID=?`,
+			[asset.AST_CREATED_BY]);
+		asset.CREATOR_FIRST_NAME = creatorRows.length > 0 ? creatorRows[0].USD_FIRST_NAME : null;
+		asset.CREATOR_LAST_NAME = creatorRows.length > 0 ? creatorRows[0].USD_LAST_NAME : null;
 
 		return {...$ERRS.ERR_SUCCESS, asset: mapAssetRow(asset)};
 	}
@@ -727,11 +740,17 @@ module.exports = class
 			}
 		}
 
-		// Enrich with community name
-		let rows = $Db.executeQuery(
+		// Enrich with community name and creator name
+		let comRows = $Db.executeQuery(
 			`SELECT COM_NAME FROM \`community\` WHERE COM_ID=?`,
 			[post.PST_COM_ID]);
-		post.COM_NAME = rows.length > 0 ? rows[0].COM_NAME : null;
+		post.COM_NAME = comRows.length > 0 ? comRows[0].COM_NAME : null;
+
+		let creatorRows = $Db.executeQuery(
+			`SELECT USD_FIRST_NAME, USD_LAST_NAME FROM \`user_details\` WHERE USD_USR_ID=?`,
+			[post.PST_CREATED_BY]);
+		post.CREATOR_FIRST_NAME = creatorRows.length > 0 ? creatorRows[0].USD_FIRST_NAME : null;
+		post.CREATOR_LAST_NAME = creatorRows.length > 0 ? creatorRows[0].USD_LAST_NAME : null;
 
 		return {...$ERRS.ERR_SUCCESS, post: mapPostRow(post)};
 	}
