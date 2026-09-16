@@ -160,8 +160,9 @@ module.exports = class
         let vals = {};
         let rc = $ERRS.ERR_SUCCESS;
 
-        // Validate phone number
-        if ($Utils.empty(this.$phone_num))
+        // Validate phone number format and convert to international format
+        let phoneNum = $Utils.validatePhone(this.$phone_num);
+        if (!phoneNum)
         {
             return $ERRS.ERR_INVALID_PHONE_NUMBER;
         }
@@ -183,7 +184,7 @@ module.exports = class
         let existingPhone = $Db.executeQuery(
             `SELECT USR_ID FROM \`user\`
              WHERE USR_PHONE_NUM=? AND USR_DELETED_ON IS NULL`,
-            [this.$phone_num]);
+            [phoneNum]);
         if (existingPhone.length > 0)
         {
             return $ERRS.ERR_USER_PHONE_ALREADY_EXISTS;
@@ -217,7 +218,7 @@ module.exports = class
         }
 
         // Create user via built-in User/add_user
-        let email = !$Utils.empty(this.$email) ? this.$email : this.$phone_num + "@placeholder.local";
+        let email = !$Utils.empty(this.$email) ? this.$email : phoneNum + "@placeholder.local";
         let addResult = $executeAPI(this.$Session, "User/add_user", {
             first_name: this.$first_name,
             last_name: this.$last_name || "",
@@ -241,7 +242,7 @@ module.exports = class
         // Update user_details with phone, image, and community
         $Db.executeQuery(
             `UPDATE \`user_details\` SET USD_PHONE_NUM=?, USD_IMAGE=?, USD_COM_ID=? WHERE USD_USR_ID=?`,
-            [this.$phone_num, imageName, this.$community_id, newUserId]);
+            [phoneNum, imageName, this.$community_id, newUserId]);
         if ($Db.isError())
         {
             $Db.rollbackTransaction();
@@ -306,7 +307,18 @@ module.exports = class
             }
         }
 
-        // Validate phone if being changed
+        // Validate and normalize phone if being changed
+        if (!$Utils.empty(this.$phone_num))
+        {
+            let validatedPhone = $Utils.validatePhone(this.$phone_num);
+            if (!validatedPhone)
+            {
+                return $ERRS.ERR_INVALID_PHONE_NUMBER;
+            }
+            this.$phone_num = validatedPhone;
+        }
+
+        // Check phone uniqueness if being changed
         if (!$Utils.empty(this.$phone_num) && this.$phone_num !== officer.USD_PHONE_NUM)
         {
             let existingPhone = $Db.executeQuery(
