@@ -162,6 +162,26 @@ module.exports = class
             return $ERRS.ERR_INVALID_USER_ROLE;
         }
 
+        // Validate phone number format and check uniqueness if provided
+        let phoneNum = null;
+        if (!$Utils.empty(this.$phone_num))
+        {
+            phoneNum = $Utils.validatePhone(this.$phone_num);
+            if (!phoneNum)
+            {
+                return $ERRS.ERR_INVALID_PHONE_NUMBER;
+            }
+
+            let existingPhone = $Db.executeQuery(
+                `SELECT USR_ID FROM \`user\`
+                 WHERE USR_PHONE_NUM=? AND USR_DELETED_ON IS NULL`,
+                [phoneNum]);
+            if (existingPhone.length > 0)
+            {
+                return $ERRS.ERR_USER_PHONE_ALREADY_EXISTS;
+            }
+        }
+
         // Create user via built-in User/add_user
         let addResult = $executeAPI(this.$Session, "User/add_user", {
             first_name: this.$first_name,
@@ -177,15 +197,9 @@ module.exports = class
 
         let newUserId = addResult.userid;
 
-        // Validate and set phone number if provided
-        if (!$Utils.empty(this.$phone_num))
+        // Set phone number if provided
+        if (phoneNum)
         {
-            let phoneNum = $Utils.validatePhone(this.$phone_num);
-            if (!phoneNum)
-            {
-                return $ERRS.ERR_INVALID_PHONE_NUMBER;
-            }
-
             $Db.executeQuery(
                 `UPDATE \`user_details\` SET USD_PHONE_NUM=? WHERE USD_USR_ID=?`,
                 [phoneNum, newUserId]);
@@ -267,6 +281,30 @@ module.exports = class
             }
         }
 
+        // Validate and normalize phone if being changed
+        if ($Utils.isset(this.$phone_num) && !$Utils.empty(this.$phone_num))
+        {
+            let validatedPhone = $Utils.validatePhone(this.$phone_num);
+            if (!validatedPhone)
+            {
+                return $ERRS.ERR_INVALID_PHONE_NUMBER;
+            }
+            this.$phone_num = validatedPhone;
+
+            // Check phone uniqueness if different from current
+            if (this.$phone_num !== user.USD_PHONE_NUM)
+            {
+                let existingPhone = $Db.executeQuery(
+                    `SELECT USR_ID FROM \`user\`
+                     WHERE USR_PHONE_NUM=? AND USR_DELETED_ON IS NULL AND USR_ID!=?`,
+                    [this.$phone_num, this.$user_id]);
+                if (existingPhone.length > 0)
+                {
+                    return $ERRS.ERR_USER_PHONE_ALREADY_EXISTS;
+                }
+            }
+        }
+
         // Build dynamic update for user_details
         let updateFields = [];
         let updateValues = [];
@@ -288,15 +326,6 @@ module.exports = class
         }
         if ($Utils.isset(this.$phone_num))
         {
-            if (!$Utils.empty(this.$phone_num))
-            {
-                let phoneNum = $Utils.validatePhone(this.$phone_num);
-                if (!phoneNum)
-                {
-                    return $ERRS.ERR_INVALID_PHONE_NUMBER;
-                }
-                this.$phone_num = phoneNum;
-            }
             updateFields.push("USD_PHONE_NUM=?");
             updateValues.push(this.$phone_num);
         }
