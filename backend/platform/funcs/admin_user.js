@@ -177,12 +177,18 @@ module.exports = class
 
         let newUserId = addResult.userid;
 
-        // Set phone number if provided
+        // Validate and set phone number if provided
         if (!$Utils.empty(this.$phone_num))
         {
+            let phoneNum = $Utils.validatePhone(this.$phone_num);
+            if (!phoneNum)
+            {
+                return $ERRS.ERR_INVALID_PHONE_NUMBER;
+            }
+
             $Db.executeQuery(
                 `UPDATE \`user_details\` SET USD_PHONE_NUM=? WHERE USD_USR_ID=?`,
-                [this.$phone_num, newUserId]);
+                [phoneNum, newUserId]);
             if ($Db.isError())
             {
                 return $Err.DBError("ERR_DB_UPDATE_ERROR", $Db.lastErrorMsg());
@@ -282,6 +288,15 @@ module.exports = class
         }
         if ($Utils.isset(this.$phone_num))
         {
+            if (!$Utils.empty(this.$phone_num))
+            {
+                let phoneNum = $Utils.validatePhone(this.$phone_num);
+                if (!phoneNum)
+                {
+                    return $ERRS.ERR_INVALID_PHONE_NUMBER;
+                }
+                this.$phone_num = phoneNum;
+            }
             updateFields.push("USD_PHONE_NUM=?");
             updateValues.push(this.$phone_num);
         }
