@@ -33,7 +33,7 @@ The project infrastructure is set up with the following **built-in platform modu
 - `USER_ROLE_LOGISTICS` = 5
 - `USER_ROLE_FINANCE` = 6
 
-**Implemented project-specific API modules:** `settings` (Phase 1.1), `community` (Phase 1.2), `admin_user` (Phase 1.3), `officer` (Phase 2.1), `resident` (Phase 2.2)
+**Implemented project-specific API modules:** `settings` (Phase 1.1), `community` (Phase 1.2), `admin_user` (Phase 1.3), `officer` (Phase 2.1), `resident` (Phase 2.2), `notification` (Phase 2.3), `call` (Phase 3.1), `task` (Phase 3.2), `asset` (Phase 4.1), `shift` (Phase 5.1), `route` (Phase 5.2)
 
 ---
 
@@ -161,10 +161,12 @@ Shift management and patrol routes are complex features that depend on officers,
 - **Depends on:** Community, Officer, Asset/Post (Phase 4.1)
 - **Why before Route:** Routes are generated per shift, assigned to officers within shifts
 
-#### 5.2 Route (`platform/api/route.js`)
-- AI patrol route generation, route CRUD, push to officer, waypoint visit tracking, compliance reports
+#### ~~5.2 Route (`platform/api/route.js`)~~ ✅ Done
+- ~~Route generation from community posts, route CRUD, push to officer, waypoint visit tracking, compliance reports~~
 - **DB tables:** `patrol_route`, `patrol_waypoint`, `waypoint_visit`
 - **Depends on:** Shift (5.1), Asset/Post (4.1), Officer
+- **Implementation:** 6 API endpoints — `generate_route`, `get_route`, `update_route`, `push_route`, `visit_waypoint`, `get_route_compliance`. Route lifecycle: `draft → active → completed`. Waypoint sources: assigned shift posts (mandatory) + community active posts. Compliance tracking with Haversine deviation calculation. Auto-route-completion when all waypoints visited. Push notification on route push.
+- **Deferred:** AI route engine, auto-generate on shift publish, coverage priority zones, vehicle/foot patrol type, waypoint skip alerts, ETA calculation — see `docs/deferred_requirements/07-route-enhancements.md`.
 
 #### 5.3 Tracking (`platform/api/tracking.js`)
 - GPS location updates, live tracking map, officer location, route history, call ETA

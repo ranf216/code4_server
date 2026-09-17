@@ -16,6 +16,8 @@
     "shift_cancelled":          {"name": {"en": "Shift Cancelled"},            "title_template": "Shift Cancelled",             "message_template": "Your shift on #shift_date# has been cancelled"},
     "shift_starting_soon":      {"name": {"en": "Shift Starting Soon"},        "title_template": "Shift Starting Soon",         "message_template": "Your shift at #location_name# starts in #minutes# minutes"},
     "route_updated":            {"name": {"en": "Route Updated"},              "title_template": "Route Updated",               "message_template": "Route #route_name# has been updated"},
+    "route_pushed":             {"name": {"en": "Route Pushed"},              "title_template": "New Patrol Route",            "message_template": "A patrol route (#route_name#) has been pushed to your shift on #shift_date#"},
+    "waypoint_skipped":         {"name": {"en": "Waypoint Skipped"},          "title_template": "Waypoint Skipped",            "message_template": "#officer_name# skipped waypoint #waypoint_name# on route #route_name#"},
     "post_order_published":     {"name": {"en": "Post Order Published"},       "title_template": "Post Order Published",        "message_template": "Post order #post_order_name# has been published"},
     "post_order_updated":       {"name": {"en": "Post Order Updated"},         "title_template": "Post Order Updated",          "message_template": "Post order #post_order_name# has been updated"},
     "poi_active":               {"name": {"en": "POI Active"},                 "title_template": "POI Active",                  "message_template": "#poi_type# #poi_name# is now active"},

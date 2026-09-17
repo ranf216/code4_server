@@ -1,0 +1,6 @@
+{
+    "critical":     {"name": {"en": "Critical"},    "define": "WAYPOINT_PRIORITY_CRITICAL"},
+    "high":         {"name": {"en": "High"},        "define": "WAYPOINT_PRIORITY_HIGH"},
+    "normal":       {"name": {"en": "Normal"},      "define": "WAYPOINT_PRIORITY_NORMAL"},
+    "low":          {"name": {"en": "Low"},         "define": "WAYPOINT_PRIORITY_LOW"}
+}

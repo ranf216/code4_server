@@ -132,14 +132,6 @@ function mapCallRow(row)
     };
 }
 
-function getOfficerCommunityId(userId)
-{
-    let rows = $Db.executeQuery(
-        `SELECT USD_COM_ID FROM \`user_details\` WHERE USD_USR_ID=? AND USD_DELETED_ON IS NULL`,
-        [userId]);
-    return rows.length > 0 ? rows[0].USD_COM_ID : null;
-}
-
 function getActiveAdminIds()
 {
     let rows = $Db.executeQuery(
@@ -397,7 +389,7 @@ module.exports = class
         else if (userType === $Const.USER_TYPE_OFFICER)
         {
             // Emergency/panic: community-wide (minus passed). Concierge/test: assigned-only.
-            let officerComId = getOfficerCommunityId(userId) || 0;
+            let officerComId = $Funcs.getUserCommunityId(userId) || 0;
 
             let broadcastCategories = $CallUtils.broadcastCategories();
 
@@ -563,7 +555,7 @@ module.exports = class
             if ($CallUtils.isBroadcastCategory(call.SVC_CATEGORY))
             {
                 // Emergency/panic: officer must be in same community
-                let officerComId = getOfficerCommunityId(userId);
+                let officerComId = $Funcs.getUserCommunityId(userId);
                 if (call.SVC_COM_ID !== officerComId && call.SVC_OFC_USR_ID !== userId)
                 {
                     return $ERRS.ERR_CALL_NOT_FOUND;
@@ -924,7 +916,7 @@ module.exports = class
         }
 
         // Verify officer is in same community
-        let officerComId = getOfficerCommunityId(userId);
+        let officerComId = $Funcs.getUserCommunityId(userId);
         if (!officerComId || officerComId !== call.SVC_COM_ID)
         {
             return $ERRS.ERR_CALL_NOT_FOUND;
@@ -981,7 +973,7 @@ module.exports = class
         }
 
         // Verify officer is in same community
-        let officerComId = getOfficerCommunityId(userId);
+        let officerComId = $Funcs.getUserCommunityId(userId);
         if (!officerComId || officerComId !== call.SVC_COM_ID)
         {
             return $ERRS.ERR_CALL_NOT_FOUND;

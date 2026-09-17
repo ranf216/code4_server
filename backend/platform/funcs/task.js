@@ -20,14 +20,6 @@ function fetchTaskRecord(taskId)
 	return rows.length > 0 ? rows[0] : null;
 }
 
-function getOfficerCommunityId(userId)
-{
-	let rows = $Db.executeQuery(
-		`SELECT USD_COM_ID FROM \`user_details\` WHERE USD_USR_ID=? AND USD_DELETED_ON IS NULL`,
-		[userId]);
-	return rows.length > 0 ? rows[0].USD_COM_ID : null;
-}
-
 function isValidAssignee(userId)
 {
 	let rows = $Db.executeQuery(
@@ -291,7 +283,7 @@ module.exports = class
 		let communityId;
 		if (userType === $Const.USER_TYPE_OFFICER)
 		{
-			communityId = getOfficerCommunityId(userId);
+			communityId = $Funcs.getUserCommunityId(userId);
 			if (!communityId)
 			{
 				return $ERRS.ERR_COMMUNITY_NOT_FOUND;
@@ -302,11 +294,11 @@ module.exports = class
 			// Admin: determine community from assignee (if provided) or from creator
 			if (!$Utils.empty(this.$assigned_to))
 			{
-				communityId = getOfficerCommunityId(this.$assigned_to);
+				communityId = $Funcs.getUserCommunityId(this.$assigned_to);
 			}
 			if (!communityId)
 			{
-				communityId = getOfficerCommunityId(userId);
+				communityId = $Funcs.getUserCommunityId(userId);
 			}
 			if (!communityId)
 			{
@@ -433,7 +425,7 @@ module.exports = class
 		// Community scoping
 		if (userType === $Const.USER_TYPE_OFFICER)
 		{
-			let communityId = getOfficerCommunityId(userId);
+			let communityId = $Funcs.getUserCommunityId(userId);
 			if (!communityId)
 			{
 				return {...$ERRS.ERR_SUCCESS, tasks: [], total_count: 0};
@@ -631,7 +623,7 @@ module.exports = class
 		// Officers can only view tasks in their community
 		if (userType === $Const.USER_TYPE_OFFICER)
 		{
-			let officerCommunityId = getOfficerCommunityId(userId);
+			let officerCommunityId = $Funcs.getUserCommunityId(userId);
 			if (row.TSK_COM_ID !== officerCommunityId)
 			{
 				return $ERRS.ERR_TASK_NOT_FOUND;
@@ -669,7 +661,7 @@ module.exports = class
 		// Officers can only update tasks in their community
 		if (userType === $Const.USER_TYPE_OFFICER)
 		{
-			let officerCommunityId = getOfficerCommunityId(userId);
+			let officerCommunityId = $Funcs.getUserCommunityId(userId);
 			if (task.TSK_COM_ID !== officerCommunityId)
 			{
 				return $ERRS.ERR_TASK_NOT_FOUND;
@@ -759,7 +751,7 @@ module.exports = class
 		// Officers can only accept tasks in their community
 		if (userType === $Const.USER_TYPE_OFFICER)
 		{
-			let officerCommunityId = getOfficerCommunityId(userId);
+			let officerCommunityId = $Funcs.getUserCommunityId(userId);
 			if (task.TSK_COM_ID !== officerCommunityId)
 			{
 				return $ERRS.ERR_TASK_NOT_FOUND;
@@ -882,7 +874,7 @@ module.exports = class
 		// Officers can only reject tasks in their community
 		if (userType === $Const.USER_TYPE_OFFICER)
 		{
-			let officerCommunityId = getOfficerCommunityId(userId);
+			let officerCommunityId = $Funcs.getUserCommunityId(userId);
 			if (task.TSK_COM_ID !== officerCommunityId)
 			{
 				return $ERRS.ERR_TASK_NOT_FOUND;
@@ -951,7 +943,7 @@ module.exports = class
 		// Officers can only complete tasks in their community
 		if (userType === $Const.USER_TYPE_OFFICER)
 		{
-			let officerCommunityId = getOfficerCommunityId(userId);
+			let officerCommunityId = $Funcs.getUserCommunityId(userId);
 			if (task.TSK_COM_ID !== officerCommunityId)
 			{
 				return $ERRS.ERR_TASK_NOT_FOUND;
@@ -1174,7 +1166,7 @@ module.exports = class
 		// Officers can only comment on tasks in their community
 		if (userType === $Const.USER_TYPE_OFFICER)
 		{
-			let officerCommunityId = getOfficerCommunityId(userId);
+			let officerCommunityId = $Funcs.getUserCommunityId(userId);
 			if (task.TSK_COM_ID !== officerCommunityId)
 			{
 				return $ERRS.ERR_TASK_NOT_FOUND;
@@ -1236,7 +1228,7 @@ module.exports = class
 		// Officers can only add media to tasks in their community
 		if (userType === $Const.USER_TYPE_OFFICER)
 		{
-			let officerCommunityId = getOfficerCommunityId(userId);
+			let officerCommunityId = $Funcs.getUserCommunityId(userId);
 			if (task.TSK_COM_ID !== officerCommunityId)
 			{
 				return $ERRS.ERR_TASK_NOT_FOUND;

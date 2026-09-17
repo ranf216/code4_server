@@ -8805,4 +8805,9 @@ module.exports = class
     {
         return $TestApiShift.test_shift_apis(this.$Session);
     }
+
+    test_route_apis()
+    {
+        return $TestApiRoute.test_route_apis(this.$Session);
+    }
 }

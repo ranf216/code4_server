@@ -27,22 +27,6 @@ function fetchShiftRecord(shiftId)
 	return rows.length > 0 ? rows[0] : null;
 }
 
-function communityExists(communityId)
-{
-	let rows = $Db.executeQuery(
-		`SELECT COM_ID FROM \`community\` WHERE COM_ID=? AND COM_DELETED_ON IS NULL`,
-		[communityId]);
-	return rows.length > 0;
-}
-
-function getOfficerCommunityId(userId)
-{
-	let rows = $Db.executeQuery(
-		`SELECT USD_COM_ID FROM \`user_details\` WHERE USD_USR_ID=? AND USD_DELETED_ON IS NULL`,
-		[userId]);
-	return rows.length > 0 ? rows[0].USD_COM_ID : null;
-}
-
 function isActiveOfficerInCommunity(officerId, communityId)
 {
 	let rows = $Db.executeQuery(
@@ -128,20 +112,6 @@ function hasActiveCheckinOnOtherShift(officerId, excludeShiftId)
 		   AND ci.SFC_SFT_ID != ? AND s.SFT_DELETED_ON IS NULL`,
 		[officerId, excludeShiftId]);
 	return rows.length > 0;
-}
-
-function getAdminCommunityId(userId)
-{
-	let rows = $Db.executeQuery(
-		`SELECT USD_COM_ID FROM \`user_details\`
-		 WHERE USD_USR_ID=? AND USD_DELETED_ON IS NULL`,
-		[userId]);
-	return (rows.length > 0 && rows[0].USD_COM_ID) ? rows[0].USD_COM_ID : null;
-}
-
-function isUserSuperAdmin(session)
-{
-	return session.isCurrentUserHasRole($Const.USER_ROLE_SUPER_ADMIN);
 }
 
 function postExistsAndActive(postId, communityId)
@@ -387,9 +357,9 @@ module.exports = class
 
 		// Q8: Community access scoping — non-super admins scoped to their assigned community
 		let requestedCommunityId = this.$community_id;
-		if (!isUserSuperAdmin(this.$Session))
+		if (!$Funcs.isUserSuperAdmin(this.$Session))
 		{
-			let adminComId = getAdminCommunityId(this.$Session.userId);
+			let adminComId = $Funcs.getAdminCommunityId(this.$Session.userId);
 			if (adminComId)
 			{
 				// Admin has a community assignment — enforce it
@@ -404,7 +374,7 @@ module.exports = class
 		// Community filter
 		if (requestedCommunityId && requestedCommunityId > 0)
 		{
-			if (!communityExists(requestedCommunityId))
+			if (!$Funcs.communityExists(requestedCommunityId))
 			{
 				return $ERRS.ERR_COMMUNITY_NOT_FOUND;
 			}
@@ -597,7 +567,7 @@ module.exports = class
 	{
 		let userId = this.$Session.userId;
 
-		if (!communityExists(this.$community_id))
+		if (!$Funcs.communityExists(this.$community_id))
 		{
 			return $ERRS.ERR_COMMUNITY_NOT_FOUND;
 		}
@@ -868,6 +838,35 @@ module.exports = class
 		sendShiftNotification(this.$Session, "shift_published", shift,
 			{shift_date: String(shift.SFT_DATE)},
 			officerIds, shift.SFT_COM_ID);
+
+		// Auto-generate patrol routes if enabled (Q6 resolution — configurable, default: on)
+		try
+		{
+			let routeSettings = $RouteUtils.getRouteSettings();
+			if (routeSettings.auto_generate_routes_on_publish)
+			{
+				for (let i = 0; i < officerIds.length; i++)
+				{
+					try
+					{
+						$executeAPI(this.$Session, "Route/generate_route", {
+							shift_id: this.$shift_id,
+							officer_id: officerIds[i],
+						});
+					}
+					catch (routeErr)
+					{
+						$Logger.logString($Const.LL_WARNING,
+							`Auto route generation failed for officer ${officerIds[i]} on shift ${this.$shift_id}: ${routeErr.message || routeErr}`);
+					}
+				}
+			}
+		}
+		catch (settingsErr)
+		{
+			$Logger.logString($Const.LL_WARNING,
+				`Route settings lookup failed during publish_shift: ${settingsErr.message || settingsErr}`);
+		}
 
 		return $ERRS.ERR_SUCCESS;
 	}
@@ -1265,6 +1264,17 @@ module.exports = class
 				{
 					return $Err.DBError("ERR_DB_UPDATE_ERROR", $Db.lastErrorMsg());
 				}
+
+				// Auto-complete active patrol routes for this shift (Q8 resolution)
+				try
+				{
+					$RouteUtils.completeActiveRoutesForShift(this.$shift_id, now);
+				}
+				catch (routeErr)
+				{
+					$Logger.logString($Const.LL_WARNING,
+						`Route auto-completion failed for shift ${this.$shift_id}: ${routeErr.message || routeErr}`);
+				}
 			}
 		}
 
@@ -1448,7 +1458,7 @@ module.exports = class
 
 	get_allocation_board()
 	{
-		if (!communityExists(this.$community_id))
+		if (!$Funcs.communityExists(this.$community_id))
 		{
 			return $ERRS.ERR_COMMUNITY_NOT_FOUND;
 		}
@@ -1754,7 +1764,7 @@ module.exports = class
 	{
 		let userId = this.$Session.userId;
 
-		if (!communityExists(this.$community_id))
+		if (!$Funcs.communityExists(this.$community_id))
 		{
 			return $ERRS.ERR_COMMUNITY_NOT_FOUND;
 		}

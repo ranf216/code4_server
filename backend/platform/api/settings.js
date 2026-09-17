@@ -229,6 +229,26 @@ module.exports =
 
 
             // =================================================================
+            // Route Settings
+            // =================================================================
+
+            "get_route_settings"                : {
+                                                    "@acl"                          : [$ACL.USER_TYPE_ADMIN],
+                                                    "@doc"                          : "Get patrol route configuration",
+                                                    "#token"                        : "s",
+                                                },
+
+
+            "update_route_settings"             : {
+                                                    "@acl"                          : [$ACL.USER_TYPE_ADMIN],
+                                                    "@doc"                          : "Update patrol route configuration",
+                                                    "#token"                        : "s",
+                                                    "auto_generate_routes_on_publish"    : "o:b:true***Automatically generate routes for all allocated officers when a shift is published. Default: true",
+                                                    "patrol_compliance_threshold_min"    : "o:i:15***Minutes overdue at a waypoint before triggering a compliance alert (5-60). Default: 15",
+                                                },
+
+
+            // =================================================================
             // Shift Settings
             // =================================================================
 

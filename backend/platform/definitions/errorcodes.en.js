@@ -257,6 +257,14 @@ module.exports = {
 	"ERR_ROUTE_ALREADY_PUSHED"							: {"rc" : 642,	"message" : "route has already been pushed to officer"},
 	"ERR_WAYPOINT_NOT_FOUND"							: {"rc" : 643,	"message" : "waypoint not found"},
 	"ERR_WAYPOINT_ALREADY_VISITED"						: {"rc" : 644,	"message" : "waypoint has already been visited"},
+	"ERR_ROUTE_INVALID_STATUS"							: {"rc" : 645,	"message" : "invalid route status for this operation"},
+	"ERR_ROUTE_SHIFT_NOT_FOUND"							: {"rc" : 646,	"message" : "shift not found or not accessible"},
+	"ERR_ROUTE_OFFICER_NOT_ALLOCATED"					: {"rc" : 647,	"message" : "officer is not allocated to this shift"},
+	"ERR_ROUTE_DUPLICATE"								: {"rc" : 648,	"message" : "a route already exists for this officer and shift"},
+	"ERR_ROUTE_INVALID_WAYPOINTS"						: {"rc" : 649,	"message" : "at least one waypoint is required"},
+	"ERR_ROUTE_INVALID_COORDINATES"						: {"rc" : 650,	"message" : "invalid waypoint coordinates"},
+	"ERR_ROUTE_CANNOT_UPDATE"							: {"rc" : 651,	"message" : "route cannot be updated in its current status"},
+	"ERR_ROUTE_NOT_PUSHED"								: {"rc" : 652,	"message" : "route has not been pushed to officer yet"},
 
 	// Tracking (660-669)
 	"ERR_TRACKING_INVALID_COORDINATES"					: {"rc" : 660,	"message" : "invalid GPS coordinates"},
