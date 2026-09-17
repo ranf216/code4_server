@@ -302,6 +302,33 @@ module.exports = class
     }
 
     // =========================================================================
+    // Route Settings
+    // =========================================================================
+
+    get_route_settings()
+    {
+        const settings = getSettings($Const.KVL_SETTINGS_ROUTE, $Config.get("SETTINGS_DEFAULTS").route);
+        return { ...$ERRS.ERR_SUCCESS, ...settings };
+    }
+
+    update_route_settings()
+    {
+        if (this.$patrol_compliance_threshold_min !== undefined &&
+            (this.$patrol_compliance_threshold_min < 5 || this.$patrol_compliance_threshold_min > 60))
+        {
+            return $ERRS.ERR_INVALID_API_PARAM;
+        }
+
+        const values = {
+            auto_generate_routes_on_publish: this.$auto_generate_routes_on_publish,
+            patrol_compliance_threshold_min: this.$patrol_compliance_threshold_min,
+        };
+        const rv = updateSettings($Const.KVL_SETTINGS_ROUTE, $Config.get("SETTINGS_DEFAULTS").route, values);
+        if ($Err.isERR(rv)) return rv;
+        return $ERRS.ERR_SUCCESS;
+    }
+
+    // =========================================================================
     // Shift Settings
     // =========================================================================
 

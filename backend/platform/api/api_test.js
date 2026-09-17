@@ -70,4 +70,11 @@ module.exports =
                                                 "#token"                        : "s",
                                             },
 
+    "test_route_apis"                       : {
+                                                "@acl"                          : [$ACL.USER_TYPE_ADMIN],
+                                                "@doc"                          : "Test all Route module APIs (generate, get, update, push, visit_waypoint, compliance, route settings, error paths, officer impersonation, auto-completion)",
+                                                "@mode"                         : "test",
+                                                "#token"                        : "s",
+                                            },
+
 };

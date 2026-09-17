@@ -29,7 +29,7 @@ The Settings module exposes CRUD operations for several managed type lists used 
 
 ### Key-Value Configuration Settings
 
-GPS, Notification, POI, and Working Hours settings are global configurations stored as key-value pairs. Each settings group has system-defined defaults. When a setting has never been explicitly changed, the default value is returned. Only provided fields are updated; omitted fields retain their current value.
+GPS, Notification, POI, Working Hours, and Route settings are global configurations stored as key-value pairs. Each settings group has system-defined defaults. When a setting has never been explicitly changed, the default value is returned. Only provided fields are updated; omitted fields retain their current value.
 
 ---
 
@@ -903,5 +903,71 @@ GPS, Notification, POI, and Working Hours settings are global configurations sto
 
 - **Usage & Flows:**
     Used by the admin to configure officer working hour limits (SDS 5.4.5). The shift management module uses this value to flag scheduling conflicts when an officer's allocated shifts exceed the configured daily maximum (SDS 4.7.3.2).
+
+---
+
+## Endpoints — Route Settings
+
+### POST Settings/get_route_settings
+*Admin only.* Retrieves the current patrol route configuration.
+
+- **API Parameters:**
+    | Parameter | Type | Required | Description |
+    |-----------|------|----------|-------------|
+    | `#token` | string | Yes | An Admin session token. |
+
+- **Return Values:**
+    ```json
+    {
+        "rc": 0,
+        "message": "success",
+        "auto_generate_routes_on_publish": true,
+        "patrol_compliance_threshold_min": 15
+    }
+    ```
+
+    | Field | Type | Description |
+    |-------|------|-------------|
+    | `auto_generate_routes_on_publish` | boolean | When `true`, the system automatically generates patrol routes for all allocated officers when a shift is published. |
+    | `patrol_compliance_threshold_min` | integer | Minutes overdue at a waypoint before a compliance alert is triggered. |
+
+- **Error Cases:**
+    | rc | Message | Scenario |
+    |----|---------|----------|
+    | 103 | current user does not have privileges | The caller is not an Admin. |
+    | 201 | invalid user token | Invalid or expired token. |
+
+- **Usage & Flows:**
+    Used by the management portal to display route configuration on the Settings page (SDS 5.4). The `auto_generate_routes_on_publish` flag controls whether patrol routes are created automatically during shift publication (SDS 4.8) or require manual generation by the admin. The `patrol_compliance_threshold_min` value drives the waypoint overdue alert logic on the Live Tracking & Compliance dashboard (SDS 4.9).
+
+---
+
+### POST Settings/update_route_settings
+*Admin only.* Updates patrol route configuration. Only provided fields are changed; omitted fields retain their current value.
+
+- **API Parameters:**
+    | Parameter | Type | Required | Description |
+    |-----------|------|----------|-------------|
+    | `#token` | string | Yes | An Admin session token. |
+    | `auto_generate_routes_on_publish` | boolean | No | Automatically generate routes on shift publish. Default: `true`. |
+    | `patrol_compliance_threshold_min` | integer | No | Minutes overdue at a waypoint before compliance alert. Range: 5–60. Default: 15. |
+
+- **Return Values:**
+    ```json
+    {
+        "rc": 0,
+        "message": "success"
+    }
+    ```
+
+- **Error Cases:**
+    | rc | Message | Scenario |
+    |----|---------|----------|
+    | 103 | current user does not have privileges | The caller is not an Admin. |
+    | 201 | invalid user token | Invalid or expired token. |
+    | 100 | invalid API parameter | `patrol_compliance_threshold_min` is outside the permitted 5–60 range. |
+
+- **Usage & Flows:**
+    Used by the admin to configure patrol route behaviour from the Settings page (SDS 5.4). Disabling `auto_generate_routes_on_publish` switches to a manual workflow where the admin generates routes individually from the Shift Management screen (SDS 4.8). Adjusting `patrol_compliance_threshold_min` changes the sensitivity of overdue waypoint alerts — lower values trigger alerts sooner.
 
 ---

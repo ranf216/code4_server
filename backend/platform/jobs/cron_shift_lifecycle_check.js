@@ -121,6 +121,20 @@ function doLifecycleCheck()
 				if (!$Db.isError())
 				{
 					completedCount++;
+
+					// Auto-complete any active patrol routes for this shift (Q8 resolution)
+					try
+					{
+						let routesClosed = $RouteUtils.completeActiveRoutesForShift(shift.SFT_ID, now);
+						if (routesClosed > 0)
+						{
+							$Logger.logString($Const.LL_INFO, `Auto-completed ${routesClosed} route(s) for shift ${shift.SFT_ID}`);
+						}
+					}
+					catch (routeErr)
+					{
+						$Logger.logString($Const.LL_WARNING, `Route auto-completion failed for shift ${shift.SFT_ID}: ${routeErr.message}`);
+					}
 				}
 			}
 		}

@@ -78,6 +78,7 @@ module.exports = {
     KVL_SETTINGS_NOTIFICATION                               : "settings:notification",
     KVL_SETTINGS_POI                                        : "settings:poi",
     KVL_SETTINGS_SHIFT                                      : "settings:shift",
+    KVL_SETTINGS_ROUTE                                      : "settings:route",
     KVL_SETTINGS_WORKING_HOURS                              : "settings:working_hours",
 
 };

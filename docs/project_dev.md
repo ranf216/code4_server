@@ -846,6 +846,44 @@ Notifications use `$executeAPI(session, "Notification/create_bulk_notifications"
 
 ---
 
+### 5.2 Route (`platform/api/route.js`) — Phase 5.2 ✅ Done
+
+**DB tables:** `patrol_route`, `patrol_waypoint`, `waypoint_visit`
+
+**Error codes:** 640–652
+
+**$DataItems:** `route_status.json` (draft, active, completed), `waypoint_priority.json` (critical, high, normal, low)
+
+**Notification types:** `route_pushed`, `waypoint_skipped`, `route_updated`, `officer_off_route`
+
+**Settings:** `settings:route` namespace — `auto_generate_routes_on_publish` (bool, default: true), `patrol_compliance_threshold_min` (int, default: 15). Managed via `Settings/get_route_settings` / `Settings/update_route_settings`.
+
+**8 API endpoints (6 Route + 2 Settings):**
+- `Route/generate_route` (ADMIN) — Generate a patrol route for an officer allocated to a shift. Creates waypoints from the community's active posts (assigned posts first as mandatory waypoints, then remaining community posts). Waypoints ordered by Nearest-Neighbour TSP for distance optimisation. Per-leg ETA and total distance calculated via Haversine. One route per officer per shift.
+- `Route/get_route` (ADMIN, OFFICER) — Get route details with all waypoints and visit data. Officers can only see routes assigned to them that have been pushed (active/completed status). Admins scoped by community.
+- `Route/update_route` (ADMIN) — Replace route waypoints (add/remove/reorder) by sending a full replacement array. Only draft routes can be updated. Validates all coordinates and priorities before transaction.
+- `Route/push_route` (ADMIN) — Push a draft route to the officer's app. Transitions route from `draft` to `active` status and sends `route_pushed` push notification to the officer.
+- `Route/visit_waypoint` (OFFICER) — Officer marks a waypoint as visited. Optionally includes GPS coordinates for compliance tracking. Calculates deviation from planned waypoint location via Haversine formula. Auto-completes route when all waypoints are visited.
+- `Route/get_route_compliance` (ADMIN) — Get compliance report: waypoint visit percentage, average deviation from planned locations, manual vs GPS visit counts, per-waypoint details.
+- `Settings/get_route_settings` (ADMIN) — Get patrol route configuration.
+- `Settings/update_route_settings` (ADMIN) — Update patrol route configuration.
+
+**Key implementation details:**
+- **Route generation with NN-TSP:** Gathers posts from two sources — (1) posts assigned to the officer in `shift_post` (mandatory waypoints) and (2) all other active posts in the community. Waypoints are ordered using a Nearest-Neighbour TSP heuristic (`orderWaypointsByNearestNeighbour`): mandatory waypoints are ordered first by closest-next, then optional community waypoints continue the chain. Per-leg ETA (`PTW_ETA_FROM_PREV_MIN`) and total distance (`PTR_TOTAL_DISTANCE_M`) are calculated via Haversine at walking pace (~5 km/h). Post coordinates extracted from `PST_LOCATION` JSON (supports point, circle centre, and line first-point formats).
+- **Auto-generate on shift publish:** When `Shift/publish_shift` succeeds, `Route/generate_route` is called for each allocated officer if `auto_generate_routes_on_publish` is enabled. Failures are logged but do not block the publish.
+- **Route lifecycle:** `draft → active → completed`. Route starts as `draft` after generation. Admin pushes to `active` (triggers notification). Auto-transitions to `completed` when all waypoints are visited, or when the parent shift completes.
+- **Auto-complete on shift end:** When a shift transitions to `completed` (via `Shift/check_out` all-officers-out logic or `cron_shift_lifecycle_check.js`), all associated active routes are auto-completed via `$RouteUtils.completeActiveRoutesForShift()`. Unvisited waypoints remain as-is for compliance reporting.
+- **Waypoint visits:** Each waypoint can only be visited once (`UQ_WPV_WAYPOINT` unique constraint). Visit records store GPS coordinates at time of visit, calculated deviation in metres, and manual/GPS flag.
+- **Compliance tracking:** Logs each waypoint visit with timestamp, GPS coordinates, deviation from planned route. Compliance report shows percentage of waypoints visited, average deviation, manual visit counts.
+- **Community scoping:** Non-super admins can only access routes for shifts in their assigned community.
+- **Bulk operations:** Waypoint inserts use a single bulk `INSERT` statement. No DB calls inside loops.
+- **Transaction discipline:** All reads (shift, officer, posts, existing route) before `beginTransaction()`. Writes (route insert + waypoint bulk insert) inside a single transaction.
+- **Soft deletion:** `patrol_route` and `patrol_waypoint` use `*_DELETED_ON` columns. `waypoint_visit` has no `DELETED_ON` (audit trail).
+- **Shared utilities:** `route_utils.js` provides `getRouteSettings()`, `completeActiveRoutesForShift()`, `shiftHasActiveRoutes()` for cross-module use.
+- **Deferred features:** See `docs/deferred_requirements/07-route-enhancements.md` for external solver integration, coverage priority zones, vehicle/foot patrol type, route regeneration, manager drag-and-drop route editing, and waypoint skip alert cron.
+
+---
+
 ## Development Best Practices
 
 For comprehensive development best practices, including database code guidelines, implementation checklists, and common patterns, see the **"Critical Rules & Best Practices"** section in `docs/brain.md`.

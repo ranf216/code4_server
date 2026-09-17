@@ -10,6 +10,7 @@ module.exports =
 	"notification",
 	"officer",
 	"resident",
+	"route",
 	"settings",
 	"shift",
 	//"social_login",

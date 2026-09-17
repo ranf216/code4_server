@@ -17,6 +17,50 @@ module.exports =
 	},
 
 	/**
+	 * Check whether a community exists (not soft-deleted).
+	 */
+	communityExists(communityId)
+	{
+		let rows = $Db.executeQuery(
+			`SELECT COM_ID FROM \`community\` WHERE COM_ID=? AND COM_DELETED_ON IS NULL`,
+			[communityId]);
+		return rows.length > 0;
+	},
+
+	/**
+	 * Get the community ID for a user (officer or admin) from user_details.
+	 * Returns null if user not found or no community assigned.
+	 */
+	getUserCommunityId(userId)
+	{
+		let rows = $Db.executeQuery(
+			`SELECT USD_COM_ID FROM \`user_details\` WHERE USD_USR_ID=? AND USD_DELETED_ON IS NULL`,
+			[userId]);
+		return rows.length > 0 ? rows[0].USD_COM_ID : null;
+	},
+
+	/**
+	 * Get the community ID for an admin user. Returns null if user not found
+	 * or community is not set (falsy).
+	 */
+	getAdminCommunityId(userId)
+	{
+		let rows = $Db.executeQuery(
+			`SELECT USD_COM_ID FROM \`user_details\`
+			 WHERE USD_USR_ID=? AND USD_DELETED_ON IS NULL`,
+			[userId]);
+		return (rows.length > 0 && rows[0].USD_COM_ID) ? rows[0].USD_COM_ID : null;
+	},
+
+	/**
+	 * Check whether the session user has the SUPER_ADMIN role.
+	 */
+	isUserSuperAdmin(session)
+	{
+		return session.isCurrentUserHasRole($Const.USER_ROLE_SUPER_ADMIN);
+	},
+
+	/**
 	 * Batch-fetch user names for multiple user IDs in a single query.
 	 * Returns an object keyed by user ID: { userId: "First Last", ... }
 	 * Missing users are mapped to "Unknown".

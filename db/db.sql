@@ -1380,6 +1380,114 @@ CREATE TABLE `shift_checkin` (
 
 
 --
+-- Definition of table `patrol_route`
+--
+
+DROP TABLE IF EXISTS `patrol_route`;
+CREATE TABLE `patrol_route` (
+  `PTR_ID` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `PTR_SFT_ID` bigint unsigned NOT NULL COMMENT 'FK to shift',
+  `PTR_OFC_USR_ID` varchar(128) NOT NULL COMMENT 'Officer user ID this route is assigned to',
+  `PTR_COM_ID` bigint unsigned NOT NULL COMMENT 'Community this route belongs to',
+  `PTR_NAME` varchar(100) DEFAULT NULL COMMENT 'Route display name (auto-generated or manager-set)',
+  `PTR_STATUS` varchar(20) NOT NULL DEFAULT 'draft' COMMENT 'draft, active, completed',
+  `PTR_TOTAL_DISTANCE_M` int unsigned DEFAULT NULL COMMENT 'Total estimated distance in metres',
+  `PTR_TOTAL_DURATION_MIN` int unsigned DEFAULT NULL COMMENT 'Total estimated duration in minutes',
+  `PTR_PUSHED_ON` datetime DEFAULT NULL COMMENT 'When route was pushed to officer app',
+  `PTR_PUSHED_BY` varchar(128) DEFAULT NULL COMMENT 'Admin who pushed the route',
+  `PTR_COMPLETED_ON` datetime DEFAULT NULL COMMENT 'When all waypoints were visited or shift ended',
+  `PTR_CREATED_BY` varchar(128) NOT NULL,
+  `PTR_CREATED_ON` datetime NOT NULL,
+  `PTR_LAST_UPDATE` datetime DEFAULT NULL,
+  `PTR_DELETED_ON` datetime DEFAULT NULL,
+  PRIMARY KEY (`PTR_ID`),
+  KEY `IX_PTR_SFT_ID` (`PTR_SFT_ID`),
+  KEY `IX_PTR_OFC_USR_ID` (`PTR_OFC_USR_ID`),
+  KEY `IX_PTR_COM_ID` (`PTR_COM_ID`),
+  KEY `IX_PTR_STATUS` (`PTR_STATUS`),
+  CONSTRAINT `FK_PTR_SFT_ID` FOREIGN KEY (`PTR_SFT_ID`) REFERENCES `shift` (`SFT_ID`),
+  CONSTRAINT `FK_PTR_OFC_USR_ID` FOREIGN KEY (`PTR_OFC_USR_ID`) REFERENCES `user` (`USR_ID`),
+  CONSTRAINT `FK_PTR_COM_ID` FOREIGN KEY (`PTR_COM_ID`) REFERENCES `community` (`COM_ID`),
+  CONSTRAINT `FK_PTR_CREATED_BY` FOREIGN KEY (`PTR_CREATED_BY`) REFERENCES `user` (`USR_ID`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+--
+-- Dumping data for table `patrol_route`
+--
+
+/*!40000 ALTER TABLE `patrol_route` DISABLE KEYS */;
+/*!40000 ALTER TABLE `patrol_route` ENABLE KEYS */;
+
+
+--
+-- Definition of table `patrol_waypoint`
+--
+
+DROP TABLE IF EXISTS `patrol_waypoint`;
+CREATE TABLE `patrol_waypoint` (
+  `PTW_ID` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `PTW_PTR_ID` bigint unsigned NOT NULL COMMENT 'FK to patrol_route',
+  `PTW_ORDER` int unsigned NOT NULL COMMENT 'Sequential order in the route (1-based)',
+  `PTW_PST_ID` bigint unsigned DEFAULT NULL COMMENT 'FK to post (NULL for manually-added waypoints)',
+  `PTW_NAME` varchar(100) NOT NULL COMMENT 'Location name (post name or auto-generated label)',
+  `PTW_LAT` decimal(10,7) NOT NULL COMMENT 'Latitude',
+  `PTW_LNG` decimal(10,7) NOT NULL COMMENT 'Longitude',
+  `PTW_ETA_FROM_PREV_MIN` int unsigned DEFAULT NULL COMMENT 'Estimated travel time from previous waypoint in minutes',
+  `PTW_DWELL_TIME_MIN` int unsigned NOT NULL DEFAULT 5 COMMENT 'Recommended dwell time in minutes',
+  `PTW_PRIORITY` varchar(20) NOT NULL DEFAULT 'normal' COMMENT 'critical, high, normal, low',
+  `PTW_NOTES` varchar(500) DEFAULT NULL COMMENT 'Special instructions for this waypoint',
+  `PTW_CREATED_ON` datetime NOT NULL,
+  `PTW_DELETED_ON` datetime DEFAULT NULL,
+  PRIMARY KEY (`PTW_ID`),
+  KEY `IX_PTW_PTR_ID` (`PTW_PTR_ID`),
+  KEY `IX_PTW_PST_ID` (`PTW_PST_ID`),
+  KEY `IX_PTW_ORDER` (`PTW_PTR_ID`, `PTW_ORDER`),
+  CONSTRAINT `FK_PTW_PTR_ID` FOREIGN KEY (`PTW_PTR_ID`) REFERENCES `patrol_route` (`PTR_ID`),
+  CONSTRAINT `FK_PTW_PST_ID` FOREIGN KEY (`PTW_PST_ID`) REFERENCES `post` (`PST_ID`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+--
+-- Dumping data for table `patrol_waypoint`
+--
+
+/*!40000 ALTER TABLE `patrol_waypoint` DISABLE KEYS */;
+/*!40000 ALTER TABLE `patrol_waypoint` ENABLE KEYS */;
+
+
+--
+-- Definition of table `waypoint_visit`
+--
+
+DROP TABLE IF EXISTS `waypoint_visit`;
+CREATE TABLE `waypoint_visit` (
+  `WPV_ID` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `WPV_PTW_ID` bigint unsigned NOT NULL COMMENT 'FK to patrol_waypoint',
+  `WPV_PTR_ID` bigint unsigned NOT NULL COMMENT 'FK to patrol_route (denormalised for faster queries)',
+  `WPV_OFC_USR_ID` varchar(128) NOT NULL COMMENT 'Officer who visited',
+  `WPV_VISITED_ON` datetime NOT NULL COMMENT 'Timestamp of visit',
+  `WPV_VISIT_LAT` decimal(10,7) DEFAULT NULL COMMENT 'GPS latitude at time of visit',
+  `WPV_VISIT_LNG` decimal(10,7) DEFAULT NULL COMMENT 'GPS longitude at time of visit',
+  `WPV_DEVIATION_M` int unsigned DEFAULT NULL COMMENT 'Distance in metres from planned waypoint location',
+  `WPV_IS_MANUAL` tinyint unsigned NOT NULL DEFAULT 0 COMMENT '1 if officer tapped Mark as Visited manually',
+  `WPV_CREATED_ON` datetime NOT NULL,
+  PRIMARY KEY (`WPV_ID`),
+  UNIQUE KEY `UQ_WPV_WAYPOINT` (`WPV_PTW_ID`),
+  KEY `IX_WPV_PTR_ID` (`WPV_PTR_ID`),
+  KEY `IX_WPV_OFC_USR_ID` (`WPV_OFC_USR_ID`),
+  CONSTRAINT `FK_WPV_PTW_ID` FOREIGN KEY (`WPV_PTW_ID`) REFERENCES `patrol_waypoint` (`PTW_ID`),
+  CONSTRAINT `FK_WPV_PTR_ID` FOREIGN KEY (`WPV_PTR_ID`) REFERENCES `patrol_route` (`PTR_ID`),
+  CONSTRAINT `FK_WPV_OFC_USR_ID` FOREIGN KEY (`WPV_OFC_USR_ID`) REFERENCES `user` (`USR_ID`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+--
+-- Dumping data for table `waypoint_visit`
+--
+
+/*!40000 ALTER TABLE `waypoint_visit` DISABLE KEYS */;
+/*!40000 ALTER TABLE `waypoint_visit` ENABLE KEYS */;
+
+
+--
 -- Definition of procedure `prc_entity_lock_acquire`
 --
 

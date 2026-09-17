@@ -27,9 +27,11 @@ module.exports =
     user: [
         "call_utils",
         "funcs",
+        "route_utils",
         "shift_utils",
         "task_utils",
         "test_api_asset",
+        "test_api_route",
         "test_api_shift",
     ]
 };

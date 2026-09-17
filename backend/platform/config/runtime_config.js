@@ -61,6 +61,10 @@ module.exports =
 			default_trespass_guidance: "This individual is subject to a formal trespass order and is prohibited from entering the specified property. If you observe this individual on site: (1) Do not use physical force unless lawfully justified. (2) Verbally advise the individual that they are trespassing and must leave. (3) If they refuse to leave, contact law enforcement. (4) Document the encounter using the incident reporting tool.",
 			default_red_card_guidance: "This individual holds an active transit exclusion (Metro Red Card) and is prohibited from the specified transit facilities and surrounding areas. If you observe this individual: (1) Verbally advise them of their exclusion and request they leave. (2) If they refuse, contact Metro Transit Authority dispatch and local law enforcement. (3) Document the encounter. Do not use physical force unless lawfully justified.",
 		},
+		"route": {
+			auto_generate_routes_on_publish: true,
+			patrol_compliance_threshold_min: 15,
+		},
 		"shift": {
 			max_weekly_hours: 48,
 			min_rest_gap_hours: 8,

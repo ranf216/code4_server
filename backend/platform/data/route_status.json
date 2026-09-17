@@ -1,0 +1,5 @@
+{
+    "draft":        {"name": {"en": "Draft"},       "define": "ROUTE_STATUS_DRAFT",     "is_active": false},
+    "active":       {"name": {"en": "Active"},      "define": "ROUTE_STATUS_ACTIVE",    "is_active": true},
+    "completed":    {"name": {"en": "Completed"},   "define": "ROUTE_STATUS_COMPLETED", "is_active": false}
+}

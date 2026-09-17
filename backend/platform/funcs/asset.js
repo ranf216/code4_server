@@ -42,22 +42,6 @@ function fetchMapZoneRecord(zoneId)
 	return rows.length > 0 ? rows[0] : null;
 }
 
-function communityExists(communityId)
-{
-	let rows = $Db.executeQuery(
-		`SELECT COM_ID FROM \`community\` WHERE COM_ID=? AND COM_DELETED_ON IS NULL`,
-		[communityId]);
-	return rows.length > 0;
-}
-
-function getOfficerCommunityId(userId)
-{
-	let rows = $Db.executeQuery(
-		`SELECT USD_COM_ID FROM \`user_details\` WHERE USD_USR_ID=? AND USD_DELETED_ON IS NULL`,
-		[userId]);
-	return rows.length > 0 ? rows[0].USD_COM_ID : null;
-}
-
 function getMaxMapItems()
 {
 	// Read from settings:asset namespace if available; fall back to default
@@ -245,7 +229,7 @@ module.exports = class
 
 	get_assets_list()
 	{
-		if (!communityExists(this.$community_id))
+		if (!$Funcs.communityExists(this.$community_id))
 		{
 			return $ERRS.ERR_COMMUNITY_NOT_FOUND;
 		}
@@ -343,7 +327,7 @@ module.exports = class
 	{
 		let userId = this.$Session.userId;
 
-		if (!communityExists(this.$community_id))
+		if (!$Funcs.communityExists(this.$community_id))
 		{
 			return $ERRS.ERR_COMMUNITY_NOT_FOUND;
 		}
@@ -423,7 +407,7 @@ module.exports = class
 			return $ERRS.ERR_ASSET_BATCH_LIMIT_EXCEEDED;
 		}
 
-		if (!communityExists(this.$community_id))
+		if (!$Funcs.communityExists(this.$community_id))
 		{
 			return $ERRS.ERR_COMMUNITY_NOT_FOUND;
 		}
@@ -644,7 +628,7 @@ module.exports = class
 		// Officers: auto-resolve community
 		if (userType === $Const.USER_TYPE_OFFICER)
 		{
-			communityId = getOfficerCommunityId(this.$Session.userId);
+			communityId = $Funcs.getUserCommunityId(this.$Session.userId);
 			if (!communityId)
 			{
 				return {...$ERRS.ERR_SUCCESS, posts: [], total_count: 0};
@@ -656,7 +640,7 @@ module.exports = class
 			return $ERRS.ERR_COMMUNITY_NOT_FOUND;
 		}
 
-		if (!communityExists(communityId))
+		if (!$Funcs.communityExists(communityId))
 		{
 			return $ERRS.ERR_COMMUNITY_NOT_FOUND;
 		}
@@ -733,7 +717,7 @@ module.exports = class
 		// Officers can only view posts in their community
 		if (userType === $Const.USER_TYPE_OFFICER)
 		{
-			let officerCommunityId = getOfficerCommunityId(userId);
+			let officerCommunityId = $Funcs.getUserCommunityId(userId);
 			if (post.PST_COM_ID !== officerCommunityId)
 			{
 				return $ERRS.ERR_POST_NOT_FOUND;
@@ -763,7 +747,7 @@ module.exports = class
 	{
 		let userId = this.$Session.userId;
 
-		if (!communityExists(this.$community_id))
+		if (!$Funcs.communityExists(this.$community_id))
 		{
 			return $ERRS.ERR_COMMUNITY_NOT_FOUND;
 		}
@@ -984,7 +968,7 @@ module.exports = class
 		// Officers: auto-resolve community
 		if (userType === $Const.USER_TYPE_OFFICER)
 		{
-			communityId = getOfficerCommunityId(this.$Session.userId);
+			communityId = $Funcs.getUserCommunityId(this.$Session.userId);
 			if (!communityId)
 			{
 				return {...$ERRS.ERR_SUCCESS, zones: []};
@@ -996,7 +980,7 @@ module.exports = class
 			return $ERRS.ERR_COMMUNITY_NOT_FOUND;
 		}
 
-		if (!communityExists(communityId))
+		if (!$Funcs.communityExists(communityId))
 		{
 			return $ERRS.ERR_COMMUNITY_NOT_FOUND;
 		}
@@ -1035,7 +1019,7 @@ module.exports = class
 	{
 		let userId = this.$Session.userId;
 
-		if (!communityExists(this.$community_id))
+		if (!$Funcs.communityExists(this.$community_id))
 		{
 			return $ERRS.ERR_COMMUNITY_NOT_FOUND;
 		}
