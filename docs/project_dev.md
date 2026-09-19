@@ -884,6 +884,38 @@ Notifications use `$executeAPI(session, "Notification/create_bulk_notifications"
 
 ---
 
+### 5.3 Tracking (`platform/api/tracking.js`, `platform/funcs/tracking.js`) — Phase 5.3 ✅ Done
+
+**DB tables:** `gps_log`
+
+**Error codes:** 660–666
+
+**$DataItems:** `tracking_source.json` (gps, network, manual)
+
+**Settings dependency:** Uses existing `settings:gps` configuration from `runtime_config.js` (gps_stale_threshold, location_history_retention, emergency_eta_interval, etc.) and `settings:route` (patrol_compliance_threshold_min) for waypoint overdue detection. No new settings added.
+
+**5 API endpoints:**
+- `Tracking/update_location` (OFFICER) — Officer sends a GPS location update. Validates coordinates (-90/90 lat, -180/180 lng) and source via `$DataItems.isValidItemId()`. Resolves the officer's community from `$Funcs.getUserCommunityId()`. Inserts a new record into `gps_log` with optional shift ID, call ID, accuracy, speed, heading, and altitude metadata.
+- `Tracking/get_live_tracking` (ADMIN) — Get all officers' latest GPS positions for the live tracking map (SDS 4.9). Returns one entry per officer using a `MAX(GPL_ID)` subquery. Joins with `user_details`, `officer`, `community`, `shift_checkin`, `shift`, and `service_call` to enrich each entry with officer name, photo, community, shift times, and active call. Computes officer status colour per SDS 4.9.2 with full priority chain: Grey (not checked in) > Amber (GPS stale) > Blue (active call) > Red (overdue waypoint) > Green (normal). Waypoint overdue detection cross-references `patrol_route`, `patrol_waypoint`, and `waypoint_visit` via batch queries. Optional community_id filter.
+- `Tracking/get_officer_location` (ADMIN) — Get a specific officer's current location and status details. Returns latest GPS entry with check-in status, active call info, staleness indicator, and minutes since last update.
+- `Tracking/get_officer_route_history` (ADMIN) — Get an officer's GPS track for a time range. Validates date range. Returns chronologically ordered location points. Optional shift_id filter for shift-specific tracks.
+- `Tracking/get_call_eta` (OFFICER, RESIDENT) — Get ETA for an active emergency call. Call must be in `accepted` status. Residents can only query their own calls; officers can only query calls assigned to them. Calculates straight-line distance via Haversine. Returns two ETA estimates: vehicular (~30 km/h, `eta_min`) as primary and walking (~5 km/h, `eta_walking_min`) as secondary. Returns distance in metres, officer and call coordinates, and officer's last GPS update time. Gracefully returns `eta_available: false` when prerequisites are not met (no coordinates, no officer, no location data).
+
+**Key implementation details:**
+- **GPS log table:** `gps_log` is a telemetry table with no `DELETED_ON` column (similar to `waypoint_visit`). Records are retained per `location_history_retention` setting (default 90 days). Cleanup via `cron_gps_log_cleanup.js` (daily at 03:00, hard-deletes in batches of 5,000).
+- **Coordinate validation:** Latitude must be -90 to 90, longitude must be -180 to 180. Uses `isValidLatitude()` / `isValidLongitude()` helper functions. Reuses `ERR_TRACKING_INVALID_COORDINATES` (660).
+- **Source validation:** Location source (gps, network, manual) is validated via `$DataItems.isValidItemId()` against `tracking_source.json`.
+- **Officer status colours (SDS 4.9.2):** Full priority chain: Grey (not checked in) > Amber (GPS stale) > Blue (active call) > Red (overdue waypoint on active patrol) > Green (normal). Red status is evaluated by cross-referencing `patrol_route` + `patrol_waypoint` + `waypoint_visit` for green-candidate officers using batch `IN(...)` queries. A waypoint is overdue when `now > PTR_PUSHED_ON + cumulative_ETA_to_waypoint + patrol_compliance_threshold_min`.
+- **GPS stale threshold:** Retrieved from `settings:gps → gps_stale_threshold` (default 2 minutes). An officer's GPS is considered stale when `now - last_update > threshold`.
+- **ETA calculation:** Haversine straight-line distance with dual speed estimates: vehicular (~30 km/h / 500 m/min, `eta_min`) for emergency response, walking (~5 km/h / 83 m/min, `eta_walking_min`) for foot patrol. Google Maps Directions API integration is deferred (requires enabling `geolocation` system module).
+- **ACL enforcement:** `update_location` restricted to officers. `get_live_tracking`, `get_officer_location`, `get_officer_route_history` restricted to admins. `get_call_eta` accessible to officers (assigned to the call) and residents (who created the call).
+- **No WebSocket push:** Location updates write to the database only. The management portal's live tracking map uses polling (`get_live_tracking`) at the configured refresh interval (default 30s per SDS 4.9.5).
+- **No DB calls in loops:** `get_live_tracking` uses a single GPS query with joins, then batch `IN(...)` queries for route compliance (3 queries for routes, waypoints, and visits). `get_officer_route_history` uses a single filtered query.
+- **Retention cron:** `cron_gps_log_cleanup.js` runs daily at 03:00 via PM2 (`code4_cron_gps_log_cleanup` in `ecosystem.config.js`). Reads `location_history_retention` from `settings:gps` (default 90 days). Hard-deletes in batches of 5,000 to avoid long locks.
+- **Deferred features:** GPS push notifications (signal lost, restored, off-route, ETA updated), Maps API ETA, location-based officer dispatch, targeted call relay, task ETA auto-calculation. See `docs/issues-questions/tracking-issues-questions.md`.
+
+---
+
 ## Development Best Practices
 
 For comprehensive development best practices, including database code guidelines, implementation checklists, and common patterns, see the **"Critical Rules & Best Practices"** section in `docs/brain.md`.

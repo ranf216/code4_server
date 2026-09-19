@@ -8810,4 +8810,9 @@ module.exports = class
     {
         return $TestApiRoute.test_route_apis(this.$Session);
     }
+
+    test_tracking_apis()
+    {
+        return $TestApiTracking.test_tracking_apis(this.$Session);
+    }
 }

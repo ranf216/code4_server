@@ -11,7 +11,7 @@
 
 **Resolved (Phase 5.2):** Nearest-Neighbour TSP algorithm implemented in `route.js` (`orderWaypointsByNearestNeighbour`). Uses Haversine distance for greedy nearest-neighbour ordering. Mandatory (assigned) waypoints are ordered first, then optional (community) waypoints continue the chain. No external API dependencies.
 
-**Still deferred (Phase 5.2.1):** Incident hotspot weighting, officer GPS start position integration, shift duration constraints, vehicle/foot patrol distinction, coverage priority zone injection. External solver integration (Google OR-Tools / OSRM) for large route sets. These require GPS Tracking module (Phase 5.3) and analytics infrastructure.
+**Still deferred (Phase 5.2.1):** Incident hotspot weighting, officer GPS start position integration, shift duration constraints, vehicle/foot patrol distinction, coverage priority zone injection. External solver integration (Google OR-Tools / OSRM) for large route sets. These require GPS Tracking module (Phase 5.3 ✅) and analytics infrastructure.
 
 ---
 
@@ -71,7 +71,7 @@
 
 **Current behavior:** Threshold setting implemented: `settings:route → patrol_compliance_threshold_min` (default: 15, range: 5–60). Notification type `waypoint_skipped` registered. No monitoring cron exists yet.
 
-**Dependencies:** Cron job infrastructure, GPS Tracking module (Phase 5.3).
+**Dependencies:** Cron job infrastructure, GPS Tracking module (Phase 5.3 ✅).
 
 **Implementation notes:** Create `cron_route_compliance_check.js` that runs every 5 minutes. For each active route, check if the current waypoint (earliest unvisited by `PTW_ORDER`) has been overdue beyond the threshold (based on `PTR_PUSHED_ON` + cumulative ETA to that waypoint). If so, send a `waypoint_skipped` notification to admins. Read threshold via `$RouteUtils.getRouteSettings()`.
 

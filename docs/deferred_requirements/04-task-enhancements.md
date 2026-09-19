@@ -11,7 +11,7 @@
 
 **Current behavior:** ETA is a manually-set datetime field (`TSK_ETA`), entered by admins only.
 
-**Dependencies:** GPS Tracking module (Phase 5.3), Geolocation service (`$Geolocation`).
+**Dependencies:** GPS Tracking module (Phase 5.3 ✅), Geolocation service (`$Geolocation`).
 
 **Implementation notes:** Once GPS tracking is available, add an auto-ETA calculation option that uses `$Geolocation.getTimeAndDistanceToDestination()` when a task has an address and the assignee has a recent GPS location.
 
