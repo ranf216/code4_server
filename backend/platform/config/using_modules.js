@@ -33,5 +33,6 @@ module.exports =
         "test_api_asset",
         "test_api_route",
         "test_api_shift",
+        "test_api_tracking",
     ]
 };

@@ -62,5 +62,11 @@ module.exports = {
       watch_delay: 1000,
       ignore_watch : [__dirname + "/.git", __dirname + "/backend/content", __dirname + "/backend/runtime", __dirname + "/backend/key_value_sets" ],
     },
+    {
+      name   : "code4_cron_gps_log_cleanup",
+      script: __dirname + "/backend/platform/jobs/cron_gps_log_cleanup.js",
+      watch_delay: 1000,
+      ignore_watch : [__dirname + "/.git", __dirname + "/backend/content", __dirname + "/backend/runtime", __dirname + "/backend/key_value_sets" ],
+    },
   ]
 }

@@ -77,4 +77,11 @@ module.exports =
                                                 "#token"                        : "s",
                                             },
 
+    "test_tracking_apis"                    : {
+                                                "@acl"                          : [$ACL.USER_TYPE_ADMIN],
+                                                "@doc"                          : "Test all Tracking module APIs (update_location, get_live_tracking, get_officer_location, get_officer_route_history, get_call_eta, error paths, ACL, boundary values)",
+                                                "@mode"                         : "test",
+                                                "#token"                        : "s",
+                                            },
+
 };

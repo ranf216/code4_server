@@ -268,6 +268,12 @@ module.exports = {
 
 	// Tracking (660-669)
 	"ERR_TRACKING_INVALID_COORDINATES"					: {"rc" : 660,	"message" : "invalid GPS coordinates"},
+	"ERR_TRACKING_OFFICER_NOT_FOUND"					: {"rc" : 661,	"message" : "officer not found or not active"},
+	"ERR_TRACKING_CALL_NOT_FOUND"						: {"rc" : 662,	"message" : "call not found"},
+	"ERR_TRACKING_CALL_NOT_ACTIVE"						: {"rc" : 663,	"message" : "call is not in an active state for ETA calculation"},
+	"ERR_TRACKING_NO_LOCATION_DATA"						: {"rc" : 664,	"message" : "no location data available for this officer"},
+	"ERR_TRACKING_INVALID_SOURCE"						: {"rc" : 665,	"message" : "invalid tracking source"},
+	"ERR_TRACKING_INVALID_TIME_RANGE"					: {"rc" : 666,	"message" : "invalid time range"},
 
 	// Post Order (670-689)
 	"ERR_POST_ORDER_NOT_FOUND"							: {"rc" : 670,	"message" : "post order not found"},

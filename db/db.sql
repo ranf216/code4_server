@@ -1488,6 +1488,42 @@ CREATE TABLE `waypoint_visit` (
 
 
 --
+-- Definition of table `gps_log`
+--
+
+DROP TABLE IF EXISTS `gps_log`;
+CREATE TABLE `gps_log` (
+  `GPL_ID` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `GPL_OFC_USR_ID` varchar(128) NOT NULL COMMENT 'Officer user ID',
+  `GPL_COM_ID` bigint unsigned NOT NULL COMMENT 'Community ID at time of logging',
+  `GPL_LATITUDE` decimal(10,7) NOT NULL,
+  `GPL_LONGITUDE` decimal(10,7) NOT NULL,
+  `GPL_ACCURACY` decimal(7,2) DEFAULT NULL COMMENT 'GPS accuracy in metres',
+  `GPL_SPEED` decimal(7,2) DEFAULT NULL COMMENT 'Speed in m/s',
+  `GPL_HEADING` decimal(5,2) DEFAULT NULL COMMENT 'Heading/bearing in degrees (0-360)',
+  `GPL_ALTITUDE` decimal(8,2) DEFAULT NULL COMMENT 'Altitude in metres',
+  `GPL_SFT_ID` bigint unsigned DEFAULT NULL COMMENT 'Active shift ID at time of logging',
+  `GPL_SVC_ID` bigint unsigned DEFAULT NULL COMMENT 'Active call ID at time of logging',
+  `GPL_SOURCE` varchar(20) NOT NULL DEFAULT 'gps' COMMENT 'Location source: gps, network, manual',
+  `GPL_CREATED_ON` datetime NOT NULL,
+  PRIMARY KEY (`GPL_ID`),
+  KEY `IX_GPL_OFC_USR_ID` (`GPL_OFC_USR_ID`),
+  KEY `IX_GPL_COM_ID` (`GPL_COM_ID`),
+  KEY `IX_GPL_CREATED_ON` (`GPL_CREATED_ON`),
+  KEY `IX_GPL_OFC_CREATED` (`GPL_OFC_USR_ID`, `GPL_CREATED_ON`),
+  CONSTRAINT `FK_GPL_OFC_USR_ID` FOREIGN KEY (`GPL_OFC_USR_ID`) REFERENCES `user` (`USR_ID`),
+  CONSTRAINT `FK_GPL_COM_ID` FOREIGN KEY (`GPL_COM_ID`) REFERENCES `community` (`COM_ID`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+--
+-- Dumping data for table `gps_log`
+--
+
+/*!40000 ALTER TABLE `gps_log` DISABLE KEYS */;
+/*!40000 ALTER TABLE `gps_log` ENABLE KEYS */;
+
+
+--
 -- Definition of procedure `prc_entity_lock_acquire`
 --
 

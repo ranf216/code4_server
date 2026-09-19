@@ -1,0 +1,5 @@
+{
+    "gps":     {"name": {"en": "GPS"},     "define": "TRACKING_SOURCE_GPS"},
+    "network": {"name": {"en": "Network"}, "define": "TRACKING_SOURCE_NETWORK"},
+    "manual":  {"name": {"en": "Manual"},  "define": "TRACKING_SOURCE_MANUAL"}
+}

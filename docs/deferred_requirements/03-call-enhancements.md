@@ -12,7 +12,7 @@ These features are documented in the SDS but are **not implemented** in the init
 
 **Current behavior:** Emergency calls notify **all active officers** in the resident's community. First officer to accept gets the call.
 
-**Dependencies:** GPS Tracking module (Phase 2.3), real-time officer location data.
+**Dependencies:** GPS Tracking module (Phase 5.3 ✅), real-time officer location data.
 
 **Implementation notes:** Once GPS tracking is available, add a proximity sort to officer notification and potentially auto-assign the closest officer.
 
@@ -24,7 +24,7 @@ These features are documented in the SDS but are **not implemented** in the init
 
 **Current behavior:** Not implemented.
 
-**Dependencies:** GPS Tracking module, Google Maps Directions API integration, real-time officer location.
+**Dependencies:** GPS Tracking module (Phase 5.3 ✅), Google Maps Directions API integration, real-time officer location.
 
 ---
 
@@ -36,7 +36,7 @@ These features are documented in the SDS but are **not implemented** in the init
 
 **Still deferred:** The *targeted* relay (explicitly routing the passed call to the next nearest officer, and re-notifying only that officer) requires GPS proximity data.
 
-**Dependencies:** GPS Tracking module for next-nearest-officer determination.
+**Dependencies:** GPS Tracking module (Phase 5.3 ✅) for next-nearest-officer determination.
 
 **Implementation notes:** Once GPS tracking is available, extend `pass_call` to compute the nearest non-passed officer and send them a targeted `new_emergency` notification instead of relying on the community-wide broadcast.
 

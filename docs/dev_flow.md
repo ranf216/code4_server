@@ -33,7 +33,7 @@ The project infrastructure is set up with the following **built-in platform modu
 - `USER_ROLE_LOGISTICS` = 5
 - `USER_ROLE_FINANCE` = 6
 
-**Implemented project-specific API modules:** `settings` (Phase 1.1), `community` (Phase 1.2), `admin_user` (Phase 1.3), `officer` (Phase 2.1), `resident` (Phase 2.2), `notification` (Phase 2.3), `call` (Phase 3.1), `task` (Phase 3.2), `asset` (Phase 4.1), `shift` (Phase 5.1), `route` (Phase 5.2)
+**Implemented project-specific API modules:** `settings` (Phase 1.1), `community` (Phase 1.2), `admin_user` (Phase 1.3), `officer` (Phase 2.1), `resident` (Phase 2.2), `notification` (Phase 2.3), `call` (Phase 3.1), `task` (Phase 3.2), `asset` (Phase 4.1), `shift` (Phase 5.1), `route` (Phase 5.2), `tracking` (Phase 5.3)
 
 ---
 
@@ -168,11 +168,12 @@ Shift management and patrol routes are complex features that depend on officers,
 - **Implementation:** 6 API endpoints — `generate_route`, `get_route`, `update_route`, `push_route`, `visit_waypoint`, `get_route_compliance`. Route lifecycle: `draft → active → completed`. Waypoint sources: assigned shift posts (mandatory) + community active posts. Compliance tracking with Haversine deviation calculation. Auto-route-completion when all waypoints visited. Push notification on route push.
 - **Deferred:** AI route engine, auto-generate on shift publish, coverage priority zones, vehicle/foot patrol type, waypoint skip alerts, ETA calculation — see `docs/deferred_requirements/07-route-enhancements.md`.
 
-#### 5.3 Tracking (`platform/api/tracking.js`)
-- GPS location updates, live tracking map, officer location, route history, call ETA
+#### ~~5.3 Tracking (`platform/api/tracking.js`)~~ ✅ Done
+- ~~GPS location updates, live tracking map, officer location, route history, call ETA~~
 - **DB tables:** `gps_log`
-- **Depends on:** Officer, Call (for ETA), Shift (for on-duty context)
-- **Can start in parallel with:** 5.1/5.2 since its core (location updates) is independent
+- **Depends on:** Officer, Call (for ETA), Shift (for on-duty context), Route (for waypoint overdue detection)
+- **Implementation:** 5 API endpoints — `update_location`, `get_live_tracking`, `get_officer_location`, `get_officer_route_history`, `get_call_eta`. Officer status colours per SDS 4.9.2: Grey > Amber > Blue > Red > Green. Waypoint overdue detection cross-references `patrol_route`/`patrol_waypoint`/`waypoint_visit` via batch queries. Dual ETA estimates (vehicular ~30 km/h, walking ~5 km/h) using Haversine distance. Daily GPS log retention cleanup via `cron_gps_log_cleanup.js`.
+- **Deferred:** GPS push notifications (signal lost, off-route), Maps API ETA, WebSocket live push — see `docs/issues-questions/tracking-issues-questions.md`. Cross-module enhancements (location-based dispatch, targeted call relay, task auto-ETA) documented in `docs/deferred_requirements/03-call-enhancements.md` and `docs/deferred_requirements/04-task-enhancements.md`.
 
 ---
 
