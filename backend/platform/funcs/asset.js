@@ -229,13 +229,31 @@ module.exports = class
 
 	get_assets_list()
 	{
-		if (!$Funcs.communityExists(this.$community_id))
+		let userType = this.$Session.userType;
+		let communityId = this.$community_id;
+
+		// Officers: auto-resolve community
+		if (userType === $Const.USER_TYPE_OFFICER)
+		{
+			communityId = $Funcs.getUserCommunityId(this.$Session.userId);
+			if (!communityId)
+			{
+				return {...$ERRS.ERR_SUCCESS, num_of_pages: 0, num_of_items: 0, assets: []};
+			}
+		}
+
+		if (!communityId || communityId <= 0)
+		{
+			return $ERRS.ERR_COMMUNITY_NOT_FOUND;
+		}
+
+		if (!$Funcs.communityExists(communityId))
 		{
 			return $ERRS.ERR_COMMUNITY_NOT_FOUND;
 		}
 
 		let conditions = ["a.AST_DELETED_ON IS NULL", "a.AST_COM_ID=?"];
-		let params = [this.$community_id];
+		let params = [communityId];
 
 		// Asset type filter
 		if (!$Utils.empty(this.$asset_type))

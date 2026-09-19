@@ -5,10 +5,10 @@ module.exports =
             // =================================================================
 
             "get_assets_list"                   : {
-                                                    "@acl"                          : [$ACL.USER_TYPE_ADMIN],
-                                                    "@doc"                          : "Get community assets list with optional filters",
+                                                    "@acl"                          : [$ACL.USER_TYPE_ADMIN, $ACL.USER_TYPE_OFFICER],
+                                                    "@doc"                          : "Get community assets list with optional filters. Officers see assets in their community only.",
                                                     "#token"                        : "s",
-                                                    "community_id"                  : "i***Community ID",
+                                                    "community_id"                  : "o:i:0***Community ID (admin: required, officer: auto-resolved)",
                                                     "asset_type"                    : "o:s:***Filter by asset type key: " + $DataItems.getListForApiDoc("asset_type"),
                                                     "search_text"                   : "o:s:***Free-text search across description",
                                                     "sort_by"                       : "o:s:created_on***Sort column: created_on, asset_type",
