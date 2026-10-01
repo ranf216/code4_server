@@ -283,6 +283,11 @@ module.exports = {
 	"ERR_POST_ORDER_SECTION_NOT_FOUND"					: {"rc" : 674,	"message" : "post order section not found"},
 	"ERR_POST_ORDER_ALREADY_ACKNOWLEDGED"				: {"rc" : 675,	"message" : "post order version already acknowledged"},
 	"ERR_POST_ORDER_INVALID_SECTION_TYPE"				: {"rc" : 676,	"message" : "invalid post order section type"},
+	"ERR_POST_ORDER_CANNOT_EDIT"						: {"rc" : 677,	"message" : "post order cannot be edited in its current status"},
+	"ERR_POST_ORDER_DRAFT_EXISTS"						: {"rc" : 678,	"message" : "a draft already exists for this post order"},
+	"ERR_POST_ORDER_MEDIA_LIMIT_REACHED"				: {"rc" : 679,	"message" : "maximum number of attachments per section reached"},
+	"ERR_POST_ORDER_VERSION_NOT_FOUND"					: {"rc" : 680,	"message" : "post order version not found"},
+	"ERR_POST_ORDER_ALREADY_EXISTS"						: {"rc" : 681,	"message" : "a post order already exists for this post"},
 
 	// POI (690-709)
 	"ERR_POI_RECORD_NOT_FOUND"							: {"rc" : 690,	"message" : "POI record not found"},

@@ -1,0 +1,4 @@
+{
+    "minor":    {"name": {"en": "Minor"},   "define": "PO_VERSION_TYPE_MINOR"},
+    "major":    {"name": {"en": "Major"},   "define": "PO_VERSION_TYPE_MAJOR"}
+}

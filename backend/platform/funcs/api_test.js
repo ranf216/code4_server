@@ -8815,4 +8815,9 @@ module.exports = class
     {
         return $TestApiTracking.test_tracking_apis(this.$Session);
     }
+
+    test_post_order_apis()
+    {
+        return $TestApiPostOrder.test_post_order_apis(this.$Session);
+    }
 }

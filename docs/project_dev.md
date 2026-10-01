@@ -916,6 +916,127 @@ Notifications use `$executeAPI(session, "Notification/create_bulk_notifications"
 
 ---
 
+### 6.1 Post Order (`platform/api/post_order.js`, `platform/funcs/post_order.js`) — Phase 6.1 ✅ Done
+
+Post Orders are structured, versioned documents attached to a specific post within a community. They define duties, procedures, and site-specific instructions for officers at each post.
+
+#### Database Tables
+
+| Table | Prefix | Purpose |
+|-------|--------|---------|
+| `post_order` | `PO_` | Main post order record, one per post |
+| `post_order_section` | `POS_` | Ordered sections within a post order |
+| `post_order_attachment` | `POF_` | File attachments per section (max 5) |
+| `post_order_version` | `POV_` | Published version snapshots (JSON content) |
+| `post_order_acknowledgement` | `POA_` | Officer acknowledgement tracking per version |
+
+**Key columns:**
+- `post_order.PO_PST_ID` → `post.PST_ID` (one PO per post)
+- `post_order.PO_COM_ID` — denormalized from post for query performance
+- `post_order.PO_STATUS` — `draft`, `published`, `archived`
+- `post_order.PO_VERSION_MAJOR` / `PO_VERSION_MINOR` — semantic version (e.g. 2.1)
+- `post_order_version.POV_CONTENT` — JSON snapshot of all sections at publish time
+- `post_order_acknowledgement.UQ_POA_VERSION_USER` — unique constraint per version per officer
+
+#### Status Lifecycle
+
+```
+Draft → Published → Archived
+  ↑         |
+  └─────────┘  (edit creates new draft; published version stays active)
+```
+
+- **Draft:** Visible/editable by admins only. Not visible to officers or clients.
+- **Published:** Active version. Officers and clients can read. Push notifications sent on publish.
+- **Archived:** No longer shown to officers/clients. Retained for audit in version history.
+- Editing a published PO sets status back to `draft`; the latest `post_order_version` remains the officer-facing content until the new draft is published.
+- Only one draft at a time per post order. Only drafts with no published history can be deleted.
+
+#### Versioning
+
+- Semantic `Major.Minor` (e.g. 2.1). First publish is always `1.0`.
+- On publish: current sections are snapshot to `post_order_version.POV_CONTENT` as JSON.
+- `version_type` = `major` bumps major and resets minor; `minor` increments minor.
+- `change_summary` (max 200 chars) is stored per version and included in push notifications.
+
+#### API Endpoints
+
+| API | ACL | Description |
+|-----|-----|-------------|
+| `PostOrder/get_post_orders_list` | ADMIN, OFFICER, RESIDENT | Paginated list with role-based filtering |
+| `PostOrder/get_post_order` | ADMIN, OFFICER, RESIDENT | Full details with sections/attachments |
+| `PostOrder/create_post_order` | ADMIN | Create new PO for a post (draft) |
+| `PostOrder/update_post_order` | ADMIN | Edit sections; published→draft auto-transition |
+| `PostOrder/publish_post_order` | ADMIN | Publish draft, create version, notify officers |
+| `PostOrder/archive_post_order` | ADMIN | Archive a published PO |
+| `PostOrder/delete_post_order` | ADMIN | Delete draft with no published history |
+| `PostOrder/get_version_history` | ADMIN | Chronological list of published versions |
+| `PostOrder/get_version` | ADMIN | View a specific historical version snapshot |
+| `PostOrder/acknowledge_post_order` | OFFICER | Acknowledge a specific or the current published version |
+
+Section type CRUD is handled by Settings module: `Settings/get_po_section_types`, `Settings/add_po_section_type`, `Settings/update_po_section_type`, `Settings/delete_po_section_type`.
+
+#### Error Codes (670–689)
+
+| Code | Constant | Message |
+|------|----------|---------|
+| 670 | `ERR_POST_ORDER_NOT_FOUND` | post order not found |
+| 671 | `ERR_POST_ORDER_CANNOT_PUBLISH` | post order cannot be published in its current status |
+| 672 | `ERR_POST_ORDER_CANNOT_ARCHIVE` | post order cannot be archived in its current status |
+| 673 | `ERR_POST_ORDER_CANNOT_DELETE` | cannot delete a post order with published history |
+| 674 | `ERR_POST_ORDER_SECTION_NOT_FOUND` | post order section not found |
+| 675 | `ERR_POST_ORDER_ALREADY_ACKNOWLEDGED` | post order version already acknowledged |
+| 676 | `ERR_POST_ORDER_INVALID_SECTION_TYPE` | invalid post order section type |
+| 677 | `ERR_POST_ORDER_CANNOT_EDIT` | post order cannot be edited in its current status |
+| 678 | `ERR_POST_ORDER_DRAFT_EXISTS` | a draft already exists for this post order |
+| 679 | `ERR_POST_ORDER_MEDIA_LIMIT_REACHED` | maximum number of attachments per section reached |
+| 680 | `ERR_POST_ORDER_VERSION_NOT_FOUND` | post order version not found |
+| 681 | `ERR_POST_ORDER_ALREADY_EXISTS` | a post order already exists for this post |
+
+#### Data Items
+
+| File | Source | Purpose |
+|------|--------|---------|
+| `po_status.json` | static | PO statuses: draft, published, archived |
+| `po_version_type.json` | static | Version bump types: minor, major |
+| `po_section_type.json` | db | Section types (admin-managed via Settings) |
+
+#### Notification Types
+
+| Type Key | Trigger |
+|----------|---------|
+| `post_order_published` | First publish (v1.0) |
+| `post_order_updated` | Subsequent version published |
+
+Notifications are sent to all officers currently allocated to the post (via `shift_post` join on published/active shifts), unless `notify_officers` is set to false.
+
+#### Access Control & Scoping
+
+- **Admins:** Full CRUD, version history, all communities.
+- **Officers:** Read-only published POs for posts allocated in the last 90 days (via `shift_post` + `shift.SFT_DATE >= NOW() - 90 days`). Can acknowledge the current version. Notes field is hidden. All sections visible.
+- **Residents:** Read-only published POs for their community. Only client-visible sections shown. Notes field hidden.
+
+#### Implementation Notes
+
+- **No DB calls in loops:** Section file IDs are resolved in a single batch query before the transaction. Sections are inserted sequentially within the transaction but file resolution precedes it.
+- **Transaction discipline:** All SELECTs (post lookup, file resolution, section snapshot, officer list) happen before `beginTransaction()`. Transactions contain only INSERTs/UPDATEs.
+- **Version snapshots:** On publish, all current sections (including attachment URLs and notes) are serialized to `POV_CONTENT` JSON in `post_order_version`. This ensures historical versions are immutable even if the working sections are later edited.
+- **Section replacement:** `update_post_order` with `sections` array performs a full replace: soft-deletes existing sections/attachments, then inserts new ones. This matches the SDS requirement for free reordering.
+- **One PO per post:** Enforced by checking for existing non-deleted PO with the same `PO_PST_ID` before insert.
+
+#### Deferred Features
+
+- Offline caching (SDS §3.12.3 — TBD)
+- Acknowledgement flow details (SDS §3.12.4 — TBD, basic endpoint implemented)
+- Acknowledged percentage in list view (SDS §4.10.2 — TBD)
+- Review due date reminder notification (requires scheduled job)
+- Post detail → PO navigation link (see `docs/deferred_requirements/05-asset-enhancements.md`)
+- Attachment file size/duration validation (see `docs/issues-questions/post-order-issues-questions.md`)
+
+See `docs/issues-questions/post-order-issues-questions.md` for the full list of open questions and design decisions.
+
+---
+
 ## Development Best Practices
 
 For comprehensive development best practices, including database code guidelines, implementation checklists, and common patterns, see the **"Critical Rules & Best Practices"** section in `docs/brain.md`.

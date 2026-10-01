@@ -84,4 +84,11 @@ module.exports =
                                                 "#token"                        : "s",
                                             },
 
+    "test_post_order_apis"                  : {
+                                                "@acl"                          : [$ACL.USER_TYPE_ADMIN],
+                                                "@doc"                          : "Test all Post Order module APIs (create, get, list, update, publish, archive, delete, version history, get version, acknowledge, state transitions, edge cases)",
+                                                "@mode"                         : "test",
+                                                "#token"                        : "s",
+                                            },
+
 };
