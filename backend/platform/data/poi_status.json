@@ -1,0 +1,7 @@
+{
+    "draft":    {"name": {"en": "Draft"},    "define": "POI_STATUS_DRAFT"},
+    "active":   {"name": {"en": "Active"},   "define": "POI_STATUS_ACTIVE"},
+    "expired":  {"name": {"en": "Expired"},  "define": "POI_STATUS_EXPIRED"},
+    "inactive": {"name": {"en": "Inactive"}, "define": "POI_STATUS_INACTIVE"},
+    "archived": {"name": {"en": "Archived"}, "define": "POI_STATUS_ARCHIVED"}
+}

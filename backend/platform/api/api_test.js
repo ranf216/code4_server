@@ -91,4 +91,11 @@ module.exports =
                                                 "#token"                        : "s",
                                             },
 
+    "test_poi_apis"                         : {
+                                                "@acl"                          : [$ACL.USER_TYPE_ADMIN],
+                                                "@doc"                          : "Test all POI module APIs (create, get, list, update, publish, inactivate, archive, export, metadata, mark_viewed, officer view, state transitions, edge cases)",
+                                                "@mode"                         : "test",
+                                                "#token"                        : "s",
+                                            },
+
 };

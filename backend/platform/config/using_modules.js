@@ -4,8 +4,8 @@ module.exports =
         // "aws",
     	// "bulk_action",
         // "dynamic_data_tables",
-        // "entity_lock",
-        // "export",
+        "entity_lock",
+        "export",
         "fcm",
         // "geolocation",
         // "json_db",
@@ -35,5 +35,6 @@ module.exports =
         "test_api_shift",
         "test_api_tracking",
         "test_api_post_order",
+        "test_api_poi",
     ]
 };

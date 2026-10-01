@@ -1,0 +1,5 @@
+{
+    "male":     {"name": {"en": "Male"},     "define": "POI_GENDER_MALE"},
+    "female":   {"name": {"en": "Female"},   "define": "POI_GENDER_FEMALE"},
+    "unknown":  {"name": {"en": "Unknown"},  "define": "POI_GENDER_UNKNOWN"}
+}

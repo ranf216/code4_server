@@ -1,0 +1,6 @@
+{
+    "low":      {"name": {"en": "Low"},      "define": "POI_THREAT_LEVEL_LOW"},
+    "medium":   {"name": {"en": "Medium"},   "define": "POI_THREAT_LEVEL_MEDIUM"},
+    "high":     {"name": {"en": "High"},     "define": "POI_THREAT_LEVEL_HIGH"},
+    "critical": {"name": {"en": "Critical"}, "define": "POI_THREAT_LEVEL_CRITICAL"}
+}

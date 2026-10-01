@@ -33,7 +33,7 @@ The project infrastructure is set up with the following **built-in platform modu
 - `USER_ROLE_LOGISTICS` = 5
 - `USER_ROLE_FINANCE` = 6
 
-**Implemented project-specific API modules:** `settings` (Phase 1.1), `community` (Phase 1.2), `admin_user` (Phase 1.3), `officer` (Phase 2.1), `resident` (Phase 2.2), `notification` (Phase 2.3), `call` (Phase 3.1), `task` (Phase 3.2), `asset` (Phase 4.1), `shift` (Phase 5.1), `route` (Phase 5.2), `tracking` (Phase 5.3)
+**Implemented project-specific API modules:** `settings` (Phase 1.1), `community` (Phase 1.2), `admin_user` (Phase 1.3), `officer` (Phase 2.1), `resident` (Phase 2.2), `notification` (Phase 2.3), `call` (Phase 3.1), `task` (Phase 3.2), `asset` (Phase 4.1), `shift` (Phase 5.1), `route` (Phase 5.2), `tracking` (Phase 5.3), `post_order` (Phase 6.1), `poi` (Phase 6.2)
 
 ---
 
@@ -182,16 +182,20 @@ Shift management and patrol routes are complex features that depend on officers,
 
 Post orders and POI records are reference/knowledge systems that officers consume during shifts.
 
-#### 6.1 Post Order (`platform/api/post_order.js`)
-- Post order CRUD with sections, publish lifecycle (Draft -> Published -> Archived), version history, officer acknowledgement
-- **DB tables:** `post_order`, `post_order_section`, `post_order_attachment`, `post_order_version`, `post_order_ack`
+#### ~~6.1 Post Order (`platform/api/post_order.js`)~~ ✅ Done
+- ~~Post order CRUD with sections, publish lifecycle (Draft -> Published -> Archived), version history, officer acknowledgement~~
+- **DB tables:** `post_order`, `post_order_section`, `post_order_attachment`, `post_order_version`, `post_order_acknowledgement`
 - **Depends on:** Community, Post (Phase 4.1), Settings (po_section_type)
+- **Implementation:** 10 API endpoints — `get_post_orders_list`, `get_post_order`, `create_post_order`, `update_post_order`, `publish_post_order`, `archive_post_order`, `delete_post_order`, `get_version_history`, `get_version`, `acknowledge_post_order`. Status lifecycle: `draft → published → archived`. Semantic versioning with immutable published snapshots (first publish always 1.0; subsequent publishes bump major or minor). Section management with configurable `po_section_type`, title (80 chars), description (10K chars), admin-only notes (2K chars), client-visible toggle, and up to 5 file attachments per section. Bulk section/attachment insert (no DB queries inside loops). Role-based visibility: admins see all statuses with full working sections and notes; officers see published POs for posts allocated in the last 90 days (latest published version snapshot, no notes); residents see published POs for their community (client-visible sections only, no notes). Editing a published PO auto-transitions to draft. Soft-delete restricted to drafts with no published history. Push notifications on publish to allocated officers. Officer acknowledgement tracking per version with duplicate prevention via unique constraint.
+- **Deferred:** Offline caching for officer mobile app (SDS 3.12.3), acknowledgement compliance dashboard/reports (SDS 3.12.4), drag-and-drop section reordering (UI), diff comparison between versions — see `docs/issues-questions/post-order-issues-questions.md`.
 
-#### 6.2 POI (`platform/api/poi.js`)
+#### 6.2 POI (`platform/api/poi.js`) ✅ Done
 - Person of Interest / Trespass Order / Metro Red Card CRUD, publish lifecycle, export PDF, site assignment, incident linking, view tracking
 - **DB tables:** `poi_record`, `poi_photo`, `poi_site`, `poi_incident`, `poi_export`, `poi_view`
 - **Depends on:** Community, Call (for incident linking)
 - **Can be parallel with:** Post Order (6.1)
+- **Implementation:** 10 API endpoints — `get_poi_list`, `get_poi_record`, `create_poi_record`, `update_poi_record`, `publish_poi_record`, `inactivate_poi_record`, `archive_poi_record`, `export_poi_record`, `get_poi_metadata`, `mark_viewed`. Three record types: Person of Interest (informational flag), Trespass Order (legal prohibition with expiry), Metro Red Card (transit exclusion with expiry). Status lifecycle: `draft → active → expired/inactive → archived`. Officer view tracking with NEW/UPDATED badges via `poi_view` upsert. Type-specific fields (POI: incident history, watch review date, associated individuals; Trespass: notice number, issuing authority, property area, notice document, LE contact, conditions; Metro RC: card number, lines, card document). Configurable response guidance text per record type from `settings:poi`. 4 `$DataItems`: `poi_record_type`, `poi_status`, `poi_threat_level`, `poi_gender`. Error codes 690–706. Notifications: `poi_active`, `poi_updated`, `poi_inactivated`, `poi_expiring_soon`, `poi_expired` to officers in assigned communities. Photo management (1–10 required), multi-community site assignment, incident linking to `service_call`. PDF export via `$Export.generate()` with pdfkit: embedded photos, watermark ("CONFIDENTIAL – AUTHORISED USE ONLY", admin name, export date), internal notes excluded. Daily lifecycle cron (`cron_poi_lifecycle_check.js` at 03:30): auto-expire active records past expiry date, expiry reminders within configurable window (dedup: 24h cooldown), auto-archive expired/inactive records past threshold. Bulk INSERT for photos/sites/incidents, ON DUPLICATE KEY UPDATE for site/incident upserts. Soft delete on all tables except `poi_export` (audit) and `poi_view` (upsert-only).
+- **Deferred:** Report Encounter (depends on Phase 7), bulk operations, settings management API, community deletion guard, dashboard statistics — see `docs/deferred_requirements/08-poi-enhancements.md` and `docs/issues-questions/poi-issues-questions.md`.
 
 ---
 
@@ -242,8 +246,8 @@ Dashboard aggregates data from all other modules, so it must be last.
 | 5.1 | Shift | Community, Officer, Post | `api/shift.js`, `funcs/shift.js` |
 | 5.2 | Route | Shift, Post | `api/route.js`, `funcs/route.js` |
 | 5.3 | Tracking | Officer, Call | `api/tracking.js`, `funcs/tracking.js` |
-| 6.1 | Post Order | Community, Post | `api/post_order.js`, `funcs/post_order.js` |
-| 6.2 | POI | Community, Call | `api/poi.js`, `funcs/poi.js` |
+| ~~6.1~~ | ~~Post Order~~ ✅ | Community, Post | `api/post_order.js`, `funcs/post_order.js` |
+| ~~6.2~~ | ~~POI~~ ✅ | Community, Call | `api/poi.js`, `funcs/poi.js` |
 | 7.1 | Report Template | Community | `api/report_template.js`, `funcs/report_template.js` |
 | 7.2 | Report | Template, Call, Officer | `api/report.js`, `funcs/report.js` |
 | 8.1 | Dashboard | All modules | `api/dashboard.js`, `funcs/dashboard.js` |
