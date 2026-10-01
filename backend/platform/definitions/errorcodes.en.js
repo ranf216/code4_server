@@ -296,6 +296,17 @@ module.exports = {
 	"ERR_POI_CANNOT_PUBLISH"							: {"rc" : 693,	"message" : "POI record cannot be published in its current status"},
 	"ERR_POI_CANNOT_INACTIVATE"							: {"rc" : 694,	"message" : "POI record cannot be inactivated in its current status"},
 	"ERR_POI_CANNOT_ARCHIVE"							: {"rc" : 695,	"message" : "POI record cannot be archived in its current status"},
+	"ERR_POI_CANNOT_EDIT"								: {"rc" : 696,	"message" : "POI record cannot be edited in its current status"},
+	"ERR_POI_PHOTO_REQUIRED"							: {"rc" : 697,	"message" : "at least one photo is required"},
+	"ERR_POI_PHOTO_LIMIT_REACHED"						: {"rc" : 698,	"message" : "maximum number of photos reached"},
+	"ERR_POI_SITE_REQUIRED"								: {"rc" : 699,	"message" : "at least one site/community is required"},
+	"ERR_POI_INVALID_STATUS"							: {"rc" : 700,	"message" : "invalid POI status"},
+	"ERR_POI_INVALID_GENDER"							: {"rc" : 701,	"message" : "invalid gender"},
+	"ERR_POI_INACTIVATION_REASON_REQUIRED"				: {"rc" : 702,	"message" : "inactivation reason is required"},
+	"ERR_POI_EXPIRY_DATE_REQUIRED"						: {"rc" : 703,	"message" : "expiry date is required for this record type"},
+	"ERR_POI_EXPORT_DISABLED"							: {"rc" : 704,	"message" : "PDF export is not enabled"},
+	"ERR_POI_TRESPASS_FIELDS_REQUIRED"					: {"rc" : 705,	"message" : "required trespass order fields are missing"},
+	"ERR_POI_RED_CARD_FIELDS_REQUIRED"					: {"rc" : 706,	"message" : "required metro red card fields are missing"},
 
 	// Report (710-729)
 	"ERR_REPORT_NOT_FOUND"								: {"rc" : 710,	"message" : "report not found"},

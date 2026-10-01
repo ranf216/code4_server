@@ -1,0 +1,5 @@
+{
+    "poi":              {"name": {"en": "Person of Interest"},   "define": "POI_RECORD_TYPE_POI"},
+    "trespass":         {"name": {"en": "Trespass Order"},       "define": "POI_RECORD_TYPE_TRESPASS"},
+    "metro_red_card":   {"name": {"en": "Metro Red Card"},       "define": "POI_RECORD_TYPE_METRO_RED_CARD"}
+}

@@ -9,6 +9,7 @@ module.exports =
 	"file",
 	"notification",
 	"officer",
+	"poi",
 	"post_order",
 	"resident",
 	"route",

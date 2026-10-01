@@ -1037,6 +1037,160 @@ See `docs/issues-questions/post-order-issues-questions.md` for the full list of 
 
 ---
 
+### 6.2 POI — Person of Interest (`platform/api/poi.js`, `platform/funcs/poi.js`) — Phase 6.2 ✅ Done
+
+Manages Persons of Interest, Trespass Orders, and Metro Red Card records. Supports CRUD, publish lifecycle, site/community assignment, incident linking, officer view tracking, and PDF export.
+
+#### Database Tables
+
+| Table | Prefix | Purpose |
+|-------|--------|---------|
+| `poi_record` | `POI_` | Main record with subject details, type-specific fields, and lifecycle status |
+| `poi_photo` | `PPH_` | Subject photos (min 1, max 10 per record) |
+| `poi_site` | `PSI_` | Community/site assignments (many-to-many) |
+| `poi_incident` | `PIN_` | Links POI records to service calls/incidents |
+| `poi_export` | `PXP_` | Export audit log (admin name + timestamp) |
+| `poi_view` | `PVW_` | Officer view tracking for NEW/UPDATED badges |
+
+**Key columns:**
+- `poi_record.POI_RECORD_TYPE` — `poi`, `trespass`, `metro_red_card`
+- `poi_record.POI_STATUS` — `draft`, `active`, `expired`, `inactive`, `archived`
+- `poi_record.POI_THREAT_LEVEL` — `low`, `medium`, `high`, `critical`
+- `poi_record.POI_EXPIRY_DATE` — expiry date for Trespass Orders and Metro Red Cards
+- `poi_site.UQ_PSI_POI_COM` — unique constraint per record per community
+- `poi_view.UQ_PVW_POI_USR` — unique constraint per record per officer (upsert on re-view)
+
+#### Record Types
+
+| Type | Description | Type-Specific Fields |
+|------|-------------|---------------------|
+| `poi` | Informational flag | Incident history, watch review date, associated individuals |
+| `trespass` | Formal prohibition with legal notice | Notice number, issuing authority, property/area, issue/expiry dates, notice document, LE contact, conditions |
+| `metro_red_card` | Transit exclusion notice | Card number, issuing authority, issue/expiry dates, transit lines, card document |
+
+#### Status Lifecycle
+
+```
+Draft → Active → Expired ──→ Archived
+                  ↓
+              Inactive ──→ Archived
+```
+
+- **Draft:** Admin-only, not visible to officers. Editable.
+- **Active:** Published and visible to officers in assigned communities. Editable (updates trigger notifications).
+- **Expired:** Auto-transition when expiry date passes (via `cron_poi_lifecycle_check.js` daily at 03:30). Can be archived.
+- **Inactive:** Manually deactivated by admin with mandatory reason. Can be archived.
+- **Archived:** Terminal state. Not visible to officers. Cannot be re-activated.
+
+#### API Endpoints
+
+| API | ACL | Description |
+|-----|-----|-------------|
+| `POI/get_poi_list` | ADMIN, OFFICER | Paginated list with role-based filtering. Officers: active only, scoped to their community. |
+| `POI/get_poi_record` | ADMIN, OFFICER | Full record details. Officers: limited fields, includes response guidance. |
+| `POI/create_poi_record` | ADMIN | Create new record (draft or immediate publish). |
+| `POI/update_poi_record` | ADMIN | Update draft/active record. Active edits trigger officer notifications. |
+| `POI/publish_poi_record` | ADMIN | Publish draft → active. Notifies officers in assigned communities. |
+| `POI/inactivate_poi_record` | ADMIN | Inactivate active record with mandatory reason. |
+| `POI/archive_poi_record` | ADMIN | Archive expired/inactive record. Terminal state. |
+| `POI/export_poi_record` | ADMIN | Generate and download PDF export with watermark. |
+| `POI/get_poi_metadata` | ADMIN, OFFICER | Record types, threat levels, statuses, genders, response guidance texts. |
+| `POI/mark_viewed` | OFFICER | Officer marks record as viewed (upsert). Updates NEW/UPDATED badge state. |
+
+#### Error Codes (690–709)
+
+| Code | Constant | Message |
+|------|----------|---------|
+| 690 | `ERR_POI_RECORD_NOT_FOUND` | POI record not found |
+| 691 | `ERR_POI_INVALID_RECORD_TYPE` | invalid POI record type |
+| 692 | `ERR_POI_INVALID_THREAT_LEVEL` | invalid threat level |
+| 693 | `ERR_POI_CANNOT_PUBLISH` | POI record cannot be published in its current status |
+| 694 | `ERR_POI_CANNOT_INACTIVATE` | POI record cannot be inactivated in its current status |
+| 695 | `ERR_POI_CANNOT_ARCHIVE` | POI record cannot be archived in its current status |
+| 696 | `ERR_POI_CANNOT_EDIT` | POI record cannot be edited in its current status |
+| 697 | `ERR_POI_PHOTO_REQUIRED` | at least one photo is required |
+| 698 | `ERR_POI_PHOTO_LIMIT_REACHED` | maximum number of photos reached |
+| 699 | `ERR_POI_SITE_REQUIRED` | at least one site/community is required |
+| 700 | `ERR_POI_INVALID_STATUS` | invalid POI status |
+| 701 | `ERR_POI_INVALID_GENDER` | invalid gender |
+| 702 | `ERR_POI_INACTIVATION_REASON_REQUIRED` | inactivation reason is required |
+| 703 | `ERR_POI_EXPIRY_DATE_REQUIRED` | expiry date is required for this record type |
+| 704 | `ERR_POI_EXPORT_DISABLED` | PDF export is not enabled |
+| 705 | `ERR_POI_TRESPASS_FIELDS_REQUIRED` | required trespass order fields are missing |
+| 706 | `ERR_POI_RED_CARD_FIELDS_REQUIRED` | required metro red card fields are missing |
+
+#### Data Items
+
+| File | Source | Purpose |
+|------|--------|---------|
+| `poi_record_type.json` | static | Record types: poi, trespass, metro_red_card |
+| `poi_status.json` | static | Statuses: draft, active, expired, inactive, archived |
+| `poi_threat_level.json` | static | Threat levels: low, medium, high, critical |
+| `poi_gender.json` | static | Genders: male, female, unknown |
+
+#### Notification Types
+
+| Type Key | Trigger |
+|----------|---------|
+| `poi_active` | Record published (draft → active) |
+| `poi_updated` | Active record edited with version-level changes |
+| `poi_inactivated` | Record inactivated |
+| `poi_expiring_soon` | Record expiring within reminder window (via lifecycle cron) |
+| `poi_expired` | Record expired (via lifecycle cron) |
+
+Notifications are sent to all active officers in the communities assigned to the record.
+
+#### Access Control & Scoping
+
+- **Admins:** Full CRUD, all communities, all statuses.
+- **Officers:** Read-only active records for their community (via `user_details.USD_COM_ID`). Hidden fields: internal notes, legal documents (notice/card documents), inactivation reason, admin metadata. Visible: response guidance text per record type.
+- **Residents:** No access to POI registry.
+
+#### Officer View Tracking (NEW/UPDATED Badges)
+
+- `poi_view` stores the last-viewed timestamp per officer per record.
+- **NEW badge:** No `poi_view` row exists for this officer+record.
+- **UPDATED badge:** `poi_view.PVW_VIEWED_ON` < `poi_record.POI_LAST_UPDATE`.
+- **No badge:** Officer has viewed the current version.
+- `mark_viewed` performs an upsert (INSERT … ON DUPLICATE KEY UPDATE).
+
+#### Settings
+
+POI settings stored in `key_value` under `settings:poi`. Defaults in `runtime_config.js`:
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `renewal_reminder_days` | 14 | Days before expiry for reminder notification |
+| `archive_threshold_months` | 24 | Months after expiry before auto-archive |
+| `pdf_export_enabled` | true | Whether PDF export is available |
+| `default_poi_guidance` | (text) | Default response guidance for Person of Interest |
+| `default_trespass_guidance` | (text) | Default response guidance for Trespass Order |
+| `default_red_card_guidance` | (text) | Default response guidance for Metro Red Card |
+
+#### Implementation Notes
+
+- **No DB calls in loops:** File IDs, community IDs, and incident IDs are resolved in batch queries before the transaction. Photos, sites, and incidents use bulk INSERT statements.
+- **Transaction discipline:** All SELECTs (record lookup, file resolution, community validation, incident validation) happen before `beginTransaction()`. Transactions contain only INSERTs/UPDATEs.
+- **Version-level updates:** On active records, edits to officer-visible fields (name, threat level, summary, photos, sites, etc.) trigger `poi_updated` notifications. Edits to internal-only fields (internal notes, renewal reminder days, review date) do not.
+- **Soft deletion:** All POI tables use soft deletion via `*_DELETED_ON` columns. Exceptions: `poi_export` (audit trail, no deletion) and `poi_view` (upsert-only, no deletion).
+- **Full replace on update:** When `photo_file_ids`, `community_ids`, or `related_incident_ids` are provided in an update, the existing records are soft-deleted and replaced with the new set. Uses `ON DUPLICATE KEY UPDATE` to handle unique constraint conflicts with soft-deleted rows on `poi_site` and `poi_incident`.
+- **Officer community scoping:** Officers see records assigned to their community (via `poi_site` join). Community resolved from `user_details.USD_COM_ID`.
+- **Response guidance:** Officers receive configurable guidance text per record type from `settings:poi`. Guidance is returned in `get_poi_record` response.
+- **PDF export:** Uses platform `$Export.generate()` with `pdfkit`. Embeds subject photos from file storage. Watermark on each page: "CONFIDENTIAL – AUTHORISED USE ONLY", admin name, export date/time. Excludes `POI_INTERNAL_NOTES`. File saved via `$Files.saveFileFromString()`, `PXP_FILE_NAME` updated in `poi_export`.
+- **Lifecycle cron:** `cron_poi_lifecycle_check.js` runs daily at 03:30 (PM2: `code4_cron_poi_lifecycle`). Auto-expires active records past `POI_EXPIRY_DATE`. Sends `poi_expiring_soon` reminders within the `renewal_reminder_days` window (24h dedup). Auto-archives expired/inactive records past `archive_threshold_months`. Inserts notifications directly (no session) with FCM push, mirroring `cron_shift_reminders.js` pattern.
+
+#### Deferred Features
+
+- Report encounter (officer → incident creation, depends on Report module Phase 7)
+- Bulk operations (batch inactivate/archive/export)
+- POI settings guidance version notes (audit logging when default guidance text changes)
+- Community deletion guard
+- Dashboard / summary statistics
+
+See `docs/issues-questions/poi-issues-questions.md` for resolved questions and `docs/deferred_requirements/08-poi-enhancements.md` for remaining deferred requirements.
+
+---
+
 ## Development Best Practices
 
 For comprehensive development best practices, including database code guidelines, implementation checklists, and common patterns, see the **"Critical Rules & Best Practices"** section in `docs/brain.md`.

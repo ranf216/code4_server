@@ -8820,4 +8820,9 @@ module.exports = class
     {
         return $TestApiPostOrder.test_post_order_apis(this.$Session);
     }
+
+    test_poi_apis()
+    {
+        return $TestApiPoi.test_poi_apis(this.$Session);
+    }
 }

@@ -1673,6 +1673,191 @@ CREATE TABLE `gps_log` (
 
 
 --
+-- Definition of table `poi_record`
+--
+
+DROP TABLE IF EXISTS `poi_record`;
+CREATE TABLE `poi_record` (
+  `POI_ID` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `POI_RECORD_TYPE` varchar(20) NOT NULL COMMENT 'poi, trespass, metro_red_card',
+  `POI_STATUS` varchar(20) NOT NULL DEFAULT 'draft' COMMENT 'draft, active, expired, inactive, archived',
+  `POI_FIRST_NAME` varchar(60) NOT NULL,
+  `POI_LAST_NAME` varchar(60) NOT NULL,
+  `POI_KNOWN_ALIASES` varchar(200) DEFAULT NULL COMMENT 'Comma-separated known alternative names',
+  `POI_DATE_OF_BIRTH` date DEFAULT NULL,
+  `POI_GENDER` varchar(10) DEFAULT NULL COMMENT 'male, female, unknown',
+  `POI_PHYSICAL_DESCRIPTION` varchar(500) DEFAULT NULL,
+  `POI_THREAT_LEVEL` varchar(20) NOT NULL COMMENT 'low, medium, high, critical',
+  `POI_SUMMARY` varchar(300) NOT NULL COMMENT 'Brief description visible to officers',
+  `POI_INTERNAL_NOTES` text DEFAULT NULL COMMENT 'Extended notes visible to managers/admins only',
+  `POI_INCIDENT_HISTORY_SUMMARY` varchar(1000) DEFAULT NULL COMMENT 'POI type only: incident narrative',
+  `POI_WATCH_LEVEL_REVIEW_DATE` date DEFAULT NULL COMMENT 'POI type only: review reminder date',
+  `POI_ASSOCIATED_INDIVIDUALS` varchar(500) DEFAULT NULL COMMENT 'POI type only: linked individuals',
+  `POI_TRESPASS_NOTICE_NUMBER` varchar(100) DEFAULT NULL COMMENT 'Trespass only: notice reference number',
+  `POI_ISSUING_AUTHORITY` varchar(200) DEFAULT NULL COMMENT 'Trespass & Metro RC: issuing entity',
+  `POI_PROPERTY_AREA_COVERED` varchar(500) DEFAULT NULL COMMENT 'Trespass only: area covered',
+  `POI_ISSUE_DATE` date DEFAULT NULL COMMENT 'Trespass & Metro RC: date notice was issued',
+  `POI_EXPIRY_DATE` date DEFAULT NULL COMMENT 'Trespass & Metro RC: expiry date',
+  `POI_NOTICE_DOCUMENT` varchar(512) DEFAULT NULL COMMENT 'Trespass only: signed notice file name',
+  `POI_RENEWAL_REMINDER_DAYS` int unsigned DEFAULT NULL COMMENT 'Days before expiry for renewal reminder',
+  `POI_LAW_ENFORCEMENT_CONTACT` varchar(200) DEFAULT NULL COMMENT 'Trespass only: LE contact info',
+  `POI_CONDITIONS` text DEFAULT NULL COMMENT 'Trespass only: specific conditions',
+  `POI_RED_CARD_NUMBER` varchar(100) DEFAULT NULL COMMENT 'Metro RC only: card number',
+  `POI_LINES` varchar(500) DEFAULT NULL COMMENT 'Metro RC only: transit lines/stations covered',
+  `POI_CARD_DOCUMENT` varchar(512) DEFAULT NULL COMMENT 'Metro RC only: scanned card file name',
+  `POI_INACTIVATION_REASON` text DEFAULT NULL COMMENT 'Reason for inactivation',
+  `POI_APPROVED_BY` varchar(128) DEFAULT NULL COMMENT 'User who published the record',
+  `POI_APPROVED_ON` datetime DEFAULT NULL COMMENT 'Timestamp of publish/approval',
+  `POI_CREATED_BY` varchar(128) NOT NULL,
+  `POI_CREATED_ON` datetime NOT NULL,
+  `POI_LAST_UPDATE` datetime DEFAULT NULL,
+  `POI_DELETED_ON` datetime DEFAULT NULL,
+  PRIMARY KEY (`POI_ID`),
+  KEY `IX_POI_RECORD_TYPE` (`POI_RECORD_TYPE`),
+  KEY `IX_POI_STATUS` (`POI_STATUS`),
+  KEY `IX_POI_THREAT_LEVEL` (`POI_THREAT_LEVEL`),
+  KEY `IX_POI_EXPIRY_DATE` (`POI_EXPIRY_DATE`),
+  KEY `IX_POI_CREATED_ON` (`POI_CREATED_ON`),
+  CONSTRAINT `FK_POI_CREATED_BY` FOREIGN KEY (`POI_CREATED_BY`) REFERENCES `user` (`USR_ID`),
+  CONSTRAINT `FK_POI_APPROVED_BY` FOREIGN KEY (`POI_APPROVED_BY`) REFERENCES `user` (`USR_ID`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+--
+-- Dumping data for table `poi_record`
+--
+
+/*!40000 ALTER TABLE `poi_record` DISABLE KEYS */;
+/*!40000 ALTER TABLE `poi_record` ENABLE KEYS */;
+
+
+--
+-- Definition of table `poi_photo`
+--
+
+DROP TABLE IF EXISTS `poi_photo`;
+CREATE TABLE `poi_photo` (
+  `PPH_ID` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `PPH_POI_ID` bigint unsigned NOT NULL COMMENT 'FK to poi_record',
+  `PPH_FILE_NAME` varchar(512) NOT NULL,
+  `PPH_SORT_ORDER` int unsigned NOT NULL DEFAULT 0,
+  `PPH_CREATED_ON` datetime NOT NULL,
+  `PPH_DELETED_ON` datetime DEFAULT NULL,
+  PRIMARY KEY (`PPH_ID`),
+  KEY `IX_PPH_POI_ID` (`PPH_POI_ID`),
+  CONSTRAINT `FK_PPH_POI_ID` FOREIGN KEY (`PPH_POI_ID`) REFERENCES `poi_record` (`POI_ID`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+--
+-- Dumping data for table `poi_photo`
+--
+
+/*!40000 ALTER TABLE `poi_photo` DISABLE KEYS */;
+/*!40000 ALTER TABLE `poi_photo` ENABLE KEYS */;
+
+
+--
+-- Definition of table `poi_site`
+--
+
+DROP TABLE IF EXISTS `poi_site`;
+CREATE TABLE `poi_site` (
+  `PSI_ID` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `PSI_POI_ID` bigint unsigned NOT NULL COMMENT 'FK to poi_record',
+  `PSI_COM_ID` bigint unsigned NOT NULL COMMENT 'FK to community',
+  `PSI_CREATED_ON` datetime NOT NULL,
+  `PSI_DELETED_ON` datetime DEFAULT NULL,
+  PRIMARY KEY (`PSI_ID`),
+  UNIQUE KEY `UQ_PSI_POI_COM` (`PSI_POI_ID`, `PSI_COM_ID`),
+  KEY `IX_PSI_COM_ID` (`PSI_COM_ID`),
+  CONSTRAINT `FK_PSI_POI_ID` FOREIGN KEY (`PSI_POI_ID`) REFERENCES `poi_record` (`POI_ID`),
+  CONSTRAINT `FK_PSI_COM_ID` FOREIGN KEY (`PSI_COM_ID`) REFERENCES `community` (`COM_ID`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+--
+-- Dumping data for table `poi_site`
+--
+
+/*!40000 ALTER TABLE `poi_site` DISABLE KEYS */;
+/*!40000 ALTER TABLE `poi_site` ENABLE KEYS */;
+
+
+--
+-- Definition of table `poi_incident`
+--
+
+DROP TABLE IF EXISTS `poi_incident`;
+CREATE TABLE `poi_incident` (
+  `PIN_ID` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `PIN_POI_ID` bigint unsigned NOT NULL COMMENT 'FK to poi_record',
+  `PIN_SVC_ID` bigint unsigned NOT NULL COMMENT 'FK to service_call',
+  `PIN_CREATED_ON` datetime NOT NULL,
+  `PIN_DELETED_ON` datetime DEFAULT NULL,
+  PRIMARY KEY (`PIN_ID`),
+  UNIQUE KEY `UQ_PIN_POI_SVC` (`PIN_POI_ID`, `PIN_SVC_ID`),
+  KEY `IX_PIN_SVC_ID` (`PIN_SVC_ID`),
+  CONSTRAINT `FK_PIN_POI_ID` FOREIGN KEY (`PIN_POI_ID`) REFERENCES `poi_record` (`POI_ID`),
+  CONSTRAINT `FK_PIN_SVC_ID` FOREIGN KEY (`PIN_SVC_ID`) REFERENCES `service_call` (`SVC_ID`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+--
+-- Dumping data for table `poi_incident`
+--
+
+/*!40000 ALTER TABLE `poi_incident` DISABLE KEYS */;
+/*!40000 ALTER TABLE `poi_incident` ENABLE KEYS */;
+
+
+--
+-- Definition of table `poi_export`
+--
+
+DROP TABLE IF EXISTS `poi_export`;
+CREATE TABLE `poi_export` (
+  `PXP_ID` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `PXP_POI_ID` bigint unsigned NOT NULL COMMENT 'FK to poi_record',
+  `PXP_EXPORTED_BY` varchar(128) NOT NULL COMMENT 'Admin who initiated export',
+  `PXP_FILE_NAME` varchar(512) DEFAULT NULL COMMENT 'Generated PDF file name',
+  `PXP_EXPORTED_ON` datetime NOT NULL,
+  PRIMARY KEY (`PXP_ID`),
+  KEY `IX_PXP_POI_ID` (`PXP_POI_ID`),
+  CONSTRAINT `FK_PXP_POI_ID` FOREIGN KEY (`PXP_POI_ID`) REFERENCES `poi_record` (`POI_ID`),
+  CONSTRAINT `FK_PXP_EXPORTED_BY` FOREIGN KEY (`PXP_EXPORTED_BY`) REFERENCES `user` (`USR_ID`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+--
+-- Dumping data for table `poi_export`
+--
+
+/*!40000 ALTER TABLE `poi_export` DISABLE KEYS */;
+/*!40000 ALTER TABLE `poi_export` ENABLE KEYS */;
+
+
+--
+-- Definition of table `poi_view`
+--
+
+DROP TABLE IF EXISTS `poi_view`;
+CREATE TABLE `poi_view` (
+  `PVW_ID` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `PVW_POI_ID` bigint unsigned NOT NULL COMMENT 'FK to poi_record',
+  `PVW_USR_ID` varchar(128) NOT NULL COMMENT 'Officer who viewed the record',
+  `PVW_VIEWED_ON` datetime NOT NULL COMMENT 'Last viewed timestamp',
+  PRIMARY KEY (`PVW_ID`),
+  UNIQUE KEY `UQ_PVW_POI_USR` (`PVW_POI_ID`, `PVW_USR_ID`),
+  KEY `IX_PVW_USR_ID` (`PVW_USR_ID`),
+  CONSTRAINT `FK_PVW_POI_ID` FOREIGN KEY (`PVW_POI_ID`) REFERENCES `poi_record` (`POI_ID`),
+  CONSTRAINT `FK_PVW_USR_ID` FOREIGN KEY (`PVW_USR_ID`) REFERENCES `user` (`USR_ID`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+--
+-- Dumping data for table `poi_view`
+--
+
+/*!40000 ALTER TABLE `poi_view` DISABLE KEYS */;
+/*!40000 ALTER TABLE `poi_view` ENABLE KEYS */;
+
+
+--
 -- Definition of procedure `prc_entity_lock_acquire`
 --
 
