@@ -586,6 +586,39 @@ Officers check in and out of shifts via the mobile app. Check-in transitions the
 
 ---
 
+### POST Shift/unassign_post
+*Admin only.* Removes a post assignment from an officer in a shift without removing the officer from the shift.
+
+- **API Parameters:**
+    | Parameter | Type | Required | Description |
+    |-----------|------|----------|-------------|
+    | `#token` | string | Yes | An Admin session token. |
+    | `shift_id` | integer | Yes | The ID of the shift. |
+    | `officer_id` | string | Yes | The user ID of the allocated officer. |
+    | `post_id` | integer | Yes | The ID of the post to unassign. |
+
+- **Return Values:**
+    ```json
+    {
+        "rc": 0,
+        "message": "success"
+    }
+    ```
+
+- **Error Cases:**
+    | rc | Message | Scenario |
+    |----|---------|----------|
+    | 103 | current user does not have privileges | The caller is not an Admin. |
+    | 201 | invalid user token | Invalid or expired token. |
+    | 610 | shift not found | No active shift exists with the given `shift_id`. |
+    | 620 | shift cannot be updated in its current status | The shift is Active, Completed, or Cancelled. |
+    | 622 | post not found or not active | No active post assignment matching the given `shift_id`, `officer_id`, and `post_id` was found. |
+
+- **Usage & Flows:**
+    Called from the Post Assignment section within the Shift Details panel (SDS 4.7.2) when the manager needs to remove a post from an officer without removing the officer from the shift entirely. Useful for correcting mistaken post assignments or clearing an assignment before reassigning a different post. Only Draft and Published shifts accept post unassignments. If the shift is Published, a "Shift Updated" notification is sent to the affected officer (SDS 4.7.4).
+
+---
+
 ## Endpoints — Check-in / Check-out
 
 ### POST Shift/check_in

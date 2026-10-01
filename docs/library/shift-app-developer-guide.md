@@ -280,6 +280,24 @@ Assign a post to an officer in a shift. The officer must already be allocated to
 
 ---
 
+#### `Shift/unassign_post`
+
+Remove a post assignment from an officer in a shift without removing the officer from the shift.
+
+**ACL:** Admin
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `shift_id` | `i` | Yes | Shift ID |
+| `officer_id` | `s` | Yes | Officer user ID |
+| `post_id` | `i` | Yes | Post ID to unassign |
+
+**Returns:** `{ rc: 0 }` on success.
+
+**Notes:** Only draft and published shifts allow post unassignment. Returns `rc: 622` if the specified post assignment does not exist. If the shift is published, the affected officer receives a `shift_updated` notification.
+
+---
+
 #### `Shift/validate_allocation`
 
 Check for scheduling conflicts without making changes. Dry-run validation.

@@ -578,7 +578,7 @@ See `docs/deferred_requirements/06-shift-enhancements.md` for the full list:
 
 | File | Purpose |
 |------|---------|
-| `backend/platform/api/shift.js` | API endpoint definitions (18 endpoints) |
+| `backend/platform/api/shift.js` | API endpoint definitions (19 endpoints) |
 | `backend/platform/funcs/shift.js` | Business logic implementation (~2000 lines) |
 | `backend/platform/user_modules/shift_utils.js` | Shared shift utilities (`$ShiftUtils`) |
 | `backend/platform/user_modules/funcs.js` | Shared helpers (`$Funcs.getUserName`, `$Funcs.getUserNames`) |

@@ -116,6 +116,16 @@ module.exports =
 												},
 
 
+			"unassign_post"						: {
+													"@acl"							: [$ACL.USER_TYPE_ADMIN],
+													"@doc"							: "Remove a post assignment from an officer in a shift without removing the officer from the shift.",
+													"#token"						: "s",
+													"shift_id"						: "i***Shift ID",
+													"officer_id"					: "s***Officer user ID",
+													"post_id"						: "i***Post ID to unassign",
+												},
+
+
 			// =================================================================
 			// Check-in / Check-out
 			// =================================================================
