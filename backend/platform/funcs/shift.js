@@ -1130,6 +1130,51 @@ module.exports = class
 	}
 
 	// =========================================================================
+	// Unassign Post
+	// =========================================================================
+
+	unassign_post()
+	{
+		let shift = fetchShiftRecord(this.$shift_id);
+		if (!shift)
+		{
+			return $ERRS.ERR_SHIFT_NOT_FOUND;
+		}
+
+		if (shift.SFT_STATUS !== $Const.SHIFT_STATUS_DRAFT && shift.SFT_STATUS !== $Const.SHIFT_STATUS_PUBLISHED)
+		{
+			return $ERRS.ERR_SHIFT_CANNOT_UPDATE;
+		}
+
+		let existing = $Db.executeQuery(
+			`SELECT SHP_ID FROM \`shift_post\`
+			 WHERE SHP_SFT_ID=? AND SHP_OFC_USR_ID=? AND SHP_PST_ID=? AND SHP_DELETED_ON IS NULL`,
+			[this.$shift_id, this.$officer_id, this.$post_id]);
+		if (existing.length === 0)
+		{
+			return $ERRS.ERR_SHIFT_POST_NOT_FOUND;
+		}
+
+		$Db.executeQuery(
+			`UPDATE \`shift_post\` SET SHP_DELETED_ON=?
+			 WHERE SHP_ID=? AND SHP_DELETED_ON IS NULL`,
+			[$Utils.now(), existing[0].SHP_ID]);
+		if ($Db.isError())
+		{
+			return $Err.DBError("ERR_DB_UPDATE_ERROR", $Db.lastErrorMsg());
+		}
+
+		if (shift.SFT_STATUS === $Const.SHIFT_STATUS_PUBLISHED)
+		{
+			sendShiftNotification(this.$Session, "shift_updated", shift,
+				{shift_date: String(shift.SFT_DATE)},
+				[this.$officer_id], shift.SFT_COM_ID);
+		}
+
+		return $ERRS.ERR_SUCCESS;
+	}
+
+	// =========================================================================
 	// Check In
 	// =========================================================================
 

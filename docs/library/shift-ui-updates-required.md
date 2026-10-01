@@ -136,6 +136,10 @@ Each officer row shows:
   - "Missing required roles: [role_a, role_b]"
   - "Missing required badges: [badge_x]"
   - This is non-blocking — the assignment proceeds.
+- Each assigned post displays a **Remove** button (small "x" icon or trash icon).
+- Clicking Remove triggers a confirmation prompt: "Remove [post_name] assignment from [officer_name]?"
+- On confirmation, calls `Shift/unassign_post` with `shift_id`, `officer_id`, and `post_id`.
+- On success, the post is removed from the officer's assignment list in the UI.
 
 #### 1.2.5 Check-In History Section
 

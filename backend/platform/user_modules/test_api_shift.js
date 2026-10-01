@@ -1677,6 +1677,225 @@ module.exports =
 			}
 
 			// =================================================================
+			// Test 55: unassign_post (happy path — draft shift)
+			// =================================================================
+
+			testResults.push({step: "Test 55: unassign_post", status: "running"});
+			if (testOfficerId === null || testPostId === null)
+			{
+				testResults.push({step: "Test 55: unassign_post", status: "failed", error: "Cannot test - officer or post not created"});
+			}
+			else
+			{
+				let unassignShiftId = null;
+				rv = $executeAPI(session, "Shift/create_shift", {
+					community_id: testCommunityId,
+					shift_date: nextWeekStr,
+					start_time: "07:00",
+					end_time: "15:00",
+					officer_ids: [testOfficerId],
+					notes: "Shift for unassign_post test"
+				});
+				if ($Err.isERR(rv))
+				{
+					testResults.push({step: "Test 55: unassign_post", status: "failed", error: "Could not create shift: " + rv.message});
+				}
+				else
+				{
+					unassignShiftId = rv.shift_id;
+					// Assign the post first
+					rv = $executeAPI(session, "Shift/assign_post", {
+						shift_id: unassignShiftId,
+						officer_id: testOfficerId,
+						post_id: testPostId
+					});
+					if ($Err.isERR(rv))
+					{
+						testResults.push({step: "Test 55: unassign_post", status: "failed", error: "Could not assign post: " + rv.message});
+					}
+					else
+					{
+						// Now unassign
+						rv = $executeAPI(session, "Shift/unassign_post", {
+							shift_id: unassignShiftId,
+							officer_id: testOfficerId,
+							post_id: testPostId
+						});
+						if ($Err.isERR(rv))
+						{
+							testResults.push({step: "Test 55: unassign_post", status: "failed", error: rv.message});
+						}
+						else
+						{
+							testResults.push({step: "Test 55: unassign_post", status: "passed"});
+						}
+					}
+
+					// =========================================================
+					// Test 56: unassign_post (verify via get_shift)
+					// =========================================================
+
+					testResults.push({step: "Test 56: unassign_post (verify removal)", status: "running"});
+					rv = $executeAPI(session, "Shift/get_shift", {shift_id: unassignShiftId});
+					if ($Err.isERR(rv))
+					{
+						testResults.push({step: "Test 56: unassign_post (verify removal)", status: "failed", error: rv.message});
+					}
+					else
+					{
+						let s = rv.shift || rv;
+						let posts = s.posts || [];
+						let stillAssigned = posts.find(p => p.officer_id === testOfficerId && p.post_id === testPostId);
+						if (!stillAssigned)
+						{
+							testResults.push({step: "Test 56: unassign_post (verify removal)", status: "passed", verified: true});
+						}
+						else
+						{
+							testResults.push({step: "Test 56: unassign_post (verify removal)", status: "warning", verified: false, message: "Post assignment still present after unassign"});
+						}
+					}
+
+					// =========================================================
+					// Test 57: unassign_post (already removed, expect rc 622)
+					// =========================================================
+
+					testResults.push({step: "Test 57: unassign_post (already removed)", status: "running"});
+					rv = $executeAPI(session, "Shift/unassign_post", {
+						shift_id: unassignShiftId,
+						officer_id: testOfficerId,
+						post_id: testPostId
+					});
+					if ($Err.isERR(rv) && rv.rc === 622)
+					{
+						testResults.push({step: "Test 57: unassign_post (already removed)", status: "passed", message: "correctly returned rc 622 for non-existent assignment"});
+					}
+					else
+					{
+						testResults.push({step: "Test 57: unassign_post (already removed)", status: "warning", message: "expected rc 622 for already-removed assignment", rc: rv.rc});
+					}
+
+					// Clean up
+					$executeAPI(session, "Shift/delete_shift", {shift_id: unassignShiftId});
+				}
+			}
+
+			// =================================================================
+			// Test 58: unassign_post (invalid shift ID, expect rc 610)
+			// =================================================================
+
+			testResults.push({step: "Test 58: unassign_post (invalid shift)", status: "running"});
+			if (testOfficerId === null || testPostId === null)
+			{
+				testResults.push({step: "Test 58: unassign_post (invalid shift)", status: "failed", error: "Cannot test - officer or post not created"});
+			}
+			else
+			{
+				rv = $executeAPI(session, "Shift/unassign_post", {
+					shift_id: 999999999,
+					officer_id: testOfficerId,
+					post_id: testPostId
+				});
+				if ($Err.isERR(rv) && rv.rc === 610)
+				{
+					testResults.push({step: "Test 58: unassign_post (invalid shift)", status: "passed", message: "correctly returned rc 610 for invalid shift"});
+				}
+				else
+				{
+					testResults.push({step: "Test 58: unassign_post (invalid shift)", status: "warning", message: "expected rc 610 for invalid shift ID", rc: rv.rc});
+				}
+			}
+
+			// =================================================================
+			// Test 59: unassign_post (cancelled shift, expect rc 620)
+			// =================================================================
+
+			testResults.push({step: "Test 59: unassign_post (cancelled shift)", status: "running"});
+			if (testShiftId2 === null || testOfficerId === null || testPostId === null)
+			{
+				testResults.push({step: "Test 59: unassign_post (cancelled shift)", status: "failed", error: "Cannot test - shift2, officer, or post not created"});
+			}
+			else
+			{
+				// testShiftId2 was cancelled in Test 39
+				rv = $executeAPI(session, "Shift/unassign_post", {
+					shift_id: testShiftId2,
+					officer_id: testOfficerId,
+					post_id: testPostId
+				});
+				if ($Err.isERR(rv) && rv.rc === 620)
+				{
+					testResults.push({step: "Test 59: unassign_post (cancelled shift)", status: "passed", message: "correctly returned rc 620 for cancelled shift"});
+				}
+				else
+				{
+					testResults.push({step: "Test 59: unassign_post (cancelled shift)", status: "warning", message: "expected rc 620 for cancelled shift", rc: rv.rc});
+				}
+			}
+
+			// =================================================================
+			// Test 60: unassign_post (published shift — with notification)
+			// =================================================================
+
+			testResults.push({step: "Test 60: unassign_post (published shift)", status: "running"});
+			if (testOfficerId === null || testPostId === null)
+			{
+				testResults.push({step: "Test 60: unassign_post (published shift)", status: "failed", error: "Cannot test - officer or post not created"});
+			}
+			else
+			{
+				let pubUnassignShiftId = null;
+				rv = $executeAPI(session, "Shift/create_shift", {
+					community_id: testCommunityId,
+					shift_date: nextWeekStr,
+					start_time: "06:00",
+					end_time: "14:00",
+					officer_ids: [testOfficerId],
+					notes: "Published shift for unassign_post test"
+				});
+				if ($Err.isERR(rv))
+				{
+					testResults.push({step: "Test 60: unassign_post (published shift)", status: "failed", error: "Could not create shift: " + rv.message});
+				}
+				else
+				{
+					pubUnassignShiftId = rv.shift_id;
+					// Assign post, publish, then unassign
+					$executeAPI(session, "Shift/assign_post", {
+						shift_id: pubUnassignShiftId,
+						officer_id: testOfficerId,
+						post_id: testPostId
+					});
+					rv = $executeAPI(session, "Shift/publish_shift", {
+						shift_id: pubUnassignShiftId,
+						acknowledge_conflicts: true
+					});
+					if ($Err.isERR(rv))
+					{
+						testResults.push({step: "Test 60: unassign_post (published shift)", status: "failed", error: "Could not publish shift: " + rv.message});
+					}
+					else
+					{
+						rv = $executeAPI(session, "Shift/unassign_post", {
+							shift_id: pubUnassignShiftId,
+							officer_id: testOfficerId,
+							post_id: testPostId
+						});
+						if ($Err.isERR(rv))
+						{
+							testResults.push({step: "Test 60: unassign_post (published shift)", status: "failed", error: rv.message});
+						}
+						else
+						{
+							testResults.push({step: "Test 60: unassign_post (published shift)", status: "passed", message: "unassigned post on published shift (notification sent)"});
+						}
+					}
+					// Clean up — cancel then it can't be deleted (published), just cancel
+					$executeAPI(session, "Shift/cancel_shift", {shift_id: pubUnassignShiftId});
+				}
+			}
+
+			// =================================================================
 			// Cleanup: delete recurring shifts
 			// =================================================================
 
