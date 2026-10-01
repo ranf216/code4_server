@@ -79,13 +79,15 @@ The limit is configurable via `settings:asset → max_map_items_per_community` i
 
 ---
 
-## 7. Post Order Link from Post (SDS 4.2.6.2, 4.2.7)
+## ~~7. Post Order Link from Post (SDS 4.2.6.2, 4.2.7)~~ ✅ Backend Implemented — UI Integration Deferred
 
 **Requirement:** Each post can have a Post Order document linked. The user can view the post order from the post detail, and can click "Create post order" from a post.
 
-**Current behavior:** The `post` table does not have a foreign key to `post_order`. This link will be established when the Post Order module (Phase 6.1) is implemented — the `post_order` table will have a `PO_PST_ID` column referencing `post.PST_ID`.
+**Current behavior:** ✅ The Post Order module (Phase 6.1) is implemented. The `post_order` table has a `PO_PST_ID` column referencing `post.PST_ID`, establishing the link. Post orders can be created via `PostOrder/create_post_order` with a `post_id` parameter.
 
-**Dependencies:** Post Order module (Phase 6.1).
+**Still deferred:**
+- Post detail API (`Asset/get_post`) does not yet include a `post_order_id` field in its response. The client can query `PostOrder/get_post_orders_list` filtered by post to find the linked PO.
+- Admin Portal UI: "Create Post Order" button on the post detail screen, and a link to the post order if one exists.
 
 ---
 
@@ -168,5 +170,7 @@ This converts a passive alert into an actionable, trackable procurement workflow
 | `backend/platform/data/asset_shape.json` | Asset shape $DataItems |
 | `backend/platform/data/post_priority.json` | Post priority $DataItems |
 | `backend/platform/data/map_zone_type.json` | Map zone type $DataItems |
-| `db/db.sql` | Table schemas (post, asset, map_zone) |
-| `db/UpgradeDB.sql` | V 4.6.0 migration script |
+| `backend/platform/api/post_order.js` | Post Order API endpoint definitions (Phase 6.1) |
+| `backend/platform/funcs/post_order.js` | Post Order business logic (Phase 6.1) |
+| `db/db.sql` | Table schemas (post, asset, map_zone, post_order, etc.) |
+| `db/UpgradeDB.sql` | Migration script |

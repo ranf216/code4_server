@@ -1,0 +1,5 @@
+{
+    "draft":        {"name": {"en": "Draft"},       "define": "PO_STATUS_DRAFT"},
+    "published":    {"name": {"en": "Published"},   "define": "PO_STATUS_PUBLISHED"},
+    "archived":     {"name": {"en": "Archived"},    "define": "PO_STATUS_ARCHIVED"}
+}

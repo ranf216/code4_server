@@ -617,6 +617,155 @@ CREATE TABLE `post` (
 
 
 --
+-- Definition of table `post_order`
+--
+
+DROP TABLE IF EXISTS `post_order`;
+CREATE TABLE `post_order` (
+  `PO_ID` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `PO_PST_ID` bigint unsigned NOT NULL COMMENT 'FK to post this order belongs to',
+  `PO_COM_ID` bigint unsigned NOT NULL COMMENT 'Denormalized from post for query performance',
+  `PO_STATUS` varchar(20) NOT NULL DEFAULT 'draft' COMMENT 'draft, published, archived',
+  `PO_VERSION_MAJOR` int unsigned NOT NULL DEFAULT 0,
+  `PO_VERSION_MINOR` int unsigned NOT NULL DEFAULT 0,
+  `PO_EFFECTIVE_DATE` date DEFAULT NULL COMMENT 'Date from which the current version is active',
+  `PO_REVIEW_DUE_DATE` date DEFAULT NULL COMMENT 'Optional reminder date for author',
+  `PO_CREATED_BY` varchar(128) NOT NULL,
+  `PO_LAST_PUBLISHED_BY` varchar(128) DEFAULT NULL,
+  `PO_LAST_PUBLISHED_ON` datetime DEFAULT NULL,
+  `PO_CREATED_ON` datetime NOT NULL,
+  `PO_LAST_UPDATE` datetime DEFAULT NULL,
+  `PO_DELETED_ON` datetime DEFAULT NULL,
+  PRIMARY KEY (`PO_ID`),
+  KEY `IX_PO_PST_ID` (`PO_PST_ID`),
+  KEY `IX_PO_COM_ID` (`PO_COM_ID`),
+  KEY `IX_PO_STATUS` (`PO_STATUS`),
+  CONSTRAINT `FK_PO_PST_ID` FOREIGN KEY (`PO_PST_ID`) REFERENCES `post` (`PST_ID`),
+  CONSTRAINT `FK_PO_COM_ID` FOREIGN KEY (`PO_COM_ID`) REFERENCES `community` (`COM_ID`),
+  CONSTRAINT `FK_PO_CREATED_BY` FOREIGN KEY (`PO_CREATED_BY`) REFERENCES `user` (`USR_ID`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+--
+-- Dumping data for table `post_order`
+--
+
+/*!40000 ALTER TABLE `post_order` DISABLE KEYS */;
+/*!40000 ALTER TABLE `post_order` ENABLE KEYS */;
+
+
+--
+-- Definition of table `post_order_section`
+--
+
+DROP TABLE IF EXISTS `post_order_section`;
+CREATE TABLE `post_order_section` (
+  `POS_ID` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `POS_PO_ID` bigint unsigned NOT NULL COMMENT 'FK to post_order',
+  `POS_SECTION_TYPE` varchar(60) NOT NULL COMMENT 'Key from po_section_type data item',
+  `POS_TITLE` varchar(80) NOT NULL,
+  `POS_DESCRIPTION` text COMMENT 'Rich text content, max 10000 chars',
+  `POS_CLIENT_VISIBLE` tinyint unsigned NOT NULL DEFAULT 0 COMMENT '1=visible to clients',
+  `POS_NOTES` varchar(2000) DEFAULT NULL COMMENT 'Manager/admin only notes',
+  `POS_SORT_ORDER` int unsigned NOT NULL DEFAULT 0,
+  `POS_CREATED_ON` datetime NOT NULL,
+  `POS_LAST_UPDATE` datetime DEFAULT NULL,
+  `POS_DELETED_ON` datetime DEFAULT NULL,
+  PRIMARY KEY (`POS_ID`),
+  KEY `IX_POS_PO_ID` (`POS_PO_ID`),
+  CONSTRAINT `FK_POS_PO_ID` FOREIGN KEY (`POS_PO_ID`) REFERENCES `post_order` (`PO_ID`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+--
+-- Dumping data for table `post_order_section`
+--
+
+/*!40000 ALTER TABLE `post_order_section` DISABLE KEYS */;
+/*!40000 ALTER TABLE `post_order_section` ENABLE KEYS */;
+
+
+--
+-- Definition of table `post_order_attachment`
+--
+
+DROP TABLE IF EXISTS `post_order_attachment`;
+CREATE TABLE `post_order_attachment` (
+  `POF_ID` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `POF_POS_ID` bigint unsigned NOT NULL COMMENT 'FK to post_order_section',
+  `POF_FILE_NAME` varchar(512) NOT NULL,
+  `POF_CREATED_ON` datetime NOT NULL,
+  `POF_DELETED_ON` datetime DEFAULT NULL,
+  PRIMARY KEY (`POF_ID`),
+  KEY `IX_POF_POS_ID` (`POF_POS_ID`),
+  CONSTRAINT `FK_POF_POS_ID` FOREIGN KEY (`POF_POS_ID`) REFERENCES `post_order_section` (`POS_ID`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+--
+-- Dumping data for table `post_order_attachment`
+--
+
+/*!40000 ALTER TABLE `post_order_attachment` DISABLE KEYS */;
+/*!40000 ALTER TABLE `post_order_attachment` ENABLE KEYS */;
+
+
+--
+-- Definition of table `post_order_version`
+--
+
+DROP TABLE IF EXISTS `post_order_version`;
+CREATE TABLE `post_order_version` (
+  `POV_ID` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `POV_PO_ID` bigint unsigned NOT NULL COMMENT 'FK to post_order',
+  `POV_VERSION_MAJOR` int unsigned NOT NULL,
+  `POV_VERSION_MINOR` int unsigned NOT NULL,
+  `POV_CHANGE_SUMMARY` varchar(200) NOT NULL COMMENT 'Brief description of changes',
+  `POV_VERSION_TYPE` varchar(10) NOT NULL COMMENT 'major or minor',
+  `POV_EFFECTIVE_DATE` date NOT NULL,
+  `POV_CONTENT` json NOT NULL COMMENT 'Snapshot of sections and attachments at publish time',
+  `POV_PUBLISHED_BY` varchar(128) NOT NULL,
+  `POV_PUBLISHED_ON` datetime NOT NULL,
+  PRIMARY KEY (`POV_ID`),
+  KEY `IX_POV_PO_ID` (`POV_PO_ID`),
+  CONSTRAINT `FK_POV_PO_ID` FOREIGN KEY (`POV_PO_ID`) REFERENCES `post_order` (`PO_ID`),
+  CONSTRAINT `FK_POV_PUBLISHED_BY` FOREIGN KEY (`POV_PUBLISHED_BY`) REFERENCES `user` (`USR_ID`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+--
+-- Dumping data for table `post_order_version`
+--
+
+/*!40000 ALTER TABLE `post_order_version` DISABLE KEYS */;
+/*!40000 ALTER TABLE `post_order_version` ENABLE KEYS */;
+
+
+--
+-- Definition of table `post_order_acknowledgement`
+--
+
+DROP TABLE IF EXISTS `post_order_acknowledgement`;
+CREATE TABLE `post_order_acknowledgement` (
+  `POA_ID` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `POA_PO_ID` bigint unsigned NOT NULL COMMENT 'FK to post_order',
+  `POA_POV_ID` bigint unsigned NOT NULL COMMENT 'FK to post_order_version',
+  `POA_USR_ID` varchar(128) NOT NULL COMMENT 'Officer user ID',
+  `POA_ACKNOWLEDGED_ON` datetime NOT NULL,
+  PRIMARY KEY (`POA_ID`),
+  UNIQUE KEY `UQ_POA_VERSION_USER` (`POA_POV_ID`, `POA_USR_ID`),
+  KEY `IX_POA_PO_ID` (`POA_PO_ID`),
+  KEY `IX_POA_USR_ID` (`POA_USR_ID`),
+  CONSTRAINT `FK_POA_PO_ID` FOREIGN KEY (`POA_PO_ID`) REFERENCES `post_order` (`PO_ID`),
+  CONSTRAINT `FK_POA_POV_ID` FOREIGN KEY (`POA_POV_ID`) REFERENCES `post_order_version` (`POV_ID`),
+  CONSTRAINT `FK_POA_USR_ID` FOREIGN KEY (`POA_USR_ID`) REFERENCES `user` (`USR_ID`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+--
+-- Dumping data for table `post_order_acknowledgement`
+--
+
+/*!40000 ALTER TABLE `post_order_acknowledgement` DISABLE KEYS */;
+/*!40000 ALTER TABLE `post_order_acknowledgement` ENABLE KEYS */;
+
+
+--
 -- Definition of table `asset`
 --
 

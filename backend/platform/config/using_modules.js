@@ -34,5 +34,6 @@ module.exports =
         "test_api_route",
         "test_api_shift",
         "test_api_tracking",
+        "test_api_post_order",
     ]
 };
