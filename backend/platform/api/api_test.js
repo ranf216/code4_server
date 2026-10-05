@@ -98,4 +98,11 @@ module.exports =
                                                 "#token"                        : "s",
                                             },
 
+    "test_report_template_apis"             : {
+                                                "@acl"                          : [$ACL.USER_TYPE_ADMIN],
+                                                "@doc"                          : "Test all Report Template module APIs (create, get, list, update, duplicate, activate, archive, delete, get_style, update_style, state transitions, edge cases)",
+                                                "@mode"                         : "test",
+                                                "#token"                        : "s",
+                                            },
+
 };

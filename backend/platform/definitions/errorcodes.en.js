@@ -314,6 +314,17 @@ module.exports = {
 	"ERR_REPORT_CANNOT_SUBMIT"							: {"rc" : 712,	"message" : "report cannot be submitted in its current status"},
 	"ERR_REPORT_CANNOT_APPROVE"							: {"rc" : 713,	"message" : "report cannot be approved in its current status"},
 	"ERR_REPORT_CANNOT_DELIVER"							: {"rc" : 714,	"message" : "report cannot be delivered in its current status"},
+	"ERR_REPORT_TEMPLATE_NAME_EXISTS"					: {"rc" : 715,	"message" : "a template with this name already exists in this community"},
+	"ERR_REPORT_TEMPLATE_INVALID_CATEGORY"				: {"rc" : 716,	"message" : "invalid report category"},
+	"ERR_REPORT_TEMPLATE_CANNOT_ACTIVATE"				: {"rc" : 717,	"message" : "template cannot be activated in its current status"},
+	"ERR_REPORT_TEMPLATE_CANNOT_ARCHIVE"				: {"rc" : 718,	"message" : "template cannot be archived in its current status"},
+	"ERR_REPORT_TEMPLATE_INVALID_FIELD_TYPE"			: {"rc" : 719,	"message" : "invalid report field type"},
+	"ERR_REPORT_TEMPLATE_SECTION_REQUIRED"				: {"rc" : 720,	"message" : "at least one section is required"},
+	"ERR_REPORT_TEMPLATE_FIELD_REQUIRED"				: {"rc" : 721,	"message" : "at least one field is required per section"},
+	"ERR_REPORT_TEMPLATE_INVALID_STATUS"				: {"rc" : 722,	"message" : "invalid template status"},
+	"ERR_REPORT_TEMPLATE_INVALID_COMMUNITY"				: {"rc" : 723,	"message" : "one or more community IDs are invalid"},
+	"ERR_REPORT_TEMPLATE_CANNOT_EDIT"					: {"rc" : 724,	"message" : "template cannot be edited in its current status"},
+	"ERR_REPORT_TEMPLATE_HAS_LINKED_REPORTS"			: {"rc" : 725,	"message" : "template cannot be deleted because it has linked reports"},
 
 	// Notification (730-739)
 	"ERR_NOTIFICATION_NOT_FOUND"						: {"rc" : 730,	"message" : "notification not found"},

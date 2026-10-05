@@ -1,0 +1,14 @@
+{
+    "incident_date":       {"name": {"en": "Incident Date"},       "define": "REPORT_SYSTEM_FIELD_INCIDENT_DATE",       "field_type": "date"},
+    "incident_time":       {"name": {"en": "Incident Time"},       "define": "REPORT_SYSTEM_FIELD_INCIDENT_TIME",       "field_type": "text"},
+    "incident_location":   {"name": {"en": "Incident Location"},   "define": "REPORT_SYSTEM_FIELD_INCIDENT_LOCATION",   "field_type": "location"},
+    "incident_type":       {"name": {"en": "Incident Type"},       "define": "REPORT_SYSTEM_FIELD_INCIDENT_TYPE",       "field_type": "dropdown"},
+    "incident_description":{"name": {"en": "Incident Description"},"define": "REPORT_SYSTEM_FIELD_INCIDENT_DESCRIPTION","field_type": "text"},
+    "officer_name":        {"name": {"en": "Officer Name"},        "define": "REPORT_SYSTEM_FIELD_OFFICER_NAME",        "field_type": "text"},
+    "resident_name":       {"name": {"en": "Resident Name"},       "define": "REPORT_SYSTEM_FIELD_RESIDENT_NAME",       "field_type": "text"},
+    "community_name":      {"name": {"en": "Community Name"},      "define": "REPORT_SYSTEM_FIELD_COMMUNITY_NAME",      "field_type": "text"},
+    "call_reference":      {"name": {"en": "Call Reference"},      "define": "REPORT_SYSTEM_FIELD_CALL_REFERENCE",      "field_type": "text"},
+    "priority":            {"name": {"en": "Priority"},            "define": "REPORT_SYSTEM_FIELD_PRIORITY",            "field_type": "dropdown"},
+    "media":               {"name": {"en": "Media"},               "define": "REPORT_SYSTEM_FIELD_MEDIA",               "field_type": "file_upload"},
+    "officer_comments":    {"name": {"en": "Officer Comments"},    "define": "REPORT_SYSTEM_FIELD_OFFICER_COMMENTS",    "field_type": "text"}
+}

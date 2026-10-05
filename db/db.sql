@@ -1858,6 +1858,125 @@ CREATE TABLE `poi_view` (
 
 
 --
+-- Definition of table `report_template`
+--
+
+DROP TABLE IF EXISTS `report_template`;
+CREATE TABLE `report_template` (
+  `RPT_ID` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `RPT_NAME` varchar(80) NOT NULL,
+  `RPT_CATEGORY` varchar(20) NOT NULL COMMENT 'incident, daily_activity, custom',
+  `RPT_STATUS` varchar(20) NOT NULL DEFAULT 'draft' COMMENT 'draft, active, archived',
+  `RPT_TITLE_FORMAT` varchar(500) NOT NULL COMMENT 'Report title pattern with placeholders: {date}, {community}, {officer}, {template_name}, {incident_type}',
+  `RPT_IS_GLOBAL` tinyint unsigned NOT NULL DEFAULT 0 COMMENT '1=available to all communities',
+  `RPT_REVIEW_BEFORE_CLIENT` tinyint unsigned NOT NULL DEFAULT 0 COMMENT '1=route to manager review before client delivery',
+  `RPT_ALLOW_OFFICER_EDITING` tinyint unsigned NOT NULL DEFAULT 0 COMMENT '1=officers can edit after submit',
+  `RPT_STYLE` json DEFAULT NULL COMMENT 'Template formatting/style settings JSON',
+  `RPT_CREATED_BY` varchar(128) NOT NULL,
+  `RPT_CREATED_ON` datetime NOT NULL,
+  `RPT_LAST_UPDATE` datetime DEFAULT NULL,
+  `RPT_DELETED_ON` datetime DEFAULT NULL,
+  PRIMARY KEY (`RPT_ID`),
+  KEY `IX_RPT_STATUS` (`RPT_STATUS`),
+  KEY `IX_RPT_CATEGORY` (`RPT_CATEGORY`),
+  CONSTRAINT `FK_RPT_CREATED_BY` FOREIGN KEY (`RPT_CREATED_BY`) REFERENCES `user` (`USR_ID`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+--
+-- Dumping data for table `report_template`
+--
+
+/*!40000 ALTER TABLE `report_template` DISABLE KEYS */;
+/*!40000 ALTER TABLE `report_template` ENABLE KEYS */;
+
+
+--
+-- Definition of table `report_template_community`
+--
+
+DROP TABLE IF EXISTS `report_template_community`;
+CREATE TABLE `report_template_community` (
+  `RTC_ID` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `RTC_RPT_ID` bigint unsigned NOT NULL COMMENT 'FK to report_template',
+  `RTC_COM_ID` bigint unsigned NOT NULL COMMENT 'FK to community',
+  `RTC_CREATED_ON` datetime NOT NULL,
+  `RTC_DELETED_ON` datetime DEFAULT NULL,
+  PRIMARY KEY (`RTC_ID`),
+  UNIQUE KEY `UQ_RTC_RPT_COM` (`RTC_RPT_ID`, `RTC_COM_ID`),
+  KEY `IX_RTC_COM_ID` (`RTC_COM_ID`),
+  CONSTRAINT `FK_RTC_RPT_ID` FOREIGN KEY (`RTC_RPT_ID`) REFERENCES `report_template` (`RPT_ID`),
+  CONSTRAINT `FK_RTC_COM_ID` FOREIGN KEY (`RTC_COM_ID`) REFERENCES `community` (`COM_ID`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+--
+-- Dumping data for table `report_template_community`
+--
+
+/*!40000 ALTER TABLE `report_template_community` DISABLE KEYS */;
+/*!40000 ALTER TABLE `report_template_community` ENABLE KEYS */;
+
+
+--
+-- Definition of table `report_template_section`
+--
+
+DROP TABLE IF EXISTS `report_template_section`;
+CREATE TABLE `report_template_section` (
+  `RTS_ID` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `RTS_RPT_ID` bigint unsigned NOT NULL COMMENT 'FK to report_template',
+  `RTS_TITLE` varchar(80) NOT NULL,
+  `RTS_SORT_ORDER` int unsigned NOT NULL DEFAULT 0,
+  `RTS_IS_ENABLED` tinyint unsigned NOT NULL DEFAULT 1 COMMENT '1=section is active in the template',
+  `RTS_IS_REQUIRED` tinyint unsigned NOT NULL DEFAULT 1 COMMENT '1=officer must complete this section',
+  `RTS_CLIENT_VISIBLE` tinyint unsigned NOT NULL DEFAULT 1 COMMENT '1=visible in client-facing report',
+  `RTS_CREATED_ON` datetime NOT NULL,
+  `RTS_LAST_UPDATE` datetime DEFAULT NULL,
+  `RTS_DELETED_ON` datetime DEFAULT NULL,
+  PRIMARY KEY (`RTS_ID`),
+  KEY `IX_RTS_RPT_ID` (`RTS_RPT_ID`),
+  CONSTRAINT `FK_RTS_RPT_ID` FOREIGN KEY (`RTS_RPT_ID`) REFERENCES `report_template` (`RPT_ID`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+--
+-- Dumping data for table `report_template_section`
+--
+
+/*!40000 ALTER TABLE `report_template_section` DISABLE KEYS */;
+/*!40000 ALTER TABLE `report_template_section` ENABLE KEYS */;
+
+
+--
+-- Definition of table `report_template_field`
+--
+
+DROP TABLE IF EXISTS `report_template_field`;
+CREATE TABLE `report_template_field` (
+  `RTF_ID` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `RTF_RTS_ID` bigint unsigned NOT NULL COMMENT 'FK to report_template_section',
+  `RTF_FIELD_KEY` varchar(50) NOT NULL COMMENT 'System field key or custom identifier',
+  `RTF_LABEL` varchar(80) NOT NULL,
+  `RTF_DESCRIPTION` varchar(500) DEFAULT NULL,
+  `RTF_FIELD_TYPE` varchar(20) NOT NULL COMMENT 'text, date, location, dropdown, file_upload, digital_signature',
+  `RTF_CONFIG` json DEFAULT NULL COMMENT 'Type-specific config: max_chars, dropdown_values, max_files, is_multi_select',
+  `RTF_SORT_ORDER` int unsigned NOT NULL DEFAULT 0,
+  `RTF_IS_SYSTEM_FIELD` tinyint unsigned NOT NULL DEFAULT 0 COMMENT '1=predefined incident field, 0=custom',
+  `RTF_IS_REQUIRED` tinyint unsigned NOT NULL DEFAULT 1 COMMENT '1=field value is mandatory when filling report',
+  `RTF_CREATED_ON` datetime NOT NULL,
+  `RTF_DELETED_ON` datetime DEFAULT NULL,
+  PRIMARY KEY (`RTF_ID`),
+  KEY `IX_RTF_RTS_ID` (`RTF_RTS_ID`),
+  CONSTRAINT `FK_RTF_RTS_ID` FOREIGN KEY (`RTF_RTS_ID`) REFERENCES `report_template_section` (`RTS_ID`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+--
+-- Dumping data for table `report_template_field`
+--
+
+/*!40000 ALTER TABLE `report_template_field` DISABLE KEYS */;
+/*!40000 ALTER TABLE `report_template_field` ENABLE KEYS */;
+
+
+--
 -- Definition of procedure `prc_entity_lock_acquire`
 --
 

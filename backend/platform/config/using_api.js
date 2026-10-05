@@ -11,6 +11,7 @@ module.exports =
 	"officer",
 	"poi",
 	"post_order",
+	"report_template",
 	"resident",
 	"route",
 	"settings",

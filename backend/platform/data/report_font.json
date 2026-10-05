@@ -1,0 +1,5 @@
+{
+    "arial":           {"name": {"en": "Arial"},           "define": "REPORT_FONT_ARIAL"},
+    "calibri":         {"name": {"en": "Calibri"},         "define": "REPORT_FONT_CALIBRI"},
+    "times_new_roman": {"name": {"en": "Times New Roman"}, "define": "REPORT_FONT_TIMES_NEW_ROMAN"}
+}
