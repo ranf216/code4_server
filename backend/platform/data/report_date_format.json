@@ -1,0 +1,5 @@
+{
+    "mm_dd_yyyy": {"name": {"en": "MM/DD/YYYY"}, "define": "REPORT_DATE_FORMAT_MM_DD_YYYY", "pattern": "m/d/Y"},
+    "dd_mm_yyyy": {"name": {"en": "DD/MM/YYYY"}, "define": "REPORT_DATE_FORMAT_DD_MM_YYYY", "pattern": "d/m/Y"},
+    "yyyy_mm_dd": {"name": {"en": "YYYY-MM-DD"}, "define": "REPORT_DATE_FORMAT_YYYY_MM_DD", "pattern": "Y-m-d"}
+}

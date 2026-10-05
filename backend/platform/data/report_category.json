@@ -1,0 +1,5 @@
+{
+    "incident":        {"name": {"en": "Incident"},        "define": "REPORT_CATEGORY_INCIDENT"},
+    "daily_activity":  {"name": {"en": "Daily Activity"},  "define": "REPORT_CATEGORY_DAILY_ACTIVITY"},
+    "custom":          {"name": {"en": "Custom"},          "define": "REPORT_CATEGORY_CUSTOM"}
+}

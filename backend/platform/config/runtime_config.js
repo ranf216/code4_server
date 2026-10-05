@@ -20,6 +20,7 @@ module.exports =
 	"ASSETS_LIST_PAGE_SIZE"												: 50,
 	"POSTS_LIST_PAGE_SIZE"												: 50,
 	"SHIFTS_LIST_PAGE_SIZE"												: 20,
+	"REPORT_TEMPLATES_PAGE_SIZE"										: 20,
 
 	"SETTINGS_DEFAULTS"													: {
 		"gps": {

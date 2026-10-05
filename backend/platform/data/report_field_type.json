@@ -1,0 +1,8 @@
+{
+    "text":              {"name": {"en": "Text"},              "define": "REPORT_FIELD_TYPE_TEXT"},
+    "date":              {"name": {"en": "Date"},              "define": "REPORT_FIELD_TYPE_DATE"},
+    "location":          {"name": {"en": "Location"},          "define": "REPORT_FIELD_TYPE_LOCATION"},
+    "dropdown":          {"name": {"en": "Dropdown"},          "define": "REPORT_FIELD_TYPE_DROPDOWN"},
+    "file_upload":       {"name": {"en": "File Upload"},       "define": "REPORT_FIELD_TYPE_FILE_UPLOAD"},
+    "digital_signature": {"name": {"en": "Digital Signature"}, "define": "REPORT_FIELD_TYPE_DIGITAL_SIGNATURE"}
+}

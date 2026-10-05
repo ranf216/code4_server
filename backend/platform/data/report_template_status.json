@@ -1,0 +1,5 @@
+{
+    "draft":    {"name": {"en": "Draft"},    "define": "REPORT_TEMPLATE_STATUS_DRAFT"},
+    "active":   {"name": {"en": "Active"},   "define": "REPORT_TEMPLATE_STATUS_ACTIVE"},
+    "archived": {"name": {"en": "Archived"}, "define": "REPORT_TEMPLATE_STATUS_ARCHIVED"}
+}

@@ -1,0 +1,5 @@
+{
+    "compact":           {"name": {"en": "Compact"},           "define": "REPORT_HEADER_LAYOUT_COMPACT"},
+    "standard":          {"name": {"en": "Standard"},          "define": "REPORT_HEADER_LAYOUT_STANDARD"},
+    "full_width_banner": {"name": {"en": "Full-Width Banner"}, "define": "REPORT_HEADER_LAYOUT_FULL_WIDTH_BANNER"}
+}

@@ -8,6 +8,34 @@ module.exports = class
         }
     }
 
+    _runTest(testFn)
+    {
+        if (!this.$log_req_res)
+        {
+            return testFn();
+        }
+
+        let origExecuteAPI = $executeAPI;
+        let callIndex = 0;
+        $executeAPI = function(session, apiName, params)
+        {
+            callIndex++;
+            $Logger.logString($Const.LL_INFO, `[TEST-REQ #${callIndex}] ${apiName} ${JSON.stringify(params)}`);
+            let rv = origExecuteAPI(session, apiName, params);
+            $Logger.logString($Const.LL_INFO, `[TEST-RES #${callIndex}] ${apiName} ${JSON.stringify(rv)}`);
+            return rv;
+        };
+
+        try
+        {
+            return testFn();
+        }
+        finally
+        {
+            $executeAPI = origExecuteAPI;
+        }
+    }
+
     test_settings()
     {
         let vals = {};
@@ -8824,5 +8852,10 @@ module.exports = class
     test_poi_apis()
     {
         return $TestApiPoi.test_poi_apis(this.$Session);
+    }
+
+    test_report_template_apis()
+    {
+        return $TestApiReportTemplate.test_report_template_apis(this.$Session);
     }
 }

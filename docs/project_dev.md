@@ -1,7 +1,7 @@
 # Server Implementation Documentation
 
-**Document Version:** 1.7  
-**Last Updated:** 2026-08-13
+**Document Version:** 1.8  
+**Last Updated:** 2026-10-04
 **Purpose:** Comprehensive documentation of the project server business logic implementation
 
 ---
@@ -1188,6 +1188,109 @@ POI settings stored in `key_value` under `settings:poi`. Defaults in `runtime_co
 - Dashboard / summary statistics
 
 See `docs/issues-questions/poi-issues-questions.md` for resolved questions and `docs/deferred_requirements/08-poi-enhancements.md` for remaining deferred requirements.
+
+---
+
+## Phase 7 — Reporting
+
+### 7.1 Report Template (`platform/api/report_template.js`, `platform/funcs/report_template.js`)
+
+Manages reusable report templates that define the structure, sections, fields, and formatting for officer reports. Templates are configured by admins and used by officers when generating incident reports, daily activity reports, and custom reports.
+
+#### Report Categories (`platform/data/report_category.json`)
+| ID | Name |
+|---|---|
+| `incident` | Incident |
+| `daily_activity` | Daily Activity |
+| `custom` | Custom |
+
+#### Template Statuses (`platform/data/report_template_status.json`)
+| ID | Name | Description |
+|---|---|---|
+| `draft` | Draft | Template is being configured; not visible to officers |
+| `active` | Active | Template is available for officer report creation |
+| `archived` | Archived | Template is retired; existing reports unaffected |
+
+#### Field Types (`platform/data/report_field_type.json`)
+| ID | Name |
+|---|---|
+| `text` | Text |
+| `date` | Date |
+| `location` | Location |
+| `dropdown` | Dropdown |
+| `file_upload` | File Upload |
+| `digital_signature` | Digital Signature |
+
+#### System Fields (`platform/data/report_system_field.json`)
+Pre-defined field keys for incident reports: `incident_type`, `incident_date`, `incident_time`, `incident_location`, `reporting_officer`, `persons_involved`, `witnesses`, `injuries_reported`, `police_notified`, `damage_description`.
+
+#### Style/Formatting Data Items
+| File | Description |
+|---|---|
+| `report_header_layout.json` | Report header layouts: compact, standard, full_width_banner |
+| `report_font.json` | Report fonts: arial, calibri, times_new_roman |
+| `report_date_format.json` | Date formats: mm_dd_yyyy, dd_mm_yyyy, yyyy_mm_dd |
+| `report_section_breaks.json` | Section breaks: new_page, continuous |
+
+#### Database Tables (V 7.1.0)
+| Table | Prefix | Description |
+|---|---|---|
+| `report_template` | `RPT_` | Root template record with header settings, category, status, style JSON |
+| `report_template_community` | `RTC_` | Community assignments (many-to-many); empty = global |
+| `report_template_section` | `RTS_` | Ordered sections within a template |
+| `report_template_field` | `RTF_` | Configured fields within each section |
+
+#### API Endpoints
+
+| API | ACL | Description |
+|---|---|---|
+| `Report_template/get_templates_list` | ADMIN, OFFICER | Paginated list with filters. Officers see only active templates for their communities. |
+| `Report_template/get_template` | ADMIN, OFFICER | Full template with sections and fields. Officers see only active templates for their communities. |
+| `Report_template/create_template` | ADMIN | Create template with header settings, sections, and fields. Starts in draft status. |
+| `Report_template/update_template` | ADMIN | Update template header and/or sections. Archived templates cannot be edited. |
+| `Report_template/duplicate_template` | ADMIN | Duplicate an existing template. New template is created in draft status. |
+| `Report_template/archive_template` | ADMIN | Archive a template. |
+| `Report_template/activate_template` | ADMIN | Activate a draft or archived template. Requires at least one section with fields. |
+| `Report_template/delete_template` | ADMIN | Soft-delete a draft template. Templates with linked reports cannot be deleted. |
+| `Report_template/get_template_style` | ADMIN | Get template formatting/style settings. |
+| `Report_template/update_template_style` | ADMIN | Update template formatting/style settings (logo, colors, fonts, layout, etc.). |
+
+#### Error Codes (711, 715–725)
+| Code | Constant | Message |
+|---|---|---|
+| 711 | `ERR_REPORT_TEMPLATE_NOT_FOUND` | report template not found |
+| 715 | `ERR_REPORT_TEMPLATE_NAME_EXISTS` | a template with this name already exists in this community |
+| 716 | `ERR_REPORT_TEMPLATE_INVALID_CATEGORY` | invalid report category |
+| 717 | `ERR_REPORT_TEMPLATE_CANNOT_ACTIVATE` | template cannot be activated in its current status |
+| 718 | `ERR_REPORT_TEMPLATE_CANNOT_ARCHIVE` | template cannot be archived in its current status |
+| 719 | `ERR_REPORT_TEMPLATE_INVALID_FIELD_TYPE` | invalid report field type |
+| 720 | `ERR_REPORT_TEMPLATE_SECTION_REQUIRED` | at least one section is required |
+| 721 | `ERR_REPORT_TEMPLATE_FIELD_REQUIRED` | at least one field is required per section |
+| 722 | `ERR_REPORT_TEMPLATE_INVALID_STATUS` | invalid template status |
+| 723 | `ERR_REPORT_TEMPLATE_INVALID_COMMUNITY` | one or more community IDs are invalid |
+| 724 | `ERR_REPORT_TEMPLATE_CANNOT_EDIT` | template cannot be edited in its current status |
+| 725 | `ERR_REPORT_TEMPLATE_HAS_LINKED_REPORTS` | template cannot be deleted because it has linked reports |
+
+#### Implementation Details
+- **Community assignment:** Templates can be global (`RPT_IS_GLOBAL=1`, empty `report_template_community`) or assigned to specific communities. Officers see only templates assigned to their community (or global). Template name uniqueness is enforced within overlapping community scopes.
+- **Section/field management:** Sections and fields use full-replacement strategy on update. Existing sections/fields are soft-deleted and new ones are bulk-inserted using the contiguous auto-increment ID pattern (no DB calls in loops).
+- **Duplicate:** Creates a deep copy of all sections, fields, style settings, and community assignments. New template starts in draft status. Supports custom name override.
+- **Style settings:** Stored as a JSON blob in `RPT_STYLE`. Includes logo, accent color, header layout, font, page numbering, confidentiality footer, date format, section breaks, and cover page toggle. Each setting is individually updatable.
+- **Deletion:** `delete_template` soft-deletes templates in `draft` status only. Cascade soft-deletes all communities, sections, and fields. When Phase 7.2 adds the `incident_report` table, the endpoint must also check for linked reports and return `ERR_REPORT_TEMPLATE_HAS_LINKED_REPORTS` if any exist.
+- **Lifecycle rules:** Draft→Active (requires sections/fields), Active→Archived, Archived→Active (re-activation), Draft→Archived, Draft→Deleted (soft-delete). Already-active templates return error on activate. Already-archived templates return error on archive.
+- **Field-level required:** `RTF_IS_REQUIRED` column enables per-field mandatory/optional configuration independently from the section-level `RTS_IS_REQUIRED` toggle. Default is required (1).
+- **No DB calls in loops:** Sections bulk-inserted in one query; fields bulk-inserted in one query using computed section IDs. Community assignments bulk-inserted. Section IDs for soft-delete are pre-fetched before the transaction.
+- **Transaction discipline:** All SELECTs (record lookup, community validation, name uniqueness check, section validation, existing section ID fetch) happen before `beginTransaction()`. Transactions contain only INSERT/UPDATE statements.
+- **Pagination:** `get_templates_list` uses `$Config.get("REPORT_TEMPLATES_PAGE_SIZE")` — no client-controlled page size.
+- **Soft deletion:** All four tables use `*_DELETED_ON` timestamp pattern. All queries filter `*_DELETED_ON IS NULL`.
+
+#### Deferred Features
+- Report generation from templates (Phase 7.2) — must freeze JSON snapshot into `incident_report.RPT_CONTENT_SNAPSHOT`
+- Linked-report check in `delete_template` (Phase 7.2 — check `incident_report` table before allowing delete)
+- Template versioning (track changes across edits)
+- Template import/export between accounts
+- Bulk archive/activate operations
+- Template field validation rules beyond type (e.g., regex, min/max)
 
 ---
 

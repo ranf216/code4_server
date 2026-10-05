@@ -1,0 +1,4 @@
+{
+    "new_page":   {"name": {"en": "New Page"},   "define": "REPORT_SECTION_BREAKS_NEW_PAGE"},
+    "continuous": {"name": {"en": "Continuous"}, "define": "REPORT_SECTION_BREAKS_CONTINUOUS"}
+}
