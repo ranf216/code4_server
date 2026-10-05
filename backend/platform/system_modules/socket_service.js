@@ -85,6 +85,7 @@ module.exports = class
     constructor(serviceConfig)
     {
         this.serviceConfig = serviceConfig;
+        this.isShuttingDown = false;
 
         if (serviceConfig.use_memory_queue)
         {
@@ -183,14 +184,14 @@ module.exports = class
             serverOptionsConfiguration.cert = fs.readFileSync($Config.get("socket", "ssl_certificate"));
         }
         
-        const server = http.createServer(serverOptionsConfiguration);
-        server.listen(this.serviceConfig.port, () =>
+        this.httpServer = http.createServer(serverOptionsConfiguration);
+        this.httpServer.listen(this.serviceConfig.port, () =>
         {
             console.log(`Socket running on port ${this.serviceConfig.port}`)
             $Logger.logString($Const.LL_INFO, `Socket running on port ${this.serviceConfig.port}`);
         });
 
-        const io = socketio(server, {
+        this.io = socketio(this.httpServer, {
                                         transports:["websocket"],
                                         cors: {
                                             origin: this.serviceConfig.cors_origin,
@@ -200,7 +201,7 @@ module.exports = class
                                         serveClient:true,
                                     });
 
-        io.on("connection", (socket) => {thiz._onConnection(socket)});
+        this.io.on("connection", (socket) => {thiz._onConnection(socket)});
     }
 
 
@@ -215,6 +216,17 @@ module.exports = class
         {
             process.on("SIGINT", (code) =>
             {
+                this.isShuttingDown = true;
+
+                if (this.io)
+                {
+                    this.io.close();
+                }
+                if (this.httpServer)
+                {
+                    this.httpServer.close();
+                }
+
                 if (subServiceId !== null, this.serviceConfig.track_user_online_ststus)
                 {
                     $Db.executeQuery(`DELETE FROM \`user_online_status\` WHERE UOS_SERVICE_ID=?`, [this.serviceConfig.service_id]);
@@ -359,6 +371,12 @@ module.exports = class
 
     _onConnection(socket)
     {
+        if (this.isShuttingDown)
+        {
+            socket.disconnect(true);
+            return;
+        }
+
         console.log(`New connection: ${socket.id}`);
         $Logger.logString($Const.LL_DEBUG, `New connection: ${socket.id}`);
 
@@ -366,6 +384,11 @@ module.exports = class
 
         socket.on("#token", (token) =>
         {
+            if (thiz.isShuttingDown)
+            {
+                return;
+            }
+
             console.log(`Set token from ${socket.id}: ${token}`);
             $Logger.logString($Const.LL_DEBUG, `Set token from ${socket.id}: ${token}`);
 
@@ -430,6 +453,11 @@ module.exports = class
 
         socket.on("message", (data) =>
         {
+            if (thiz.isShuttingDown)
+            {
+                return;
+            }
+
             let info = thiz.infoBySocketId[socket.id];
             if ($Utils.empty(info))
             {
