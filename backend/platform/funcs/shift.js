@@ -2014,7 +2014,7 @@ module.exports = class
 
 		if (!$DataItems.isValidItemId(this.$scope, TABLE_UPDATE_SCOPE))
 		{
-			return $ERRS.ERR_INVALID_API_PARAM;
+			return $Err.errWithInfo("ERR_INVALID_API_PARAM", "scope");
 		}
 
 		let updates = [];

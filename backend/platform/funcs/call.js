@@ -1206,7 +1206,7 @@ module.exports = class
         // Validate reaction value
         if (this.$reaction !== 1 && this.$reaction !== -1)
         {
-            return $ERRS.ERR_INVALID_API_PARAM;
+            return $Err.errWithInfo("ERR_INVALID_API_PARAM", "reaction");
         }
 
         $Db.executeQuery(
