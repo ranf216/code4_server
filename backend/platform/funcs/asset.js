@@ -780,7 +780,7 @@ module.exports = class
 		let postName = (this.$name || "").trim();
 		if (postName.length === 0 || postName.length > 60)
 		{
-			return $ERRS.ERR_INVALID_API_PARAM;
+			return $Err.errWithInfo("ERR_INVALID_API_PARAM", "name");
 		}
 
 		// Check uniqueness within community
@@ -853,7 +853,7 @@ module.exports = class
 			let postName = (this.$name || "").trim();
 			if (postName.length === 0 || postName.length > 60)
 			{
-				return $ERRS.ERR_INVALID_API_PARAM;
+				return $Err.errWithInfo("ERR_INVALID_API_PARAM", "name");
 			}
 			// Check uniqueness
 			if (postName !== post.PST_NAME)

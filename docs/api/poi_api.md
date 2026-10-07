@@ -490,7 +490,7 @@ The system sends push notifications at key lifecycle events:
     | rc | Message | Scenario |
     |----|---------|----------|
     | 103 | current user does not have privileges | The caller is not an Admin. |
-    | 105 | missing or invalid parameter | A required field is missing, empty, or exceeds its maximum length. |
+    | 105 | invalid api param (*field_name*) | A required field is missing, empty, or exceeds its maximum length. The parenthesized suffix identifies the offending parameter (e.g. `first_name`, `summary`). |
     | 201 | invalid user token | Invalid or expired token. |
     | 321 | file not found | One or more file IDs in `photo_file_ids`, `notice_document_file_id`, or `card_document_file_id` do not correspond to a valid uploaded file. |
     | 500 | community not found | One or more community IDs in `community_ids` do not exist. |
@@ -560,7 +560,7 @@ All parameters except `record_id` are optional. Only the fields included in the 
     | rc | Message | Scenario |
     |----|---------|----------|
     | 103 | current user does not have privileges | The caller is not an Admin. |
-    | 105 | missing or invalid parameter | A field value is invalid or exceeds its maximum length. |
+    | 105 | invalid api param (*field_name*) | A field value is invalid or exceeds its maximum length. The parenthesized suffix identifies the offending parameter. |
     | 201 | invalid user token | Invalid or expired token. |
     | 321 | file not found | A provided file ID does not correspond to a valid uploaded file. |
     | 500 | community not found | A community ID does not exist. |

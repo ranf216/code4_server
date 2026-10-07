@@ -316,7 +316,7 @@ module.exports = class
         if (this.$patrol_compliance_threshold_min !== undefined &&
             (this.$patrol_compliance_threshold_min < 5 || this.$patrol_compliance_threshold_min > 60))
         {
-            return $ERRS.ERR_INVALID_API_PARAM;
+            return $Err.errWithInfo("ERR_INVALID_API_PARAM", "patrol_compliance_threshold_min");
         }
 
         const values = {
@@ -343,27 +343,27 @@ module.exports = class
         if (this.$max_weekly_hours !== undefined &&
             (this.$max_weekly_hours < 20 || this.$max_weekly_hours > 80))
         {
-            return $ERRS.ERR_INVALID_API_PARAM;
+            return $Err.errWithInfo("ERR_INVALID_API_PARAM", "max_weekly_hours");
         }
         if (this.$min_rest_gap_hours !== undefined &&
             (this.$min_rest_gap_hours < 4 || this.$min_rest_gap_hours > 24))
         {
-            return $ERRS.ERR_INVALID_API_PARAM;
+            return $Err.errWithInfo("ERR_INVALID_API_PARAM", "min_rest_gap_hours");
         }
         if (this.$auto_checkout_grace_mins !== undefined &&
             (this.$auto_checkout_grace_mins < 15 || this.$auto_checkout_grace_mins > 240))
         {
-            return $ERRS.ERR_INVALID_API_PARAM;
+            return $Err.errWithInfo("ERR_INVALID_API_PARAM", "auto_checkout_grace_mins");
         }
         if (this.$shift_starting_soon_lead_mins !== undefined &&
             (this.$shift_starting_soon_lead_mins < 10 || this.$shift_starting_soon_lead_mins > 120))
         {
-            return $ERRS.ERR_INVALID_API_PARAM;
+            return $Err.errWithInfo("ERR_INVALID_API_PARAM", "shift_starting_soon_lead_mins");
         }
         if (this.$early_checkin_window_mins !== undefined &&
             (this.$early_checkin_window_mins < 0 || this.$early_checkin_window_mins > 120))
         {
-            return $ERRS.ERR_INVALID_API_PARAM;
+            return $Err.errWithInfo("ERR_INVALID_API_PARAM", "early_checkin_window_mins");
         }
 
         const values = {

@@ -767,37 +767,37 @@ module.exports = class
 		// Validate names
 		if ($Utils.empty(this.$first_name) || this.$first_name.length > MAX_FIRST_NAME_LENGTH)
 		{
-			return $ERRS.ERR_INVALID_API_PARAM;
+			return $Err.errWithInfo("ERR_INVALID_API_PARAM", "first_name");
 		}
 		if ($Utils.empty(this.$last_name) || this.$last_name.length > MAX_LAST_NAME_LENGTH)
 		{
-			return $ERRS.ERR_INVALID_API_PARAM;
+			return $Err.errWithInfo("ERR_INVALID_API_PARAM", "last_name");
 		}
 
 		// Validate optional string lengths
 		if (this.$known_aliases && this.$known_aliases.length > MAX_ALIASES_LENGTH)
 		{
-			return $ERRS.ERR_INVALID_API_PARAM;
+			return $Err.errWithInfo("ERR_INVALID_API_PARAM", "known_aliases");
 		}
 		if (this.$physical_description && this.$physical_description.length > MAX_PHYSICAL_DESC_LENGTH)
 		{
-			return $ERRS.ERR_INVALID_API_PARAM;
+			return $Err.errWithInfo("ERR_INVALID_API_PARAM", "physical_description");
 		}
 		if ($Utils.empty(this.$summary) || this.$summary.length > MAX_SUMMARY_LENGTH)
 		{
-			return $ERRS.ERR_INVALID_API_PARAM;
+			return $Err.errWithInfo("ERR_INVALID_API_PARAM", "summary");
 		}
 		if (this.$internal_notes && this.$internal_notes.length > MAX_INTERNAL_NOTES_LENGTH)
 		{
-			return $ERRS.ERR_INVALID_API_PARAM;
+			return $Err.errWithInfo("ERR_INVALID_API_PARAM", "internal_notes");
 		}
 		if (this.$incident_history_summary && this.$incident_history_summary.length > MAX_INCIDENT_HISTORY_LENGTH)
 		{
-			return $ERRS.ERR_INVALID_API_PARAM;
+			return $Err.errWithInfo("ERR_INVALID_API_PARAM", "incident_history_summary");
 		}
 		if (this.$associated_individuals && this.$associated_individuals.length > MAX_ASSOCIATED_INDIVIDUALS_LENGTH)
 		{
-			return $ERRS.ERR_INVALID_API_PARAM;
+			return $Err.errWithInfo("ERR_INVALID_API_PARAM", "associated_individuals");
 		}
 
 		// Validate gender if provided
@@ -875,7 +875,7 @@ module.exports = class
 		let relatedIncidentIds = this.$related_incident_ids || [];
 		if (relatedIncidentIds.length > 0 && !validateIncidentIds(relatedIncidentIds))
 		{
-			return $ERRS.ERR_INVALID_API_PARAM;
+			return $Err.errWithInfo("ERR_INVALID_API_PARAM", "related_incident_ids");
 		}
 
 		// Determine renewal reminder days
@@ -1019,7 +1019,7 @@ module.exports = class
 		{
 			if ($Utils.empty(this.$first_name) || this.$first_name.length > MAX_FIRST_NAME_LENGTH)
 			{
-				return $ERRS.ERR_INVALID_API_PARAM;
+				return $Err.errWithInfo("ERR_INVALID_API_PARAM", "first_name");
 			}
 			updates.push("POI_FIRST_NAME=?");
 			params.push(this.$first_name);
@@ -1031,7 +1031,7 @@ module.exports = class
 		{
 			if ($Utils.empty(this.$last_name) || this.$last_name.length > MAX_LAST_NAME_LENGTH)
 			{
-				return $ERRS.ERR_INVALID_API_PARAM;
+				return $Err.errWithInfo("ERR_INVALID_API_PARAM", "last_name");
 			}
 			updates.push("POI_LAST_NAME=?");
 			params.push(this.$last_name);
@@ -1043,7 +1043,7 @@ module.exports = class
 		{
 			if (this.$known_aliases.length > MAX_ALIASES_LENGTH)
 			{
-				return $ERRS.ERR_INVALID_API_PARAM;
+				return $Err.errWithInfo("ERR_INVALID_API_PARAM", "known_aliases");
 			}
 			updates.push("POI_KNOWN_ALIASES=?");
 			params.push($Utils.empty(this.$known_aliases) ? null : this.$known_aliases);
@@ -1075,7 +1075,7 @@ module.exports = class
 		{
 			if (this.$physical_description.length > MAX_PHYSICAL_DESC_LENGTH)
 			{
-				return $ERRS.ERR_INVALID_API_PARAM;
+				return $Err.errWithInfo("ERR_INVALID_API_PARAM", "physical_description");
 			}
 			updates.push("POI_PHYSICAL_DESCRIPTION=?");
 			params.push($Utils.empty(this.$physical_description) ? null : this.$physical_description);
@@ -1099,7 +1099,7 @@ module.exports = class
 		{
 			if ($Utils.empty(this.$summary) || this.$summary.length > MAX_SUMMARY_LENGTH)
 			{
-				return $ERRS.ERR_INVALID_API_PARAM;
+				return $Err.errWithInfo("ERR_INVALID_API_PARAM", "summary");
 			}
 			updates.push("POI_SUMMARY=?");
 			params.push(this.$summary);
@@ -1111,7 +1111,7 @@ module.exports = class
 		{
 			if (this.$internal_notes.length > MAX_INTERNAL_NOTES_LENGTH)
 			{
-				return $ERRS.ERR_INVALID_API_PARAM;
+				return $Err.errWithInfo("ERR_INVALID_API_PARAM", "internal_notes");
 			}
 			updates.push("POI_INTERNAL_NOTES=?");
 			params.push($Utils.empty(this.$internal_notes) ? null : this.$internal_notes);
@@ -1122,7 +1122,7 @@ module.exports = class
 		{
 			if (this.$incident_history_summary.length > MAX_INCIDENT_HISTORY_LENGTH)
 			{
-				return $ERRS.ERR_INVALID_API_PARAM;
+				return $Err.errWithInfo("ERR_INVALID_API_PARAM", "incident_history_summary");
 			}
 			updates.push("POI_INCIDENT_HISTORY_SUMMARY=?");
 			params.push($Utils.empty(this.$incident_history_summary) ? null : this.$incident_history_summary);
@@ -1139,7 +1139,7 @@ module.exports = class
 		{
 			if (this.$associated_individuals.length > MAX_ASSOCIATED_INDIVIDUALS_LENGTH)
 			{
-				return $ERRS.ERR_INVALID_API_PARAM;
+				return $Err.errWithInfo("ERR_INVALID_API_PARAM", "associated_individuals");
 			}
 			updates.push("POI_ASSOCIATED_INDIVIDUALS=?");
 			params.push($Utils.empty(this.$associated_individuals) ? null : this.$associated_individuals);
@@ -1286,11 +1286,11 @@ module.exports = class
 		{
 			if (!Array.isArray(this.$related_incident_ids))
 			{
-				return $ERRS.ERR_INVALID_API_PARAM;
+				return $Err.errWithInfo("ERR_INVALID_API_PARAM", "related_incident_ids");
 			}
 			if (this.$related_incident_ids.length > 0 && !validateIncidentIds(this.$related_incident_ids))
 			{
-				return $ERRS.ERR_INVALID_API_PARAM;
+				return $Err.errWithInfo("ERR_INVALID_API_PARAM", "related_incident_ids");
 			}
 			newIncidentIds = this.$related_incident_ids;
 		}

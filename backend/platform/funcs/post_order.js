@@ -298,7 +298,7 @@ function validateSectionsInput(sections)
 {
 	if (!Array.isArray(sections) || sections.length === 0)
 	{
-		return {error: $ERRS.ERR_INVALID_API_PARAM};
+		return {error: $Err.errWithInfo("ERR_INVALID_API_PARAM", "sections")};
 	}
 
 	let allFileIds = [];
@@ -308,7 +308,7 @@ function validateSectionsInput(sections)
 		let s = sections[i];
 		if (typeof s !== "object" || s === null)
 		{
-			return {error: $ERRS.ERR_INVALID_API_PARAM};
+			return {error: $Err.errWithInfo("ERR_INVALID_API_PARAM", "sections[" + i + "]")};
 		}
 
 		// section_type
@@ -320,19 +320,19 @@ function validateSectionsInput(sections)
 		// title
 		if ($Utils.empty(s.title) || s.title.length > MAX_SECTION_TITLE_LENGTH)
 		{
-			return {error: $ERRS.ERR_INVALID_API_PARAM};
+			return {error: $Err.errWithInfo("ERR_INVALID_API_PARAM", "sections[" + i + "].title")};
 		}
 
 		// description
 		if (s.description && s.description.length > MAX_SECTION_DESCRIPTION_LENGTH)
 		{
-			return {error: $ERRS.ERR_INVALID_API_PARAM};
+			return {error: $Err.errWithInfo("ERR_INVALID_API_PARAM", "sections[" + i + "].description")};
 		}
 
 		// notes
 		if (s.notes && s.notes.length > MAX_SECTION_NOTES_LENGTH)
 		{
-			return {error: $ERRS.ERR_INVALID_API_PARAM};
+			return {error: $Err.errWithInfo("ERR_INVALID_API_PARAM", "sections[" + i + "].notes")};
 		}
 
 		// attachments
@@ -456,7 +456,7 @@ module.exports = class
 			{
 				if (!$DataItems.isValidItemId(this.$status, TABLE_PO_STATUS))
 				{
-					return $ERRS.ERR_INVALID_API_PARAM;
+					return $Err.errWithInfo("ERR_INVALID_API_PARAM", "status");
 				}
 				conditions.push("po.PO_STATUS=?");
 				params.push(this.$status);
@@ -868,13 +868,13 @@ module.exports = class
 		// Validate version type
 		if (!$DataItems.isValidItemId(this.$version_type, TABLE_PO_VERSION_TYPE))
 		{
-			return $ERRS.ERR_INVALID_API_PARAM;
+			return $Err.errWithInfo("ERR_INVALID_API_PARAM", "version_type");
 		}
 
 		// Validate change summary
 		if ($Utils.empty(this.$change_summary) || this.$change_summary.length > MAX_CHANGE_SUMMARY_LENGTH)
 		{
-			return $ERRS.ERR_INVALID_API_PARAM;
+			return $Err.errWithInfo("ERR_INVALID_API_PARAM", "change_summary");
 		}
 
 		// Calculate new version number
