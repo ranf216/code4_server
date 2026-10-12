@@ -1,7 +1,7 @@
 # Code4 - Development Flow
 
 **Document Version:** 1.0
-**Last Updated:** 2026-07-08
+**Last Updated:** 2026-10-04
 **Purpose:** Recommended order of implementation for the Code4 Security Operations Platform server modules
 
 ---
@@ -33,7 +33,7 @@ The project infrastructure is set up with the following **built-in platform modu
 - `USER_ROLE_LOGISTICS` = 5
 - `USER_ROLE_FINANCE` = 6
 
-**Implemented project-specific API modules:** `settings` (Phase 1.1), `community` (Phase 1.2), `admin_user` (Phase 1.3), `officer` (Phase 2.1), `resident` (Phase 2.2), `notification` (Phase 2.3), `call` (Phase 3.1), `task` (Phase 3.2), `asset` (Phase 4.1), `shift` (Phase 5.1), `route` (Phase 5.2), `tracking` (Phase 5.3), `post_order` (Phase 6.1), `poi` (Phase 6.2)
+**Implemented project-specific API modules:** `settings` (Phase 1.1), `community` (Phase 1.2), `admin_user` (Phase 1.3), `officer` (Phase 2.1), `resident` (Phase 2.2), `notification` (Phase 2.3), `call` (Phase 3.1), `task` (Phase 3.2), `asset` (Phase 4.1), `shift` (Phase 5.1), `route` (Phase 5.2), `tracking` (Phase 5.3), `post_order` (Phase 6.1), `poi` (Phase 6.2), `report_template` (Phase 7.1)
 
 ---
 
@@ -204,11 +204,13 @@ Post orders and POI records are reference/knowledge systems that officers consum
 
 Reports depend on templates and are generated from calls, making them late-stage features.
 
-#### 7.1 Report Template (`platform/api/report_template.js`)
-- Template CRUD, sections with configurable fields, community assignment, styling/formatting, duplicate, activate/archive
+#### ~~7.1 Report Template (`platform/api/report_template.js`)~~ ✅ Done
+- ~~Template CRUD, sections with configurable fields, community assignment, styling/formatting, duplicate, activate/archive~~
 - **DB tables:** `report_template`, `report_template_community`, `report_template_section`, `report_template_field`
 - **Depends on:** Community
 - **Why before Report:** Officers need templates to create reports
+- **Implementation:** 10 API endpoints — `get_templates_list`, `get_template`, `create_template`, `update_template`, `duplicate_template`, `archive_template`, `activate_template`, `delete_template`, `get_template_style`, `update_template_style`. Three categories: `incident`, `daily_activity`, `custom`. Status lifecycle: `draft → active → archived` with re-activation support. Community scoping (global or multi-community assignment) with overlapping-scope name uniqueness. Sections with ordered fields supporting 6 field types (text, date, location, dropdown, file_upload, digital_signature) and 12 predefined system fields. Full-replacement strategy for sections/fields (bulk INSERT, no DB calls in loops). Style settings as JSON blob with 9 formatting options (logo, accent color, header layout, font, page numbering, confidentiality footer, date format, section breaks, cover page). Dual ACL: admins have full CRUD; officers have read-only access to active templates for their shift community. 8 `$DataItems`: `report_category`, `report_template_status`, `report_field_type`, `report_system_field`, `report_header_layout`, `report_font`, `report_date_format`, `report_section_breaks`. Error codes 711, 715–725. Transaction discipline: all SELECTs before `beginTransaction()`. Field-level `RTF_IS_REQUIRED` (Q7). Pagination via `$Config.get("REPORT_TEMPLATES_PAGE_SIZE")` (0-based).
+- **Deferred:** Report generation from templates (Phase 7.2 — must freeze JSON snapshot into `incident_report.RPT_CONTENT_SNAPSHOT`), linked-report check in `delete_template` (Phase 7.2), template versioning, template import/export — see `docs/issues-questions/report-template-issues-questions.md`.
 
 #### 7.2 Report (`platform/api/report.js`)
 - Incident report creation (from call or standalone), edit, submit, approval workflow (Draft -> Submitted -> Under Review -> Approved -> Delivered), client view
@@ -248,7 +250,7 @@ Dashboard aggregates data from all other modules, so it must be last.
 | 5.3 | Tracking | Officer, Call | `api/tracking.js`, `funcs/tracking.js` |
 | ~~6.1~~ | ~~Post Order~~ ✅ | Community, Post | `api/post_order.js`, `funcs/post_order.js` |
 | ~~6.2~~ | ~~POI~~ ✅ | Community, Call | `api/poi.js`, `funcs/poi.js` |
-| 7.1 | Report Template | Community | `api/report_template.js`, `funcs/report_template.js` |
+| ~~7.1~~ | ~~Report Template~~ ✅ | Community | `api/report_template.js`, `funcs/report_template.js` |
 | 7.2 | Report | Template, Call, Officer | `api/report.js`, `funcs/report.js` |
 | 8.1 | Dashboard | All modules | `api/dashboard.js`, `funcs/dashboard.js` |
 
@@ -263,9 +265,10 @@ For **each module** implementation, follow this sequence:
 3. **API definition** - Create `platform/api/<module>.js` with parameter schemas and ACL
 4. **API implementation** - Create `platform/funcs/<module>.js` with business logic
 5. **Register module** - Add to `platform/config/using_api.js`
-6. **Tests** - Add test methods in `platform/funcs/api_test.js`
+6. **Tests** - Add test user module in `platform/user_modules/test_api_<module>.js`, register in `using_modules.js`, add thin wrapper in `funcs/api_test.js`, add route in `api/api_test.js`
 7. **Code review** - Run through `docs/code_review_checklist.md`
 8. **Document** - Update `docs/project_dev.md` with new flows
+9. **API Doc** - Create or update `docs/api/<module>_api.md` (consumer-facing black-box documentation)
 
 ---
 
