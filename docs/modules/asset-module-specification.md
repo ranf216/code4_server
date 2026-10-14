@@ -25,7 +25,7 @@ The Asset module provides the map infrastructure layer of the Code4 Axis Securit
 
 - **API:** Registered as `"asset"` in `backend/platform/config/using_api.js`.
 - **Runtime Config:** `ASSETS_LIST_PAGE_SIZE` (50) and `POSTS_LIST_PAGE_SIZE` (50) in `backend/platform/config/runtime_config.js`.
-- **Error Codes:** RC 750-763 in `backend/platform/definitions/errorcodes.en.js`.
+- **Error Codes:** RC 770-783 in `backend/platform/definitions/errorcodes.en.js`.
 - **Audit Trail:** `asset`, `post`, and `map_zone` trigger definitions in `db/triggers_def.js`.
 
 ---
@@ -124,7 +124,7 @@ CREATE TABLE `asset` (
 - `AST_LOCATION` — JSON object whose structure varies by shape (see Section 3.3).
 - `AST_DESCRIPTION` — Free-text field for manufacturer, model, serial number, or any identifying detail.
 - `AST_ACRES` — Server-calculated area persisted on create and recalculated on update when shape or location changes (see Section 3.2).
-- `AST_INSTALLATION_DATE` / `AST_REPLACEMENT_DATE` — Optional lifecycle dates. Validated with `$Utils.validateDateStr()` when provided. Invalid formats return `ERR_ASSET_INVALID_DATE` (rc 763).
+- `AST_INSTALLATION_DATE` / `AST_REPLACEMENT_DATE` — Optional lifecycle dates. Validated with `$Utils.validateDateStr()` when provided. Invalid formats return `ERR_ASSET_INVALID_DATE` (rc 783).
 
 **Index rationale:**
 - `IX_AST_COM_ID` — All list queries are community-scoped.
@@ -335,7 +335,7 @@ Reads `settings:asset` from the `key_value` table. If the key exists and contain
 | `create_post` | `current_count + 1 > max` |
 | `create_map_zone` | `current_count + 1 > max` |
 
-All four checks are **pre-flight** — they run before any INSERT. If the limit is exceeded, the endpoint returns `ERR_MAP_ITEM_LIMIT_EXCEEDED` (rc 762) immediately. For batch creation, the entire batch is rejected atomically if the combined total would exceed the limit.
+All four checks are **pre-flight** — they run before any INSERT. If the limit is exceeded, the endpoint returns `ERR_MAP_ITEM_LIMIT_EXCEEDED` (rc 782) immediately. For batch creation, the entire batch is rejected atomically if the combined total would exceed the limit.
 
 ---
 
@@ -377,7 +377,7 @@ Posts that have been used in a shift (referenced by the `shift_post` junction ta
 
 1. Queries `information_schema.TABLES` to check if `shift_post` exists (the Shift module may not yet be deployed).
 2. If the table exists, queries for any `SHP_PST_ID` reference to the target post.
-3. If references exist, returns `ERR_POST_HAS_SHIFT_HISTORY` (rc 759).
+3. If references exist, returns `ERR_POST_HAS_SHIFT_HISTORY` (rc 779).
 
 This defensive pattern ensures the Asset module works correctly both before and after the Shift module is deployed.
 
@@ -393,7 +393,7 @@ The `installation_date` and `replacement_date` fields on assets are validated wi
 | `create_assets_batch` | Both dates validated once (shared across batch) |
 | `update_asset` | Each date validated when provided (non-null); empty string clears to `null` |
 
-Invalid date formats return `ERR_ASSET_INVALID_DATE` (rc 763).
+Invalid date formats return `ERR_ASSET_INVALID_DATE` (rc 783).
 
 ---
 
@@ -421,20 +421,20 @@ All three are registered via `$DataItems.define()` in the module constructor, ma
 
 | RC | Constant | Message | Trigger |
 |----|----------|---------|---------|
-| 750 | `ERR_ASSET_NOT_FOUND` | asset not found | `get_asset`, `update_asset`, `delete_asset` — record missing or already deleted |
-| 751 | `ERR_ASSET_INVALID_TYPE` | invalid asset type | `create_asset`, `create_assets_batch`, `update_asset`, `get_assets_list` — `asset_type` not in $DataItems |
-| 752 | `ERR_POST_NOT_FOUND` | post not found | `get_post`, `update_post`, `delete_post` — record missing or already deleted |
-| 753 | `ERR_POST_NAME_ALREADY_EXISTS` | a post with this name already exists in this community | `create_post`, `update_post` — uniqueness violation |
-| 754 | `ERR_MAP_ZONE_NOT_FOUND` | map zone not found | `update_map_zone`, `delete_map_zone` — record missing or already deleted |
-| 755 | `ERR_ASSET_INVALID_SHAPE` | invalid asset shape | `create_asset`, `create_assets_batch`, `update_asset` — `shape` not in $DataItems |
-| 756 | `ERR_POST_INVALID_PRIORITY` | invalid post priority | `create_post`, `update_post` — `priority` not in $DataItems |
-| 757 | `ERR_POST_INVALID_SHAPE` | invalid post shape | `create_post`, `update_post` — `shape` not in $DataItems |
-| 758 | `ERR_MAP_ZONE_INVALID_TYPE` | invalid map zone type | `create_map_zone`, `update_map_zone`, `get_map_zones` — `zone_type` not in $DataItems |
-| 759 | `ERR_POST_HAS_SHIFT_HISTORY` | post has been used in a shift and cannot be deleted, only deactivated | `delete_post` — post referenced by `shift_post` |
-| 760 | `ERR_ASSET_BATCH_EMPTY` | batch asset list is empty | `create_assets_batch` — empty `locations` array |
-| 761 | `ERR_ASSET_BATCH_LIMIT_EXCEEDED` | batch asset list exceeds maximum allowed size | `create_assets_batch` — `locations.length > 100` |
-| 762 | `ERR_MAP_ITEM_LIMIT_EXCEEDED` | maximum number of map items reached for this community | All four creation endpoints — combined count exceeds community limit |
-| 763 | `ERR_ASSET_INVALID_DATE` | invalid date format | `create_asset`, `create_assets_batch`, `update_asset` — `installation_date` or `replacement_date` fails `$Utils.validateDateStr()` |
+| 770 | `ERR_ASSET_NOT_FOUND` | asset not found | `get_asset`, `update_asset`, `delete_asset` — record missing or already deleted |
+| 771 | `ERR_ASSET_INVALID_TYPE` | invalid asset type | `create_asset`, `create_assets_batch`, `update_asset`, `get_assets_list` — `asset_type` not in $DataItems |
+| 772 | `ERR_POST_NOT_FOUND` | post not found | `get_post`, `update_post`, `delete_post` — record missing or already deleted |
+| 773 | `ERR_POST_NAME_ALREADY_EXISTS` | a post with this name already exists in this community | `create_post`, `update_post` — uniqueness violation |
+| 774 | `ERR_MAP_ZONE_NOT_FOUND` | map zone not found | `update_map_zone`, `delete_map_zone` — record missing or already deleted |
+| 775 | `ERR_ASSET_INVALID_SHAPE` | invalid asset shape | `create_asset`, `create_assets_batch`, `update_asset` — `shape` not in $DataItems |
+| 776 | `ERR_POST_INVALID_PRIORITY` | invalid post priority | `create_post`, `update_post` — `priority` not in $DataItems |
+| 777 | `ERR_POST_INVALID_SHAPE` | invalid post shape | `create_post`, `update_post` — `shape` not in $DataItems |
+| 778 | `ERR_MAP_ZONE_INVALID_TYPE` | invalid map zone type | `create_map_zone`, `update_map_zone`, `get_map_zones` — `zone_type` not in $DataItems |
+| 779 | `ERR_POST_HAS_SHIFT_HISTORY` | post has been used in a shift and cannot be deleted, only deactivated | `delete_post` — post referenced by `shift_post` |
+| 780 | `ERR_ASSET_BATCH_EMPTY` | batch asset list is empty | `create_assets_batch` — empty `locations` array |
+| 781 | `ERR_ASSET_BATCH_LIMIT_EXCEEDED` | batch asset list exceeds maximum allowed size | `create_assets_batch` — `locations.length > 100` |
+| 782 | `ERR_MAP_ITEM_LIMIT_EXCEEDED` | maximum number of map items reached for this community | All four creation endpoints — combined count exceeds community limit |
+| 783 | `ERR_ASSET_INVALID_DATE` | invalid date format | `create_asset`, `create_assets_batch`, `update_asset` — `installation_date` or `replacement_date` fails `$Utils.validateDateStr()` |
 
 ---
 
@@ -487,7 +487,7 @@ On zoom out, asset icons in the same area should be grouped. This is entirely a 
 | `backend/platform/data/map_zone_type.json` | Map zone type $DataItems (static) |
 | `backend/platform/config/using_api.js` | Module registration |
 | `backend/platform/config/runtime_config.js` | Page size configuration |
-| `backend/platform/definitions/errorcodes.en.js` | Error codes (RC 750-763) |
+| `backend/platform/definitions/errorcodes.en.js` | Error codes (RC 770-783) |
 | `db/db.sql` | Full schema (post, asset, map_zone) |
 | `db/UpgradeDB.sql` | V 4.6.0 migration script |
 | `db/triggers_def.js` | Audit trail trigger definitions |

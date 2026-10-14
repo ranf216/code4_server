@@ -9,7 +9,7 @@
 
 **Requirement:** A map can have up to 1,000 items (assets + posts + zones combined per community).
 
-**Current behavior:** ✅ Server-side enforcement is active. All four creation endpoints (`create_asset`, `create_assets_batch`, `create_post`, `create_map_zone`) check the combined count of assets + posts + map zones before inserting. The batch endpoint validates `current_count + batch_size`. Error: `ERR_MAP_ITEM_LIMIT_EXCEEDED` (762).
+**Current behavior:** ✅ Server-side enforcement is active. All four creation endpoints (`create_asset`, `create_assets_batch`, `create_post`, `create_map_zone`) check the combined count of assets + posts + map zones before inserting. The batch endpoint validates `current_count + batch_size`. Error: `ERR_MAP_ITEM_LIMIT_EXCEEDED` (782).
 
 The limit is configurable via `settings:asset → max_map_items_per_community` in the `key_value` table (default 1,000).
 

@@ -386,7 +386,7 @@ When the Super Admin edits the `email` field so that its value **differs** from 
 1. **Dropdown options:** Same as Add User modal (Section 2.4)
 2. **Pre-selected value:** The user's current role from `user.role`
 3. **Self-role restriction:** If the user being edited is the **currently logged-in Super Admin** (i.e., their `user_id` matches the caller's own ID), **disable the role dropdown** and show a tooltip: *"You cannot change your own role."*
-4. **Server-side enforcement:** Even if the dropdown is not disabled client-side, the server returns `rc: 772` if a Super Admin tries to change their own role.
+4. **Server-side enforcement:** Even if the dropdown is not disabled client-side, the server returns `rc: 792` if a Super Admin tries to change their own role.
 
 ### 3.6 Active Status Toggle
 
@@ -437,16 +437,16 @@ When the Super Admin edits the `email` field so that its value **differs** from 
 | Server RC | UI Action |
 |---|---|
 | 0 | Close modal → refresh users list → show success toast: "User updated successfully" |
-| 770 | Show "User not found — they may have been deleted." → close modal → refresh list |
-| 771 | Show "Cannot deactivate — last admin" prompt (Section 3.8.1) |
-| 772 | Show "You cannot change your own role" inline on the role dropdown |
+| 790 | Show "User not found — they may have been deleted." → close modal → refresh list |
+| 791 | Show "Cannot deactivate — last admin" prompt (Section 3.8.1) |
+| 792 | Show "You cannot change your own role" inline on the role dropdown |
 | 102 | Show "An initial password is required when changing the email address" inline on the initial password field |
 | 106 | Show "Invalid role selected" inline on the role dropdown |
 | 235 | Show "Please enter a valid email address" inline on the email field |
 | 240 | Show "A user with this email already exists" inline on the email field |
 | 242 | Show password criteria error (from server `message` field) inline on the initial password field |
 
-#### 3.8.1 Last Admin Deactivation Prompt (RC 771)
+#### 3.8.1 Last Admin Deactivation Prompt (RC 791)
 
 When the server blocks deactivation because the target is the last active admin:
 
@@ -484,7 +484,7 @@ When the server blocks deactivation because the target is the last active admin:
 - [ ] Handle all error responses per Section 3.8 with inline field errors
 - [ ] Handle RC 102 (missing initial_password) with inline error on password field
 - [ ] Handle RC 242 (password criteria) with inline error on password field
-- [ ] Handle RC 771 with the "last admin" prompt (Section 3.8.1)
+- [ ] Handle RC 791 with the "last admin" prompt (Section 3.8.1)
 - [ ] On success: close modal, refresh list, show toast
 
 ---
@@ -701,7 +701,7 @@ The Reset Password action can be triggered from:
 | Server RC | UI Action |
 |---|---|
 | 0 | Close dialog → show success toast: "Password reset successfully. The user must change it on their next login." |
-| 770 | Show "User not found — they may have been deleted." → close dialog → refresh list |
+| 790 | Show "User not found — they may have been deleted." → close dialog → refresh list |
 | 242 | Show password criteria error inline on the password field |
 
 ### 5.6 Post-Reset Behaviour (Important for UI)
@@ -721,7 +721,7 @@ After a successful reset:
 - [ ] Validate password criteria client-side before enabling "Reset" button
 - [ ] Call `AdminUser/reset_password` on form submission
 - [ ] Handle RC 242 (criteria not met) with inline error
-- [ ] Handle RC 770 (user not found) with message and list refresh
+- [ ] Handle RC 790 (user not found) with message and list refresh
 - [ ] On success: close dialog, show success toast
 
 ---
@@ -767,12 +767,12 @@ The Delete action is triggered from the **Users list — Actions column** (trash
 | Server RC | UI Action |
 |---|---|
 | 0 | Close dialog → refresh users list → show success toast: "User deleted successfully" |
-| 770 | Show "User not found — they may have already been deleted." → refresh list |
-| 771 | Show constraint prompt (Section 6.5.1) |
+| 790 | Show "User not found — they may have already been deleted." → refresh list |
+| 791 | Show constraint prompt (Section 6.5.1) |
 
-#### 6.5.1 Constraint Prompt (RC 771)
+#### 6.5.1 Constraint Prompt (RC 791)
 
-The `rc: 771` error is returned when:
+The `rc: 791` error is returned when:
 - The Super Admin is trying to delete their own account, OR
 - The target user is the last remaining active admin
 
@@ -811,9 +811,9 @@ If the Super Admin clicks **[Deactivate Instead]**, call:
 | Deactivation RC | Action |
 |---|---|
 | 0 | Close prompt → refresh list → show toast: "User deactivated successfully" |
-| 771 | Show "Cannot deactivate — this is the last active admin. At least one admin must remain active." → [OK] button only |
+| 791 | Show "Cannot deactivate — this is the last active admin. At least one admin must remain active." → [OK] button only |
 
-> **Note:** If the Super Admin is trying to delete their own account AND they are the last admin, the deactivation will also fail with RC 771. In this case, show the final "last admin" message with no further action options.
+> **Note:** If the Super Admin is trying to delete their own account AND they are the last admin, the deactivation will also fail with RC 791. In this case, show the final "last admin" message with no further action options.
 
 ### 6.6 Implementation Checklist — User Deletion
 
@@ -821,10 +821,10 @@ If the Super Admin clicks **[Deactivate Instead]**, call:
 - [ ] Optionally hide Delete button on the Super Admin's own row
 - [ ] Implement confirmation dialog with user name
 - [ ] Call `AdminUser/delete_user` on confirmation
-- [ ] Handle RC 770 (user not found) with message and list refresh
-- [ ] Handle RC 771 with constraint prompt showing deactivation option
+- [ ] Handle RC 790 (user not found) with message and list refresh
+- [ ] Handle RC 791 with constraint prompt showing deactivation option
 - [ ] Implement deactivation fallback via `update_user` { is_active: false }
-- [ ] Handle deactivation RC 771 (last admin) with final informational message
+- [ ] Handle deactivation RC 791 (last admin) with final informational message
 - [ ] On success: close dialog, refresh list, show toast
 
 ---
@@ -873,8 +873,8 @@ If the Super Admin clicks **[Deactivate Instead]**, call:
 - [ ] Role dropdown pre-selects current role
 - [ ] Role dropdown disabled when editing own account
 - [ ] "Cannot change your own role" tooltip visible on disabled dropdown
-- [ ] On RC 771 (deactivation): "last admin" prompt displayed
-- [ ] On RC 772: "Cannot change your own role" message shown
+- [ ] On RC 791 (deactivation): "last admin" prompt displayed
+- [ ] On RC 792: "Cannot change your own role" message shown
 - [ ] Email change dynamically shows "Initial Password" field with criteria checklist
 - [ ] "Save" disabled when Initial Password is visible but criteria not met
 - [ ] Reverting email to original hides Initial Password field and clears its value
@@ -893,9 +893,9 @@ If the Super Admin clicks **[Deactivate Instead]**, call:
 ### Delete User
 - [ ] Confirmation dialog shows user's full name
 - [ ] On success: list refreshes, toast shown
-- [ ] On RC 771: constraint prompt with "Deactivate Instead" option
+- [ ] On RC 791: constraint prompt with "Deactivate Instead" option
 - [ ] "Deactivate Instead" calls `update_user` with `is_active: false`
-- [ ] If deactivation also returns RC 771: final "last admin" message shown
+- [ ] If deactivation also returns RC 791: final "last admin" message shown
 - [ ] Delete button hidden or error-handled for own account
 
 ### Password Flows

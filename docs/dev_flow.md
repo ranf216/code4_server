@@ -1,7 +1,7 @@
 # Code4 - Development Flow
 
 **Document Version:** 1.0
-**Last Updated:** 2026-07-08
+**Last Updated:** 2026-10-12
 **Purpose:** Recommended order of implementation for the Code4 Security Operations Platform server modules
 
 ---
@@ -33,7 +33,7 @@ The project infrastructure is set up with the following **built-in platform modu
 - `USER_ROLE_LOGISTICS` = 5
 - `USER_ROLE_FINANCE` = 6
 
-**Implemented project-specific API modules:** `settings` (Phase 1.1), `community` (Phase 1.2), `admin_user` (Phase 1.3), `officer` (Phase 2.1), `resident` (Phase 2.2), `notification` (Phase 2.3), `call` (Phase 3.1), `task` (Phase 3.2), `asset` (Phase 4.1), `shift` (Phase 5.1), `route` (Phase 5.2), `tracking` (Phase 5.3), `post_order` (Phase 6.1), `poi` (Phase 6.2)
+**Implemented project-specific API modules:** `settings` (Phase 1.1), `community` (Phase 1.2), `admin_user` (Phase 1.3), `officer` (Phase 2.1), `resident` (Phase 2.2), `notification` (Phase 2.3), `call` (Phase 3.1), `task` (Phase 3.2), `asset` (Phase 4.1), `shift` (Phase 5.1), `route` (Phase 5.2), `tracking` (Phase 5.3), `post_order` (Phase 6.1), `poi` (Phase 6.2), `report_template` (Phase 7.1), `report` (Phase 7.2)
 
 ---
 
@@ -45,7 +45,7 @@ The project infrastructure is set up with the following **built-in platform modu
 Before any API module, set up the project-level foundations:
 
 1. ~~**Define admin roles**~~ ✅ Done — `USER_ROLE_SUPER_ADMIN` (2), `USER_ROLE_MANAGER` (3), `USER_ROLE_PLANNING` (4), `USER_ROLE_LOGISTICS` (5), `USER_ROLE_FINANCE` (6) in `platform/definitions/user_roles.js`
-2. ~~**Define project error codes**~~ ✅ Done — RC 500–779 in `platform/definitions/errorcodes.en.js`
+2. ~~**Define project error codes**~~ ✅ Done — RC 500–799 in `platform/definitions/errorcodes.en.js`
 3. ~~**Add user types**~~ ✅ Done — `USER_TYPE_OFFICER` (2) and `USER_TYPE_RESIDENT` (3) defined in `platform/definitions/user_types.js`
 4. ~~**Set up `$DataItems`**~~ ✅ Done — `service_type.json`, `task_type.json`, `asset_type.json`, `po_section_type.json` in `platform/data/`
 5. ~~**Create the `community` table**~~ ✅ Done — `community` + `featured_officer` tables in `db/db.sql` and `db/UpgrdeDB.sql` (V 4.0.0)
@@ -195,7 +195,7 @@ Post orders and POI records are reference/knowledge systems that officers consum
 - **Depends on:** Community, Call (for incident linking)
 - **Can be parallel with:** Post Order (6.1)
 - **Implementation:** 10 API endpoints — `get_poi_list`, `get_poi_record`, `create_poi_record`, `update_poi_record`, `publish_poi_record`, `inactivate_poi_record`, `archive_poi_record`, `export_poi_record`, `get_poi_metadata`, `mark_viewed`. Three record types: Person of Interest (informational flag), Trespass Order (legal prohibition with expiry), Metro Red Card (transit exclusion with expiry). Status lifecycle: `draft → active → expired/inactive → archived`. Officer view tracking with NEW/UPDATED badges via `poi_view` upsert. Type-specific fields (POI: incident history, watch review date, associated individuals; Trespass: notice number, issuing authority, property area, notice document, LE contact, conditions; Metro RC: card number, lines, card document). Configurable response guidance text per record type from `settings:poi`. 4 `$DataItems`: `poi_record_type`, `poi_status`, `poi_threat_level`, `poi_gender`. Error codes 690–706. Notifications: `poi_active`, `poi_updated`, `poi_inactivated`, `poi_expiring_soon`, `poi_expired` to officers in assigned communities. Photo management (1–10 required), multi-community site assignment, incident linking to `service_call`. PDF export via `$Export.generate()` with pdfkit: embedded photos, watermark ("CONFIDENTIAL – AUTHORISED USE ONLY", admin name, export date), internal notes excluded. Daily lifecycle cron (`cron_poi_lifecycle_check.js` at 03:30): auto-expire active records past expiry date, expiry reminders within configurable window (dedup: 24h cooldown), auto-archive expired/inactive records past threshold. Bulk INSERT for photos/sites/incidents, ON DUPLICATE KEY UPDATE for site/incident upserts. Soft delete on all tables except `poi_export` (audit) and `poi_view` (upsert-only).
-- **Deferred:** Report Encounter (depends on Phase 7), bulk operations, settings management API, community deletion guard, dashboard statistics — see `docs/deferred_requirements/08-poi-enhancements.md` and `docs/issues-questions/poi-issues-questions.md`.
+- **Deferred:** ~~Report Encounter (depends on Phase 7)~~ ✅ done in 7.2 (`Report/create_report` with `poi_id`, `related_reports` in `POI/get_poi_record`), bulk operations, settings management API, community deletion guard, dashboard statistics — see `docs/deferred_requirements/08-poi-enhancements.md` and `docs/issues-questions/poi-issues-questions.md`.
 
 ---
 
@@ -204,16 +204,21 @@ Post orders and POI records are reference/knowledge systems that officers consum
 
 Reports depend on templates and are generated from calls, making them late-stage features.
 
-#### 7.1 Report Template (`platform/api/report_template.js`)
-- Template CRUD, sections with configurable fields, community assignment, styling/formatting, duplicate, activate/archive
+#### ~~7.1 Report Template (`platform/api/report_template.js`)~~ ✅ Done
+- ~~Template CRUD, sections with configurable fields, community assignment, styling/formatting, duplicate, activate/archive~~
 - **DB tables:** `report_template`, `report_template_community`, `report_template_section`, `report_template_field`
 - **Depends on:** Community
 - **Why before Report:** Officers need templates to create reports
+- **Implementation:** 10 API endpoints — `get_templates_list`, `get_template`, `create_template`, `update_template`, `duplicate_template`, `archive_template`, `activate_template`, `delete_template`, `get_template_style`, `update_template_style`. Three categories: `incident`, `daily_activity`, `custom`. Status lifecycle: `draft → active → archived` with re-activation support. Community scoping (global or multi-community assignment) with overlapping-scope name uniqueness. Sections with ordered fields supporting 6 field types (text, date, location, dropdown, file_upload, digital_signature) and 12 predefined system fields. Full-replacement strategy for sections/fields (bulk INSERT, no DB calls in loops). Style settings as JSON blob with 9 formatting options (logo, accent color, header layout, font, page numbering, confidentiality footer, date format, section breaks, cover page). Dual ACL: admins have full CRUD; officers have read-only access to active templates for their shift community. 8 `$DataItems`: `report_category`, `report_template_status`, `report_field_type`, `report_system_field`, `report_header_layout`, `report_font`, `report_date_format`, `report_section_breaks`. Error codes 711, 715–725. Transaction discipline: all SELECTs before `beginTransaction()`. Field-level `RTF_IS_REQUIRED` (Q7). Pagination via `$Config.get("REPORT_TEMPLATES_PAGE_SIZE")` (0-based).
+- **Deferred:** ~~Report generation from templates (Phase 7.2 — must freeze JSON snapshot into the report)~~ ✅ done in 7.2 (`incident_report.IRP_CONTENT_SNAPSHOT`), ~~linked-report check in `delete_template`~~ ✅ done in 7.2, template versioning, template import/export — see `docs/issues-questions/report-template-issues-questions.md`.
 
-#### 7.2 Report (`platform/api/report.js`)
-- Incident report creation (from call or standalone), edit, submit, approval workflow (Draft -> Submitted -> Under Review -> Approved -> Delivered), client view
-- **DB tables:** `incident_report`, `incident_report_section`, `incident_report_attachment`
+#### ~~7.2 Report (`platform/api/report.js`)~~ ✅ Done
+- ~~Incident report creation (from call or standalone), edit, submit, approval workflow (Draft -> Submitted -> Under Review -> Approved -> Delivered), client view~~
+- **DB tables:** `incident_report`, `incident_report_section`, `incident_report_attachment`, `incident_report_history`
 - **Depends on:** Report Template (7.1), Call (3.1), Officer, Community
+- **Implementation:** 14 API endpoints — `get_reports_list`, `get_report`, `create_report`, `update_report`, `submit_report`, `start_review`, `release_review`, `approve_report`, `request_changes`, `deliver_report`, `export_report_pdf`, `get_report_history`, `get_report_for_client`, `get_report_metadata`. Status lifecycle: `draft → submitted → under_review → approved → delivered`, with `changes_requested` (resubmission returns to the same reviewer) and direct `draft → approved` when the template does not require review. Template structure and effective style frozen into `IRP_CONTENT_SNAPSHOT` at creation (Report Template Q3). Call-linked reports auto-populate system fields from the call (populated fields locked); call media imported as attachments. Field validation per type (text/date/location/dropdown/file_upload/digital_signature) with section- and field-level required rules at submit. Single-reviewer lock via `$EntityLock` with expired-lock takeover. Audit trail: officer-submitted values retained (`IRS_SUBMITTED_VALUES`) and every transition / post-submission edit logged in `incident_report_history` with field-level diffs. Manager edits (values, manager notes, client section inclusion), approval with inclusion checklist + management summary, mandatory change-request comments. Delivery renders the client-facing PDF from the template style settings via `$Export` + new `$ReportPdf` user module. Notifications: `report_submitted`, new `report_under_review`, `report_approved`, `report_changes_requested`, `report_delivered`, `new_incident_report` (client). 3 new/extended `$DataItems` (`report_status`, `report_history_action`, `report_pdf_image_ext`; attributes added to `report_field_type`, `report_font`). Error codes 726–739 (Report band extended to 710–749; Notification, Settings, Asset & Post and Admin User bands shifted +20). `ReportTemplate/delete_template` linked-report check implemented.
+- **Architectural decisions Q1–Q16 implemented:** optional resident recipient for standalone reports with community-wide visibility otherwise; diagonal 15% "CONFIDENTIAL – AUTHORISED USE ONLY" watermark with audit header/footer; POI Report Encounter (`IRP_POI_ID`, pre-filled type/description/location, `related_reports` on POI records); `incident_description` / `officer_comments` editable after auto-population; `report_under_review_enabled` notification toggle; error codes 740–741.
+- **Open / deferred:** follow-up questions Q17, Q19–Q22 — see `docs/issues-questions/report-issues-questions.md`; dashboard reports section and other enhancements — see `docs/deferred_requirements/09-report-enhancements.md`.
 
 ---
 
@@ -248,8 +253,8 @@ Dashboard aggregates data from all other modules, so it must be last.
 | 5.3 | Tracking | Officer, Call | `api/tracking.js`, `funcs/tracking.js` |
 | ~~6.1~~ | ~~Post Order~~ ✅ | Community, Post | `api/post_order.js`, `funcs/post_order.js` |
 | ~~6.2~~ | ~~POI~~ ✅ | Community, Call | `api/poi.js`, `funcs/poi.js` |
-| 7.1 | Report Template | Community | `api/report_template.js`, `funcs/report_template.js` |
-| 7.2 | Report | Template, Call, Officer | `api/report.js`, `funcs/report.js` |
+| ~~7.1~~ | ~~Report Template~~ ✅ | Community | `api/report_template.js`, `funcs/report_template.js` |
+| ~~7.2~~ | ~~Report~~ ✅ | Template, Call, Officer | `api/report.js`, `funcs/report.js` |
 | 8.1 | Dashboard | All modules | `api/dashboard.js`, `funcs/dashboard.js` |
 
 ---
@@ -263,9 +268,10 @@ For **each module** implementation, follow this sequence:
 3. **API definition** - Create `platform/api/<module>.js` with parameter schemas and ACL
 4. **API implementation** - Create `platform/funcs/<module>.js` with business logic
 5. **Register module** - Add to `platform/config/using_api.js`
-6. **Tests** - Add test methods in `platform/funcs/api_test.js`
+6. **Tests** - Add test user module in `platform/user_modules/test_api_<module>.js`, register in `using_modules.js`, add thin wrapper in `funcs/api_test.js`, add route in `api/api_test.js`
 7. **Code review** - Run through `docs/code_review_checklist.md`
 8. **Document** - Update `docs/project_dev.md` with new flows
+9. **API Doc** - Create or update `docs/api/<module>_api.md` (consumer-facing black-box documentation)
 
 ---
 

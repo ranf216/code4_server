@@ -76,9 +76,13 @@ These features are documented in the SDS but are **not implemented** in the init
 
 **Requirement:** Officers and admins can share/export call details as a formatted report (PDF or similar).
 
-**Current behavior:** Not implemented.
+**Current behavior:** ✅ **Partially implemented (Phase 7.2).**
+- [x] Officers can create an incident-linked report from a call (`Report/create_report` with `call_id`) — call details (date, time, type, location, description, resident, priority, officer comments, media) are auto-populated into the report.
+- [x] The report is delivered to the client as a formatted PDF generated from the template style settings (`Report/deliver_report`).
+- [ ] Direct "Share to email" of the call (link + details) from the call screen (SDS 3.4.1.5 6.1).
+- [ ] "Export incident" to Excel (type, description, location, comments, images) from the call screen (SDS 3.4.1.5 6.2).
 
-**Dependencies:** Report generation module, PDF export library.
+**Dependencies:** ~~Report generation module, PDF export library.~~ Report module (Phase 7.2 ✅), `$Export` (CSV/XLSX/PDF) available.
 
 ---
 

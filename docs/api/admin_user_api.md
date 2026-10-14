@@ -134,7 +134,7 @@ Management system users are the personnel who access the management portal — a
     | rc | Message | Scenario |
     |----|---------|----------|
     | 201 | invalid user token | Invalid or expired token. |
-    | 770 | admin user not found | No active user exists with the given `user_id`. |
+    | 790 | admin user not found | No active user exists with the given `user_id`. |
 
 - **Usage & Flows:**
     Called when opening a user's detail view or the edit form (SDS 5.2.3). Also used to verify that changes (update, role change, deletion) were applied correctly.
@@ -210,8 +210,8 @@ Management system users are the personnel who access the management portal — a
     | rc | Message | Scenario |
     |----|---------|----------|
     | 201 | invalid user token | Invalid or expired token. |
-    | 770 | admin user not found | No active user exists with the given `user_id`. |
-    | 771 | cannot delete your own account | Attempting to deactivate the last remaining active admin. |
+    | 790 | admin user not found | No active user exists with the given `user_id`. |
+    | 791 | cannot delete your own account | Attempting to deactivate the last remaining active admin. |
     | 235 | invalid email address | The new `email` is not a valid email format. |
     | 240 | user email already exists | Another active user already has this email address. |
     | 102 | missing api param: initial_password | `email` was changed but `initial_password` was not provided. |
@@ -244,7 +244,7 @@ Management system users are the personnel who access the management portal — a
     | rc | Message | Scenario |
     |----|---------|----------|
     | 201 | invalid user token | Invalid or expired token. |
-    | 770 | admin user not found | No active user exists with the given `user_id`. |
+    | 790 | admin user not found | No active user exists with the given `user_id`. |
     | 242 | password does not meet criteria | `password` does not satisfy the configured complexity requirements. |
 
 - **Usage & Flows:**
@@ -273,8 +273,8 @@ Management system users are the personnel who access the management portal — a
     | rc | Message | Scenario |
     |----|---------|----------|
     | 201 | invalid user token | Invalid or expired token. |
-    | 770 | admin user not found | No active user exists with the given `user_id`. |
-    | 771 | cannot delete your own account | The caller is attempting to delete their own account, or is attempting to delete the last remaining active admin. |
+    | 790 | admin user not found | No active user exists with the given `user_id`. |
+    | 791 | cannot delete your own account | The caller is attempting to delete their own account, or is attempting to delete the last remaining active admin. |
 
 - **Usage & Flows:**
     Called from the Delete action in the Users Table (SDS 5.2.4). The user can be deleted as long as they are not the only active admin remaining in the system. An admin cannot delete their own account. Deleted users are retained for historical reference but can no longer log in or appear in the active users list.
@@ -306,8 +306,8 @@ Management system users are the personnel who access the management portal — a
     |----|---------|----------|
     | 201 | invalid user token | Invalid or expired token. |
     | 103 | current user does not have privileges | The caller does not have the Super Admin role. |
-    | 772 | cannot change your own role | The caller is attempting to change their own role. |
-    | 770 | admin user not found | No active user exists with the given `user_id`. |
+    | 792 | cannot change your own role | The caller is attempting to change their own role. |
+    | 790 | admin user not found | No active user exists with the given `user_id`. |
     | 106 | invalid user role | `role` is not a recognized role type. |
 
 - **Usage & Flows:**

@@ -1,0 +1,12 @@
+{
+    "created":            {"name": {"en": "Created"},            "define": "REPORT_HISTORY_ACTION_CREATED"},
+    "updated":            {"name": {"en": "Updated"},            "define": "REPORT_HISTORY_ACTION_UPDATED"},
+    "submitted":          {"name": {"en": "Submitted"},          "define": "REPORT_HISTORY_ACTION_SUBMITTED"},
+    "auto_approved":      {"name": {"en": "Auto-Approved"},      "define": "REPORT_HISTORY_ACTION_AUTO_APPROVED"},
+    "review_started":     {"name": {"en": "Review Started"},     "define": "REPORT_HISTORY_ACTION_REVIEW_STARTED"},
+    "review_released":    {"name": {"en": "Review Released"},    "define": "REPORT_HISTORY_ACTION_REVIEW_RELEASED"},
+    "changes_requested":  {"name": {"en": "Changes Requested"},  "define": "REPORT_HISTORY_ACTION_CHANGES_REQUESTED"},
+    "approved":           {"name": {"en": "Approved"},           "define": "REPORT_HISTORY_ACTION_APPROVED"},
+    "delivered":          {"name": {"en": "Delivered"},          "define": "REPORT_HISTORY_ACTION_DELIVERED"},
+    "pdf_regenerated":    {"name": {"en": "PDF Regenerated"},    "define": "REPORT_HISTORY_ACTION_PDF_REGENERATED"}
+}

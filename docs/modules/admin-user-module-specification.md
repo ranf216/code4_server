@@ -33,7 +33,7 @@ Roles are **sequential identifiers**. The `$UserRoles` system module converts th
 |---|---|
 | `platform/api/admin_user.js` | API definition — parameter schemas, ACL, documentation hints |
 | `platform/funcs/admin_user.js` | API implementation — all business logic, database interaction, validation |
-| `platform/definitions/errorcodes.en.js` | Error code definitions (RC 770–772 for admin user) |
+| `platform/definitions/errorcodes.en.js` | Error code definitions (RC 790–792 for admin user) |
 | `platform/config/using_api.js` | Module registration |
 | `platform/config/using_modules.js` | System module enablement (`user_roles`) |
 | `platform/system_modules/user_roles.js` | Role bitmask management system module |
@@ -250,7 +250,7 @@ ORDER BY USD_FIRST_NAME ASC
 **Implementation flow:**
 
 1. **Fetch user:** Call `fetchAdminUserRecord(this.$user_id)`.
-2. **Not found:** If `null`, return `$ERRS.ERR_ADMIN_USER_NOT_FOUND` (RC 770).
+2. **Not found:** If `null`, return `$ERRS.ERR_ADMIN_USER_NOT_FOUND` (RC 790).
 3. **Map:** Transform row via `mapAdminUserRow()`.
 4. **Return:** `{ rc: 0, user: {...} }`.
 
@@ -324,15 +324,15 @@ ORDER BY USD_FIRST_NAME ASC
 
 **Implementation flow:**
 
-1. **Fetch user:** `fetchAdminUserRecord(this.$user_id)` — return `ERR_ADMIN_USER_NOT_FOUND` (RC 770) if not found.
-2. **Last-admin deactivation check:** If `is_active` is explicitly set to `false` AND the user is currently active (status=1), call `getActiveAdminCount()`. If count ≤ 1, return `ERR_ADMIN_CANNOT_DELETE_SELF` (RC 771). This prevents deactivating the last remaining admin.
+1. **Fetch user:** `fetchAdminUserRecord(this.$user_id)` — return `ERR_ADMIN_USER_NOT_FOUND` (RC 790) if not found.
+2. **Last-admin deactivation check:** If `is_active` is explicitly set to `false` AND the user is currently active (status=1), call `getActiveAdminCount()`. If count ≤ 1, return `ERR_ADMIN_CANNOT_DELETE_SELF` (RC 791). This prevents deactivating the last remaining admin.
 3. **Email change handling (if changed):** If `email` is non-empty and differs from current:
    - Validate format via `$Utils.validateEmail()` — return `ERR_INVALID_EMAIL_ADDRESS` (RC 235) if invalid.
    - Check uniqueness among non-deleted users (excluding self) — return `ERR_USER_EMAIL_ALREADY_EXISTS` (RC 240) if duplicate.
    - **Require `initial_password`:** If `this.$initial_password` is empty/missing, return `ERR_MISSING_API_PARAM` (RC 102) with `param: "initial_password"`. Per SDS 5.2.3, an email change mandates a new initial password.
    - **Validate `initial_password` criteria:** `$Utils.isValidPassword(this.$initial_password)` — return `ERR_PASSWORD_NOT_MEET_CRITERIA` (RC 242) if invalid.
 4. **Role change handling (if provided):**
-   - **Self-role check:** If the target `user_id` matches the caller's session user ID, return `ERR_ADMIN_CANNOT_EDIT_SELF_ROLE` (RC 772). A Super Admin cannot change their own role.
+   - **Self-role check:** If the target `user_id` matches the caller's session user ID, return `ERR_ADMIN_CANNOT_EDIT_SELF_ROLE` (RC 792). A Super Admin cannot change their own role.
    - **Validate role:** Check against `$Globals.allUserRoles` — return `ERR_INVALID_USER_ROLE` (RC 106) if invalid.
    - **Execute role change:** Compute current roles via `$Utils.getCalculatedUserRoles()`, then call `$UserRoles.setUserRoles(userId, [newRole], currentRoles.filter(r => r != newRole), [], [])`. This atomically removes all current roles and sets the new one.
 5. **Build dynamic UPDATE:** Array-based pattern. Each optional field is checked with `$Utils.isset()` / `$Utils.empty()`:
@@ -382,9 +382,9 @@ ORDER BY USD_FIRST_NAME ASC
 
 **Implementation flow:**
 
-1. **Fetch user:** `fetchAdminUserRecord(this.$user_id)` — return `ERR_ADMIN_USER_NOT_FOUND` (RC 770) if not found.
-2. **Self-deletion check:** If `this.$user_id === this.$Session.userId`, return `ERR_ADMIN_CANNOT_DELETE_SELF` (RC 771). Admins cannot delete their own account.
-3. **Last-admin check:** Call `getActiveAdminCount()`. If count ≤ 1 AND the target user is currently active (status=1), return `ERR_ADMIN_CANNOT_DELETE_SELF` (RC 771). The system must always have at least one active admin.
+1. **Fetch user:** `fetchAdminUserRecord(this.$user_id)` — return `ERR_ADMIN_USER_NOT_FOUND` (RC 790) if not found.
+2. **Self-deletion check:** If `this.$user_id === this.$Session.userId`, return `ERR_ADMIN_CANNOT_DELETE_SELF` (RC 791). Admins cannot delete their own account.
+3. **Last-admin check:** Call `getActiveAdminCount()`. If count ≤ 1 AND the target user is currently active (status=1), return `ERR_ADMIN_CANNOT_DELETE_SELF` (RC 791). The system must always have at least one active admin.
 4. **Begin transaction:** `$Db.beginTransaction()`.
 5. **Clear session:** `UPDATE user SET USR_TOKEN='', USR_DEVICE_ID=NULL WHERE USR_ID=?`. Check `$Db.isError()` — rollback on failure.
 6. **Soft-delete:** `UPDATE user_details SET USD_DELETED_ON=?, USD_EMAIL=CONCAT(USD_EMAIL, '/DELETED'), USD_PHONE_NUM=CONCAT(USD_PHONE_NUM, '/DELETED') WHERE USD_USR_ID=? AND USD_DELETED_ON IS NULL`. Check `$Db.isError()` — rollback on failure.
@@ -418,7 +418,7 @@ ORDER BY USD_FIRST_NAME ASC
 
 **Implementation flow:**
 
-1. **Fetch user:** `fetchAdminUserRecord(this.$user_id)` — return `ERR_ADMIN_USER_NOT_FOUND` (RC 770) if not found.
+1. **Fetch user:** `fetchAdminUserRecord(this.$user_id)` — return `ERR_ADMIN_USER_NOT_FOUND` (RC 790) if not found.
 2. **Validate password criteria:** `$Utils.isValidPassword(this.$password)` — return `ERR_PASSWORD_NOT_MEET_CRITERIA` (RC 242) if invalid.
 3. **Store plain-text password:** The password is stored as-is (`this.$password`), without hashing.
 4. **Update user record:** `UPDATE user SET USR_PASSWORD=?, USR_TOKEN='', USR_DEVICE_ID=NULL, USR_PASSWORD_CREATED_ON=? WHERE USR_ID=?`. Check `$Db.isError()`.
@@ -450,7 +450,7 @@ ORDER BY USD_FIRST_NAME ASC
 
 **Implementation flow:**
 
-1. **Fetch current user:** `fetchAdminUserRecord(this.$Session.userId)` — return `ERR_ADMIN_USER_NOT_FOUND` (RC 770) if not found.
+1. **Fetch current user:** `fetchAdminUserRecord(this.$Session.userId)` — return `ERR_ADMIN_USER_NOT_FOUND` (RC 790) if not found.
 2. **Verify current password:** `$Utils.isCorrectPwd(userId, this.$current_password, user.USR_PASSWORD)` — return `ERR_INVALID_PASSWORD` (RC 247) if incorrect.
 3. **Validate new password criteria:** `$Utils.isValidPassword(this.$new_password)` — return `ERR_PASSWORD_NOT_MEET_CRITERIA` (RC 242) if invalid.
 4. **Same-password check:** If `this.$new_password === this.$current_password`, return `ERR_NEW_PASSWORD_CANNOT_BE_SAME_AS_CURRENT` (RC 248).
@@ -551,7 +551,7 @@ The `AdminUser/reset_password` endpoint:
 
 The `delete_user` method performs two sequential constraint checks:
 
-1. **Self-deletion prevention:** `if (this.$user_id === this.$Session.userId)` → return `ERR_ADMIN_CANNOT_DELETE_SELF` (RC 771). A user cannot delete their own account regardless of how many admins exist.
+1. **Self-deletion prevention:** `if (this.$user_id === this.$Session.userId)` → return `ERR_ADMIN_CANNOT_DELETE_SELF` (RC 791). A user cannot delete their own account regardless of how many admins exist.
 
 2. **Last-admin prevention:** `getActiveAdminCount()` queries:
    ```sql
@@ -560,7 +560,7 @@ The `delete_user` method performs two sequential constraint checks:
       JOIN `user_details` ON USR_ID = USD_USR_ID
    WHERE USR_TYPE=? AND USR_STATUS=1 AND USD_DELETED_ON IS NULL
    ```
-   If `cnt ≤ 1` AND the target user is active (status=1), return `ERR_ADMIN_CANNOT_DELETE_SELF` (RC 771).
+   If `cnt ≤ 1` AND the target user is active (status=1), return `ERR_ADMIN_CANNOT_DELETE_SELF` (RC 791).
 
 **Implementation — `update_user` (deactivation):**
 
@@ -568,14 +568,14 @@ The `update_user` method performs the same constraint check when deactivating:
 
 1. **Check:** If `is_active` is explicitly set to `false` AND the target user is currently active:
    - Call `getActiveAdminCount()`.
-   - If count ≤ 1, return `ERR_ADMIN_CANNOT_DELETE_SELF` (RC 771).
+   - If count ≤ 1, return `ERR_ADMIN_CANNOT_DELETE_SELF` (RC 791).
 
 **Why server-side:** These checks MUST be server-side (not client-side) because:
 - Client-side checks can be bypassed.
 - Multiple administrators may modify users concurrently.
 - The server is the single source of truth for the admin count.
 
-**SDS compliance status:** ✅ Fully compliant. Both deletion and deactivation enforce the "at least one admin" constraint. The error code `ERR_ADMIN_CANNOT_DELETE_SELF` (RC 771) is returned for all constraint violations.
+**SDS compliance status:** ✅ Fully compliant. Both deletion and deactivation enforce the "at least one admin" constraint. The error code `ERR_ADMIN_CANNOT_DELETE_SELF` (RC 791) is returned for all constraint violations.
 
 ---
 
@@ -603,7 +603,7 @@ A formal deviation was made to **allow Super Admins to change a user's role** th
 
 **Security boundaries maintained:**
 1. **ACL enforcement:** `update_user` requires `USER_ROLE_SUPER_ADMIN` ACL — only Super Admins can access this endpoint.
-2. **Self-role prevention:** The server returns `ERR_ADMIN_CANNOT_EDIT_SELF_ROLE` (RC 772) if a Super Admin attempts to change their own role.
+2. **Self-role prevention:** The server returns `ERR_ADMIN_CANNOT_EDIT_SELF_ROLE` (RC 792) if a Super Admin attempts to change their own role.
 3. **Role validation:** Only valid roles from `$Globals.allUserRoles` are accepted. Invalid values return `ERR_INVALID_USER_ROLE` (RC 106).
 4. **`$UserRoles` module:** Role assignment is delegated to the `$UserRoles` system module which handles bitmask operations atomically and clears user cache.
 
@@ -613,13 +613,13 @@ A formal deviation was made to **allow Super Admins to change a user's role** th
 
 ## 7. Error Codes
 
-All admin-user-related error codes are defined in `platform/definitions/errorcodes.en.js` under the **Admin User (770–779)** range:
+All admin-user-related error codes are defined in `platform/definitions/errorcodes.en.js` under the **Admin User (790–799)** range:
 
 | RC | Constant | Message | Used By |
 |---|---|---|---|
-| 770 | `ERR_ADMIN_USER_NOT_FOUND` | admin user not found | `get_user`, `update_user`, `delete_user`, `reset_password`, `change_password` |
-| 771 | `ERR_ADMIN_CANNOT_DELETE_SELF` | cannot delete your own account | `delete_user`, `update_user` (deactivation) |
-| 772 | `ERR_ADMIN_CANNOT_EDIT_SELF_ROLE` | cannot change your own role | `update_user` (role change) |
+| 790 | `ERR_ADMIN_USER_NOT_FOUND` | admin user not found | `get_user`, `update_user`, `delete_user`, `reset_password`, `change_password` |
+| 791 | `ERR_ADMIN_CANNOT_DELETE_SELF` | cannot delete your own account | `delete_user`, `update_user` (deactivation) |
+| 792 | `ERR_ADMIN_CANNOT_EDIT_SELF_ROLE` | cannot change your own role | `update_user` (role change) |
 
 Additionally, the following infrastructure error codes are returned:
 
@@ -669,9 +669,9 @@ Super Admin → POST AdminUser/delete_user
     { user_id: "abc123" }
          │
          ▼
-    [1] Fetch user → ERR 770 if not found
-    [2] Self-deletion check → ERR 771 if own account
-    [3] Active admin count check → ERR 771 if last admin
+    [1] Fetch user → ERR 790 if not found
+    [2] Self-deletion check → ERR 791 if own account
+    [3] Active admin count check → ERR 791 if last admin
     [4] BEGIN TRANSACTION
     [5] Clear token: UPDATE user SET USR_TOKEN='', USR_DEVICE_ID=NULL
     [6] Soft-delete: UPDATE user_details SET USD_DELETED_ON=now(),
@@ -690,7 +690,7 @@ Super Admin → POST AdminUser/reset_password
     { user_id: "abc123", password: "NewInit@789" }
          │
          ▼
-    [1] Fetch user → ERR 770 if not found
+    [1] Fetch user → ERR 790 if not found
     [2] Validate password criteria → ERR 242 if weak
     [3] Store: USR_PASSWORD = "NewInit@789" (plain text), clear token
     [4] Invalidate token cache

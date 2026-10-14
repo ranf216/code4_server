@@ -8,6 +8,7 @@
     "resident_like":            {"name": {"en": "Resident Like"},              "title_template": "Resident Feedback",           "message_template": "#resident_name# liked your service on call #call_number#"},
     "new_incident_report":      {"name": {"en": "New Incident Report"},        "title_template": "New Incident Report",         "message_template": "Incident report #report_number# filed by #officer_name#"},
     "report_submitted":         {"name": {"en": "Report Submitted"},           "title_template": "Report Submitted",            "message_template": "Report #report_number# submitted by #officer_name# for review"},
+    "report_under_review":      {"name": {"en": "Report Under Review"},        "title_template": "Report Under Review",         "message_template": "Report #report_number# is being reviewed by #reviewer_name#"},
     "report_approved":          {"name": {"en": "Report Approved"},            "title_template": "Report Approved",             "message_template": "Report #report_number# has been approved"},
     "report_changes_requested": {"name": {"en": "Report Changes Requested"},   "title_template": "Report Changes Requested",    "message_template": "Changes requested on report #report_number#"},
     "report_delivered":         {"name": {"en": "Report Delivered"},           "title_template": "Report Delivered",            "message_template": "Report #report_number# has been delivered to the client"},

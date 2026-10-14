@@ -92,7 +92,7 @@ Retrieve a paginated list of assets for a community with optional filters.
 | RC | Constant | Cause |
 |----|----------|-------|
 | 500 | `ERR_COMMUNITY_NOT_FOUND` | `community_id` does not exist or is deleted |
-| 751 | `ERR_ASSET_INVALID_TYPE` | `asset_type` filter is not a recognized type |
+| 771 | `ERR_ASSET_INVALID_TYPE` | `asset_type` filter is not a recognized type |
 
 ---
 
@@ -143,7 +143,7 @@ Retrieve full details for a single asset.
 
 | RC | Constant | Cause |
 |----|----------|-------|
-| 750 | `ERR_ASSET_NOT_FOUND` | Asset does not exist or was deleted |
+| 770 | `ERR_ASSET_NOT_FOUND` | Asset does not exist or was deleted |
 
 ---
 
@@ -178,7 +178,7 @@ Create a single new asset on the community map.
 
 **Behavior notes:**
 - Server calculates and persists `AST_ACRES` based on `shape` and `location`.
-- Dates are validated with server-side format checking. Invalid date strings return rc 763.
+- Dates are validated with server-side format checking. Invalid date strings return rc 783.
 - The community's combined map item count (assets + posts + zones) is checked before insertion.
 
 **Error codes:**
@@ -186,10 +186,10 @@ Create a single new asset on the community map.
 | RC | Constant | Cause |
 |----|----------|-------|
 | 500 | `ERR_COMMUNITY_NOT_FOUND` | Community does not exist |
-| 751 | `ERR_ASSET_INVALID_TYPE` | `asset_type` is not a recognized type |
-| 755 | `ERR_ASSET_INVALID_SHAPE` | `shape` is not `place`, `circle`, or `line` |
-| 762 | `ERR_MAP_ITEM_LIMIT_EXCEEDED` | Community has reached the maximum number of map items |
-| 763 | `ERR_ASSET_INVALID_DATE` | `installation_date` or `replacement_date` is not a valid date |
+| 771 | `ERR_ASSET_INVALID_TYPE` | `asset_type` is not a recognized type |
+| 775 | `ERR_ASSET_INVALID_SHAPE` | `shape` is not `place`, `circle`, or `line` |
+| 782 | `ERR_MAP_ITEM_LIMIT_EXCEEDED` | Community has reached the maximum number of map items |
+| 783 | `ERR_ASSET_INVALID_DATE` | `installation_date` or `replacement_date` is not a valid date |
 
 ---
 
@@ -213,9 +213,9 @@ Create multiple assets at once. All assets in the batch share the same type, sha
 | `replacement_date` | string | No | `null` | Shared replacement date (`YYYY-MM-DD`) |
 
 **Constraints:**
-- `locations` must be a non-empty array (otherwise rc 760).
-- Maximum 100 items per batch (otherwise rc 761).
-- Total community map items including the batch must not exceed the limit (otherwise rc 762).
+- `locations` must be a non-empty array (otherwise rc 780).
+- Maximum 100 items per batch (otherwise rc 781).
+- Total community map items including the batch must not exceed the limit (otherwise rc 782).
 
 **Success response:**
 
@@ -234,12 +234,12 @@ Create multiple assets at once. All assets in the batch share the same type, sha
 | RC | Constant | Cause |
 |----|----------|-------|
 | 500 | `ERR_COMMUNITY_NOT_FOUND` | Community does not exist |
-| 751 | `ERR_ASSET_INVALID_TYPE` | Invalid asset type |
-| 755 | `ERR_ASSET_INVALID_SHAPE` | Invalid shape |
-| 760 | `ERR_ASSET_BATCH_EMPTY` | `locations` array is empty |
-| 761 | `ERR_ASSET_BATCH_LIMIT_EXCEEDED` | Batch exceeds 100 items |
-| 762 | `ERR_MAP_ITEM_LIMIT_EXCEEDED` | Community limit exceeded |
-| 763 | `ERR_ASSET_INVALID_DATE` | Invalid date format |
+| 771 | `ERR_ASSET_INVALID_TYPE` | Invalid asset type |
+| 775 | `ERR_ASSET_INVALID_SHAPE` | Invalid shape |
+| 780 | `ERR_ASSET_BATCH_EMPTY` | `locations` array is empty |
+| 781 | `ERR_ASSET_BATCH_LIMIT_EXCEEDED` | Batch exceeds 100 items |
+| 782 | `ERR_MAP_ITEM_LIMIT_EXCEEDED` | Community limit exceeded |
+| 783 | `ERR_ASSET_INVALID_DATE` | Invalid date format |
 
 ---
 
@@ -279,10 +279,10 @@ Partial update (PATCH-like) — only provided fields are modified. Omit a field 
 
 | RC | Constant | Cause |
 |----|----------|-------|
-| 750 | `ERR_ASSET_NOT_FOUND` | Asset not found |
-| 751 | `ERR_ASSET_INVALID_TYPE` | Invalid asset type |
-| 755 | `ERR_ASSET_INVALID_SHAPE` | Invalid shape |
-| 763 | `ERR_ASSET_INVALID_DATE` | Invalid date format |
+| 770 | `ERR_ASSET_NOT_FOUND` | Asset not found |
+| 771 | `ERR_ASSET_INVALID_TYPE` | Invalid asset type |
+| 775 | `ERR_ASSET_INVALID_SHAPE` | Invalid shape |
+| 783 | `ERR_ASSET_INVALID_DATE` | Invalid date format |
 
 ---
 
@@ -312,7 +312,7 @@ Soft-delete an asset. The record is not physically removed.
 
 | RC | Constant | Cause |
 |----|----------|-------|
-| 750 | `ERR_ASSET_NOT_FOUND` | Asset not found or already deleted |
+| 770 | `ERR_ASSET_NOT_FOUND` | Asset not found or already deleted |
 
 ---
 
@@ -403,7 +403,7 @@ Post object structure is identical to the items in `get_posts_list`.
 
 | RC | Constant | Cause |
 |----|----------|-------|
-| 752 | `ERR_POST_NOT_FOUND` | Post not found, deleted, or not in officer's community |
+| 772 | `ERR_POST_NOT_FOUND` | Post not found, deleted, or not in officer's community |
 
 ---
 
@@ -456,10 +456,10 @@ All three keys are optional. Omitted keys default to empty arrays.
 |----|----------|-------|
 | 105 | `ERR_INVALID_API_PARAM` | Name is empty or exceeds 60 characters |
 | 500 | `ERR_COMMUNITY_NOT_FOUND` | Community does not exist |
-| 753 | `ERR_POST_NAME_ALREADY_EXISTS` | A post with this name already exists in the community |
-| 756 | `ERR_POST_INVALID_PRIORITY` | Invalid priority value |
-| 757 | `ERR_POST_INVALID_SHAPE` | Invalid shape value |
-| 762 | `ERR_MAP_ITEM_LIMIT_EXCEEDED` | Community map item limit exceeded |
+| 773 | `ERR_POST_NAME_ALREADY_EXISTS` | A post with this name already exists in the community |
+| 776 | `ERR_POST_INVALID_PRIORITY` | Invalid priority value |
+| 777 | `ERR_POST_INVALID_SHAPE` | Invalid shape value |
+| 782 | `ERR_MAP_ITEM_LIMIT_EXCEEDED` | Community map item limit exceeded |
 
 ---
 
@@ -498,10 +498,10 @@ Partial update for a post. Only provided fields are modified.
 | RC | Constant | Cause |
 |----|----------|-------|
 | 105 | `ERR_INVALID_API_PARAM` | Name is empty or exceeds 60 characters |
-| 752 | `ERR_POST_NOT_FOUND` | Post not found |
-| 753 | `ERR_POST_NAME_ALREADY_EXISTS` | Duplicate name in community |
-| 756 | `ERR_POST_INVALID_PRIORITY` | Invalid priority |
-| 757 | `ERR_POST_INVALID_SHAPE` | Invalid shape |
+| 772 | `ERR_POST_NOT_FOUND` | Post not found |
+| 773 | `ERR_POST_NAME_ALREADY_EXISTS` | Duplicate name in community |
+| 776 | `ERR_POST_INVALID_PRIORITY` | Invalid priority |
+| 777 | `ERR_POST_INVALID_SHAPE` | Invalid shape |
 
 ---
 
@@ -531,8 +531,8 @@ Soft-delete a post. Posts that have been used in a shift (referenced by the shif
 
 | RC | Constant | Cause |
 |----|----------|-------|
-| 752 | `ERR_POST_NOT_FOUND` | Post not found |
-| 759 | `ERR_POST_HAS_SHIFT_HISTORY` | Post has been used in a shift; deactivate instead |
+| 772 | `ERR_POST_NOT_FOUND` | Post not found |
+| 779 | `ERR_POST_HAS_SHIFT_HISTORY` | Post has been used in a shift; deactivate instead |
 
 ---
 
@@ -578,7 +578,7 @@ Retrieve all map zones for a community. Not paginated (zone count per community 
 | RC | Constant | Cause |
 |----|----------|-------|
 | 500 | `ERR_COMMUNITY_NOT_FOUND` | Community not found |
-| 758 | `ERR_MAP_ZONE_INVALID_TYPE` | Invalid zone type filter |
+| 778 | `ERR_MAP_ZONE_INVALID_TYPE` | Invalid zone type filter |
 
 ---
 
@@ -613,8 +613,8 @@ Create a map zone (entry/exit point or high-priority zone).
 | RC | Constant | Cause |
 |----|----------|-------|
 | 500 | `ERR_COMMUNITY_NOT_FOUND` | Community not found |
-| 758 | `ERR_MAP_ZONE_INVALID_TYPE` | Invalid zone type |
-| 762 | `ERR_MAP_ITEM_LIMIT_EXCEEDED` | Community map item limit exceeded |
+| 778 | `ERR_MAP_ZONE_INVALID_TYPE` | Invalid zone type |
+| 782 | `ERR_MAP_ITEM_LIMIT_EXCEEDED` | Community map item limit exceeded |
 
 ---
 
@@ -647,8 +647,8 @@ Partial update for a map zone.
 
 | RC | Constant | Cause |
 |----|----------|-------|
-| 754 | `ERR_MAP_ZONE_NOT_FOUND` | Zone not found |
-| 758 | `ERR_MAP_ZONE_INVALID_TYPE` | Invalid zone type |
+| 774 | `ERR_MAP_ZONE_NOT_FOUND` | Zone not found |
+| 778 | `ERR_MAP_ZONE_INVALID_TYPE` | Invalid zone type |
 
 ---
 
@@ -678,7 +678,7 @@ Soft-delete a map zone.
 
 | RC | Constant | Cause |
 |----|----------|-------|
-| 754 | `ERR_MAP_ZONE_NOT_FOUND` | Zone not found |
+| 774 | `ERR_MAP_ZONE_NOT_FOUND` | Zone not found |
 
 ---
 
@@ -786,20 +786,20 @@ Retrieve all enum values for populating dropdowns in the UI. Call this once on s
 
 | RC | Constant | Meaning |
 |----|----------|---------|
-| 750 | `ERR_ASSET_NOT_FOUND` | Asset not found or already deleted |
-| 751 | `ERR_ASSET_INVALID_TYPE` | Asset type key not recognized |
-| 752 | `ERR_POST_NOT_FOUND` | Post not found or already deleted |
-| 753 | `ERR_POST_NAME_ALREADY_EXISTS` | Post name not unique within community |
-| 754 | `ERR_MAP_ZONE_NOT_FOUND` | Map zone not found or already deleted |
-| 755 | `ERR_ASSET_INVALID_SHAPE` | Shape not `place`, `circle`, or `line` |
-| 756 | `ERR_POST_INVALID_PRIORITY` | Priority not recognized |
-| 757 | `ERR_POST_INVALID_SHAPE` | Shape not recognized |
-| 758 | `ERR_MAP_ZONE_INVALID_TYPE` | Zone type not recognized |
-| 759 | `ERR_POST_HAS_SHIFT_HISTORY` | Post used in shifts, cannot delete — deactivate instead |
-| 760 | `ERR_ASSET_BATCH_EMPTY` | Batch locations array is empty |
-| 761 | `ERR_ASSET_BATCH_LIMIT_EXCEEDED` | Batch exceeds 100 items |
-| 762 | `ERR_MAP_ITEM_LIMIT_EXCEEDED` | Community map item limit reached |
-| 763 | `ERR_ASSET_INVALID_DATE` | Date field format is invalid |
+| 770 | `ERR_ASSET_NOT_FOUND` | Asset not found or already deleted |
+| 771 | `ERR_ASSET_INVALID_TYPE` | Asset type key not recognized |
+| 772 | `ERR_POST_NOT_FOUND` | Post not found or already deleted |
+| 773 | `ERR_POST_NAME_ALREADY_EXISTS` | Post name not unique within community |
+| 774 | `ERR_MAP_ZONE_NOT_FOUND` | Map zone not found or already deleted |
+| 775 | `ERR_ASSET_INVALID_SHAPE` | Shape not `place`, `circle`, or `line` |
+| 776 | `ERR_POST_INVALID_PRIORITY` | Priority not recognized |
+| 777 | `ERR_POST_INVALID_SHAPE` | Shape not recognized |
+| 778 | `ERR_MAP_ZONE_INVALID_TYPE` | Zone type not recognized |
+| 779 | `ERR_POST_HAS_SHIFT_HISTORY` | Post used in shifts, cannot delete — deactivate instead |
+| 780 | `ERR_ASSET_BATCH_EMPTY` | Batch locations array is empty |
+| 781 | `ERR_ASSET_BATCH_LIMIT_EXCEEDED` | Batch exceeds 100 items |
+| 782 | `ERR_MAP_ITEM_LIMIT_EXCEEDED` | Community map item limit reached |
+| 783 | `ERR_ASSET_INVALID_DATE` | Date field format is invalid |
 
 ---
 
@@ -871,13 +871,13 @@ For bulk asset placement (e.g., plotting 20 cameras along a fence line):
 1. Collect all coordinates client-side as the admin clicks on the map.
 2. Call `Asset/create_assets_batch` with all coordinates in the `locations` array.
 3. On success, use the returned `asset_ids` array to render markers immediately.
-4. On `rc: 762`, display a limit-exceeded warning and show the current count vs. maximum.
+4. On `rc: 782`, display a limit-exceeded warning and show the current count vs. maximum.
 
 ### 5.3 Handling the Map Item Limit
 
 Before enabling "Add" buttons, you may optionally call `Asset/get_assets_list`, `Asset/get_posts_list`, and `Asset/get_map_zones` to calculate the current total from `num_of_items` + zones count. Compare against the known limit (default: 1000) to proactively disable drawing tools.
 
-If you do not pre-check, the server will return `rc: 762` on any creation attempt that exceeds the limit.
+If you do not pre-check, the server will return `rc: 782` on any creation attempt that exceeds the limit.
 
 ### 5.4 Partial Updates
 
@@ -890,6 +890,6 @@ For update endpoints (`update_asset`, `update_post`, `update_map_zone`), only se
 
 When calling `Asset/delete_post`:
 - If `rc: 0` is returned, the post was successfully soft-deleted.
-- If `rc: 759` is returned, the post has shift history. Show the user a message:
+- If `rc: 779` is returned, the post has shift history. Show the user a message:
   > "This post has been used in a shift and cannot be deleted. Would you like to deactivate it instead?"
   If confirmed, call `Asset/update_post` with `is_active: false`.

@@ -33,6 +33,7 @@ Each notification has a `type` key that classifies it. The system supports the f
 | `resident_like` | Resident Like |
 | `new_incident_report` | New Incident Report |
 | `report_submitted` | Report Submitted |
+| `report_under_review` | Report Under Review |
 | `report_approved` | Report Approved |
 | `report_changes_requested` | Report Changes Requested |
 | `report_delivered` | Report Delivered |
@@ -203,8 +204,8 @@ When `send_push` is `true`, the system delivers the notification through the cha
     | rc | Message | Scenario |
     |----|---------|----------|
     | 201 | invalid user token | Invalid or expired token. |
-    | 730 | notification not found | The notification does not exist, does not belong to the current user, or has been deleted. |
-    | 732 | notification is already marked as read | The notification was already in a read state. |
+    | 750 | notification not found | The notification does not exist, does not belong to the current user, or has been deleted. |
+    | 752 | notification is already marked as read | The notification was already in a read state. |
 
 - **Usage & Flows:**
     Called when the user taps on a specific notification in the inbox. After a successful call, update the local notification state to reflect read status. If the consumer uses optimistic UI updates, this endpoint confirms the server state. Correlates with in-app notification interactions described in SDS 5.4.4.
@@ -290,7 +291,7 @@ When `send_push` is `true`, the system delivers the notification through the cha
     | rc | Message | Scenario |
     |----|---------|----------|
     | 201 | invalid user token | Invalid or expired token. |
-    | 731 | invalid notification type | The `type` value does not match any defined notification type key. |
+    | 751 | invalid notification type | The `type` value does not match any defined notification type key. |
     | 102 | invalid api parameter: title/message or template_vars required | Neither explicit title/message nor template_vars were provided, and the type's template cannot produce output. |
 
 - **Usage & Flows:**
@@ -342,7 +343,7 @@ When `send_push` is `true`, the system delivers the notification through the cha
     | rc | Message | Scenario |
     |----|---------|----------|
     | 201 | invalid user token | Invalid or expired token. |
-    | 731 | invalid notification type | The `type` value does not match any defined notification type key. |
+    | 751 | invalid notification type | The `type` value does not match any defined notification type key. |
     | 102 | invalid api parameter: title/message or template_vars required | Neither explicit title/message nor template_vars were provided, and the type's template cannot produce output. |
     | 102 | invalid api parameter: target_user_ids | `target_user_ids` is empty or not an array. |
 
@@ -374,7 +375,7 @@ When `send_push` is `true`, the system delivers the notification through the cha
     | rc | Message | Scenario |
     |----|---------|----------|
     | 201 | invalid user token | Invalid or expired token. |
-    | 730 | notification not found | The notification does not exist, does not belong to the current user, or was already deleted. |
+    | 750 | notification not found | The notification does not exist, does not belong to the current user, or was already deleted. |
 
 - **Usage & Flows:**
     Enables the user to dismiss individual notifications from their inbox. Useful for a "swipe to delete" gesture or an explicit delete action. Deleted notifications cannot be recovered by the consumer app.
@@ -403,6 +404,6 @@ The consumer app should listen for the `new_notification` event to update the ba
 
 | rc | Constant | Message |
 |----|----------|---------|
-| 730 | ERR_NOTIFICATION_NOT_FOUND | notification not found |
-| 731 | ERR_NOTIFICATION_INVALID_TYPE | invalid notification type |
-| 732 | ERR_NOTIFICATION_ALREADY_READ | notification is already marked as read |
+| 750 | ERR_NOTIFICATION_NOT_FOUND | notification not found |
+| 751 | ERR_NOTIFICATION_INVALID_TYPE | invalid notification type |
+| 752 | ERR_NOTIFICATION_ALREADY_READ | notification is already marked as read |

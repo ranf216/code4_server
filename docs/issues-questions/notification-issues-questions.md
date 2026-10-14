@@ -40,7 +40,7 @@ Template rendering utility implemented (Option A). `renderTemplate(type, vars)` 
 
 ### What Was Implemented
 1. **DB table:** `notification` (prefix `NTF_`) — see `db/UpgradeDB.sql`
-2. **Error codes:** 730–732 in `errorcodes.en.js`
+2. **Error codes:** 750–752 in `errorcodes.en.js`
 3. **API endpoints (7 total):**
    - `Notification/get_notifications` — paginated list with filters (read status, type, date range)
    - `Notification/get_unread_count` — unread badge count

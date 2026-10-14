@@ -316,6 +316,16 @@ The system sends push notifications at key lifecycle events:
                     "call_id": 42
                 }
             ],
+            "related_reports":
+            [
+                {
+                    "report_id": 15,
+                    "title": "Encounter - Trespass Order",
+                    "status": "submitted",
+                    "status_name": "Submitted",
+                    "created_on": "2026-10-12 09:30:00"
+                }
+            ],
             "expiry_date": "2026-12-31",
             "issue_date": "2026-01-15",
             "created_on": "2026-01-15 10:30:00",
@@ -342,7 +352,8 @@ The system sends push notifications at key lifecycle events:
     | `record.summary` | string | Summary (officer-visible). |
     | `record.photos` | array | Photo objects with `photo_id` (integer), `url` (string), and `sort_order` (integer). |
     | `record.sites` | array | Assigned sites with `site_id` (integer), `community_id` (integer), and `community_name` (string). |
-    | `record.related_incidents` | array | Linked incidents with `incident_link_id` (integer) and `call_id` (integer). |
+    | `record.related_incidents` | array | Linked incidents with `incident_link_id` (integer) and `call_id` (integer). Tapping opens the Call Details screen. |
+    | `record.related_reports` | array | Incident reports created from this record via "Report Encounter", with `report_id` (integer), `title`, `status`, `status_name` and `created_on`. Admins receive all non-draft linked reports; officers receive only their own. Tapping opens the Report Details screen. |
     | `record.expiry_date` | string \| null | Expiry date (`YYYY-MM-DD`), or `null`. |
     | `record.issue_date` | string \| null | Issue date (`YYYY-MM-DD`), or `null`. |
     | `record.created_on` | string | Creation datetime. |
@@ -696,7 +707,7 @@ All parameters except `record_id` are optional. Only the fields included in the 
 
     The PDF includes:
     - Header with record type, name, status, threat level, and record ID.
-    - Embedded photos.
+    - Embedded photos (JPEG / PNG). Photos whose image data cannot be decoded (e.g. corrupt uploads) are omitted from the PDF; the export still succeeds.
     - Personal details: name, aliases, DOB, gender, physical description.
     - Assessment: threat level and summary. Internal notes are **excluded**.
     - Assigned sites.

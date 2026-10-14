@@ -13,6 +13,7 @@ const TABLE_POI_RECORD_TYPE = "poi_record_type";
 const TABLE_POI_THREAT_LEVEL = "poi_threat_level";
 const TABLE_POI_STATUS = "poi_status";
 const TABLE_POI_GENDER = "poi_gender";
+const TABLE_REPORT_STATUS = "report_status";
 
 // Fields that can be edited at any time without triggering a version update
 const ALWAYS_EDITABLE_FIELDS = ["internal_notes", "renewal_reminder_days", "watch_level_review_date", "related_incident_ids"];
@@ -73,6 +74,38 @@ function getIncidents(recordId)
 		 WHERE PIN_POI_ID=? AND PIN_DELETED_ON IS NULL
 		 ORDER BY PIN_SVC_ID ASC`,
 		[recordId]);
+}
+
+// Incident reports created through "Report Encounter" (incident_report.IRP_POI_ID).
+// Admins see all non-draft reports; officers see their own reports (the only reports they can open).
+function getRelatedReports(recordId, userId, isOfficer)
+{
+	let conditions = ["IRP_POI_ID=?", "IRP_DELETED_ON IS NULL"];
+	let params = [recordId];
+	if (isOfficer)
+	{
+		conditions.push("IRP_OFC_USR_ID=?");
+		params.push(userId);
+	}
+	else
+	{
+		let visibleStatuses = $Funcs.getDataItemIdsByAttr(TABLE_REPORT_STATUS, "manager_visible", true);
+		conditions.push(`IRP_STATUS IN (${visibleStatuses.toPlaceholders()})`);
+		params.push(...visibleStatuses);
+	}
+	let rows = $Db.executeQuery(
+		`SELECT IRP_ID, IRP_TITLE, IRP_STATUS, IRP_CREATED_ON
+		 FROM \`incident_report\`
+		 WHERE ${conditions.join(" AND ")}
+		 ORDER BY IRP_CREATED_ON DESC`,
+		params);
+	return rows.map(r => ({
+		report_id: r.IRP_ID,
+		title: r.IRP_TITLE,
+		status: r.IRP_STATUS,
+		status_name: $DataItems.getItemName(r.IRP_STATUS, TABLE_REPORT_STATUS) || r.IRP_STATUS,
+		created_on: r.IRP_CREATED_ON
+	}));
 }
 
 function buildFullName(firstName, lastName)
@@ -709,6 +742,7 @@ module.exports = class
 		}
 
 		let result = mapRecordRow(record, photos, sites, incidents, isOfficer, viewedOn);
+		result.related_reports = getRelatedReports(record.POI_ID, userId, isOfficer);
 
 		// Add admin-only enrichment
 		if (!isOfficer)
@@ -1560,7 +1594,8 @@ module.exports = class
 			try
 			{
 				let content = $Files.getFileFromContainer(photos[i].PPH_FILE_NAME);
-				if (content)
+				// Corrupt images would crash the process inside pdfkit's async decoding
+				if (content && $Funcs.isPdfSafeImage(content))
 				{
 					photoBuffers.push(content);
 				}

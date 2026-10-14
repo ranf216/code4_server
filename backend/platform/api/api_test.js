@@ -105,4 +105,12 @@ module.exports =
                                                 "#token"                        : "s",
                                             },
 
+    "test_report_apis"                      : {
+                                                "@acl"                          : [$ACL.USER_TYPE_ADMIN],
+                                                "@doc"                          : "Test all Report module APIs (create from call / POI / standalone, update, submit, review lock, request changes, approve, deliver, PDF export, history, client view, metadata, access scoping, state transitions, edge cases)",
+                                                "@mode"                         : "test",
+                                                "#token"                        : "s",
+                                                "log_req_res"                   : "o:b:false***log request and response JSONs for each API call",
+                                            },
+
 };

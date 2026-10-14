@@ -1977,6 +1977,154 @@ CREATE TABLE `report_template_field` (
 
 
 --
+-- Definition of table `incident_report`
+--
+
+DROP TABLE IF EXISTS `incident_report`;
+CREATE TABLE `incident_report` (
+  `IRP_ID` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `IRP_RPT_ID` bigint unsigned NOT NULL COMMENT 'FK to report_template the report was created from',
+  `IRP_SVC_ID` bigint unsigned DEFAULT NULL COMMENT 'FK to service_call for incident-linked reports (NULL = standalone)',
+  `IRP_POI_ID` bigint unsigned DEFAULT NULL COMMENT 'FK to poi_record for POI "Report Encounter" reports (shown under the POI Related Incidents)',
+  `IRP_COM_ID` bigint unsigned NOT NULL COMMENT 'Community the report belongs to',
+  `IRP_OFC_USR_ID` varchar(128) NOT NULL COMMENT 'Officer who created the report',
+  `IRP_CLIENT_USR_ID` varchar(128) DEFAULT NULL COMMENT 'Resident/client the report is delivered to (call creator for incident-linked reports)',
+  `IRP_TITLE` varchar(500) NOT NULL COMMENT 'Generated from the template title format',
+  `IRP_CATEGORY` varchar(20) NOT NULL COMMENT 'incident, daily_activity, custom (copied from template)',
+  `IRP_STATUS` varchar(30) NOT NULL DEFAULT 'draft' COMMENT 'draft, submitted, under_review, changes_requested, approved, delivered',
+  `IRP_REVIEW_REQUIRED` tinyint unsigned NOT NULL DEFAULT 0 COMMENT 'Copied from template review_before_client at creation',
+  `IRP_ALLOW_OFFICER_EDITING` tinyint unsigned NOT NULL DEFAULT 0 COMMENT 'Copied from template allow_officer_editing at creation',
+  `IRP_CONTENT_SNAPSHOT` json NOT NULL COMMENT 'Frozen template structure (sections, fields, style) at creation time',
+  `IRP_REVIEWER_USR_ID` varchar(128) DEFAULT NULL COMMENT 'Manager currently (or last) holding the report under review',
+  `IRP_CHANGES_COMMENT` varchar(1000) DEFAULT NULL COMMENT 'Latest manager comments when changes were requested',
+  `IRP_MANAGEMENT_SUMMARY` varchar(1000) DEFAULT NULL COMMENT 'Optional summary shown at the beginning of the client-facing report',
+  `IRP_PDF_FILE_NAME` varchar(1000) DEFAULT NULL COMMENT 'Formatted client PDF generated on delivery',
+  `IRP_SUBMITTED_ON` datetime DEFAULT NULL COMMENT 'Latest officer submission',
+  `IRP_REVIEW_STARTED_ON` datetime DEFAULT NULL,
+  `IRP_APPROVED_ON` datetime DEFAULT NULL,
+  `IRP_APPROVED_BY` varchar(128) DEFAULT NULL COMMENT 'NULL when auto-approved (review not required)',
+  `IRP_DELIVERED_ON` datetime DEFAULT NULL,
+  `IRP_DELIVERED_BY` varchar(128) DEFAULT NULL,
+  `IRP_CREATED_ON` datetime NOT NULL,
+  `IRP_LAST_UPDATE` datetime DEFAULT NULL,
+  `IRP_DELETED_ON` datetime DEFAULT NULL,
+  PRIMARY KEY (`IRP_ID`),
+  KEY `IX_IRP_RPT_ID` (`IRP_RPT_ID`),
+  KEY `IX_IRP_SVC_ID` (`IRP_SVC_ID`),
+  KEY `IX_IRP_POI_ID` (`IRP_POI_ID`),
+  KEY `IX_IRP_COM_ID` (`IRP_COM_ID`),
+  KEY `IX_IRP_OFC_USR_ID` (`IRP_OFC_USR_ID`),
+  KEY `IX_IRP_CLIENT_USR_ID` (`IRP_CLIENT_USR_ID`),
+  KEY `IX_IRP_STATUS` (`IRP_STATUS`),
+  KEY `IX_IRP_SUBMITTED_ON` (`IRP_SUBMITTED_ON`),
+  KEY `IX_IRP_CREATED_ON` (`IRP_CREATED_ON`),
+  CONSTRAINT `FK_IRP_RPT_ID` FOREIGN KEY (`IRP_RPT_ID`) REFERENCES `report_template` (`RPT_ID`),
+  CONSTRAINT `FK_IRP_SVC_ID` FOREIGN KEY (`IRP_SVC_ID`) REFERENCES `service_call` (`SVC_ID`),
+  CONSTRAINT `FK_IRP_POI_ID` FOREIGN KEY (`IRP_POI_ID`) REFERENCES `poi_record` (`POI_ID`),
+  CONSTRAINT `FK_IRP_COM_ID` FOREIGN KEY (`IRP_COM_ID`) REFERENCES `community` (`COM_ID`),
+  CONSTRAINT `FK_IRP_OFC_USR_ID` FOREIGN KEY (`IRP_OFC_USR_ID`) REFERENCES `user` (`USR_ID`),
+  CONSTRAINT `FK_IRP_CLIENT_USR_ID` FOREIGN KEY (`IRP_CLIENT_USR_ID`) REFERENCES `user` (`USR_ID`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+--
+-- Dumping data for table `incident_report`
+--
+
+/*!40000 ALTER TABLE `incident_report` DISABLE KEYS */;
+/*!40000 ALTER TABLE `incident_report` ENABLE KEYS */;
+
+
+--
+-- Definition of table `incident_report_section`
+--
+
+DROP TABLE IF EXISTS `incident_report_section`;
+CREATE TABLE `incident_report_section` (
+  `IRS_ID` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `IRS_IRP_ID` bigint unsigned NOT NULL COMMENT 'FK to incident_report',
+  `IRS_RTS_ID` bigint unsigned NOT NULL COMMENT 'Template section ID inside IRP_CONTENT_SNAPSHOT',
+  `IRS_TITLE` varchar(80) NOT NULL,
+  `IRS_SORT_ORDER` int unsigned NOT NULL DEFAULT 0,
+  `IRS_CLIENT_INCLUDED` tinyint unsigned NOT NULL DEFAULT 1 COMMENT '1=section is included in the client-facing report',
+  `IRS_VALUES` json DEFAULT NULL COMMENT 'Current field values keyed by snapshot field ID',
+  `IRS_SUBMITTED_VALUES` json DEFAULT NULL COMMENT 'Field values as last submitted by the officer (retained for audit)',
+  `IRS_MANAGER_NOTES` varchar(2000) DEFAULT NULL COMMENT 'Manager notes block added during review',
+  `IRS_CREATED_ON` datetime NOT NULL,
+  `IRS_LAST_UPDATE` datetime DEFAULT NULL,
+  `IRS_DELETED_ON` datetime DEFAULT NULL,
+  PRIMARY KEY (`IRS_ID`),
+  KEY `IX_IRS_IRP_ID` (`IRS_IRP_ID`),
+  CONSTRAINT `FK_IRS_IRP_ID` FOREIGN KEY (`IRS_IRP_ID`) REFERENCES `incident_report` (`IRP_ID`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+--
+-- Dumping data for table `incident_report_section`
+--
+
+/*!40000 ALTER TABLE `incident_report_section` DISABLE KEYS */;
+/*!40000 ALTER TABLE `incident_report_section` ENABLE KEYS */;
+
+
+--
+-- Definition of table `incident_report_attachment`
+--
+
+DROP TABLE IF EXISTS `incident_report_attachment`;
+CREATE TABLE `incident_report_attachment` (
+  `IRA_ID` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `IRA_IRP_ID` bigint unsigned NOT NULL COMMENT 'FK to incident_report',
+  `IRA_IRS_ID` bigint unsigned NOT NULL COMMENT 'FK to incident_report_section',
+  `IRA_FIELD_ID` bigint unsigned NOT NULL COMMENT 'Template field ID inside IRP_CONTENT_SNAPSHOT (file_upload / digital_signature fields)',
+  `IRA_FILE_NAME` varchar(1000) NOT NULL,
+  `IRA_UPLOADED_BY` varchar(128) NOT NULL COMMENT 'User who attached the file (officer, manager, or call import)',
+  `IRA_SORT_ORDER` int unsigned NOT NULL DEFAULT 0,
+  `IRA_CREATED_ON` datetime NOT NULL,
+  `IRA_DELETED_ON` datetime DEFAULT NULL,
+  PRIMARY KEY (`IRA_ID`),
+  KEY `IX_IRA_IRP_ID` (`IRA_IRP_ID`),
+  KEY `IX_IRA_IRS_ID` (`IRA_IRS_ID`),
+  CONSTRAINT `FK_IRA_IRP_ID` FOREIGN KEY (`IRA_IRP_ID`) REFERENCES `incident_report` (`IRP_ID`),
+  CONSTRAINT `FK_IRA_IRS_ID` FOREIGN KEY (`IRA_IRS_ID`) REFERENCES `incident_report_section` (`IRS_ID`),
+  CONSTRAINT `FK_IRA_UPLOADED_BY` FOREIGN KEY (`IRA_UPLOADED_BY`) REFERENCES `user` (`USR_ID`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+--
+-- Dumping data for table `incident_report_attachment`
+--
+
+/*!40000 ALTER TABLE `incident_report_attachment` DISABLE KEYS */;
+/*!40000 ALTER TABLE `incident_report_attachment` ENABLE KEYS */;
+
+
+--
+-- Definition of table `incident_report_history`
+--
+
+DROP TABLE IF EXISTS `incident_report_history`;
+CREATE TABLE `incident_report_history` (
+  `IRH_ID` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `IRH_IRP_ID` bigint unsigned NOT NULL COMMENT 'FK to incident_report',
+  `IRH_ACTION` varchar(30) NOT NULL COMMENT 'report_history_action data item key',
+  `IRH_FROM_STATUS` varchar(30) DEFAULT NULL,
+  `IRH_TO_STATUS` varchar(30) DEFAULT NULL,
+  `IRH_USR_ID` varchar(128) DEFAULT NULL COMMENT 'Acting user (NULL = system)',
+  `IRH_COMMENT` varchar(1000) DEFAULT NULL,
+  `IRH_CHANGES` json DEFAULT NULL COMMENT 'Field-level change log for content edits',
+  `IRH_CREATED_ON` datetime NOT NULL,
+  PRIMARY KEY (`IRH_ID`),
+  KEY `IX_IRH_IRP_ID` (`IRH_IRP_ID`),
+  CONSTRAINT `FK_IRH_IRP_ID` FOREIGN KEY (`IRH_IRP_ID`) REFERENCES `incident_report` (`IRP_ID`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+--
+-- Dumping data for table `incident_report_history`
+--
+
+/*!40000 ALTER TABLE `incident_report_history` DISABLE KEYS */;
+/*!40000 ALTER TABLE `incident_report_history` ENABLE KEYS */;
+
+
+--
 -- Definition of procedure `prc_entity_lock_acquire`
 --
 

@@ -308,7 +308,7 @@ module.exports = {
 	"ERR_POI_TRESPASS_FIELDS_REQUIRED"					: {"rc" : 705,	"message" : "required trespass order fields are missing"},
 	"ERR_POI_RED_CARD_FIELDS_REQUIRED"					: {"rc" : 706,	"message" : "required metro red card fields are missing"},
 
-	// Report (710-729)
+	// Report (710-749)
 	"ERR_REPORT_NOT_FOUND"								: {"rc" : 710,	"message" : "report not found"},
 	"ERR_REPORT_TEMPLATE_NOT_FOUND"						: {"rc" : 711,	"message" : "report template not found"},
 	"ERR_REPORT_CANNOT_SUBMIT"							: {"rc" : 712,	"message" : "report cannot be submitted in its current status"},
@@ -325,37 +325,54 @@ module.exports = {
 	"ERR_REPORT_TEMPLATE_INVALID_COMMUNITY"				: {"rc" : 723,	"message" : "one or more community IDs are invalid"},
 	"ERR_REPORT_TEMPLATE_CANNOT_EDIT"					: {"rc" : 724,	"message" : "template cannot be edited in its current status"},
 	"ERR_REPORT_TEMPLATE_HAS_LINKED_REPORTS"			: {"rc" : 725,	"message" : "template cannot be deleted because it has linked reports"},
+	"ERR_REPORT_CANNOT_EDIT"							: {"rc" : 726,	"message" : "report cannot be edited in its current status"},
+	"ERR_REPORT_LOCKED"									: {"rc" : 727,	"message" : "report is under review by another manager"},
+	"ERR_REPORT_CANNOT_REVIEW"							: {"rc" : 728,	"message" : "report cannot be reviewed in its current status"},
+	"ERR_REPORT_CANNOT_REQUEST_CHANGES"					: {"rc" : 729,	"message" : "changes cannot be requested for the report in its current status"},
+	"ERR_REPORT_REQUIRED_FIELDS_MISSING"				: {"rc" : 730,	"message" : "required report fields are missing"},
+	"ERR_REPORT_INVALID_FIELD_VALUE"					: {"rc" : 731,	"message" : "invalid report field value"},
+	"ERR_REPORT_FIELD_LOCKED"							: {"rc" : 732,	"message" : "auto-populated report fields cannot be changed"},
+	"ERR_REPORT_INVALID_SECTION"						: {"rc" : 733,	"message" : "invalid report section"},
+	"ERR_REPORT_CHANGES_COMMENT_REQUIRED"				: {"rc" : 734,	"message" : "comments are required when requesting changes"},
+	"ERR_REPORT_INVALID_CALL"							: {"rc" : 735,	"message" : "call not found or not accessible for this report"},
+	"ERR_REPORT_NOT_UNDER_REVIEW_BY_USER"				: {"rc" : 736,	"message" : "report is not under review by this manager"},
+	"ERR_REPORT_INVALID_STATUS"							: {"rc" : 737,	"message" : "invalid report status"},
+	"ERR_REPORT_FILE_LIMIT_REACHED"						: {"rc" : 738,	"message" : "maximum number of files reached for this report field"},
+	"ERR_REPORT_INVALID_ATTACHMENT"						: {"rc" : 739,	"message" : "attachment not found in this report field"},
+	"ERR_REPORT_INVALID_CLIENT"							: {"rc" : 740,	"message" : "client must be an active resident of the report community"},
+	"ERR_REPORT_INVALID_POI"							: {"rc" : 741,	"message" : "POI record not found or not accessible for this report"},
+	"ERR_REPORT_CANNOT_EXPORT"							: {"rc" : 742,	"message" : "the report PDF is only available once the report is delivered"},
 
-	// Notification (730-739)
-	"ERR_NOTIFICATION_NOT_FOUND"						: {"rc" : 730,	"message" : "notification not found"},
-	"ERR_NOTIFICATION_INVALID_TYPE"						: {"rc" : 731,	"message" : "invalid notification type"},
-	"ERR_NOTIFICATION_ALREADY_READ"						: {"rc" : 732,	"message" : "notification is already marked as read"},
+	// Notification (750-759)
+	"ERR_NOTIFICATION_NOT_FOUND"						: {"rc" : 750,	"message" : "notification not found"},
+	"ERR_NOTIFICATION_INVALID_TYPE"						: {"rc" : 751,	"message" : "invalid notification type"},
+	"ERR_NOTIFICATION_ALREADY_READ"						: {"rc" : 752,	"message" : "notification is already marked as read"},
 
-	// Settings (740-749)
-	"ERR_SETTING_NOT_FOUND"								: {"rc" : 740,	"message" : "setting not found"},
-	"ERR_SETTING_NAME_ALREADY_EXISTS"					: {"rc" : 741,	"message" : "a setting with this name already exists"},
-	"ERR_GPS_INTERVAL_NORMAL_OUT_OF_RANGE"				: {"rc" : 742,	"message" : "gps_interval_normal out of range (must be 10-120)"},
-	"ERR_GPS_INTERVAL_EMERGENCY_OUT_OF_RANGE"			: {"rc" : 743,	"message" : "gps_interval_emergency out of range (must be 5-30)"},
+	// Settings (760-769)
+	"ERR_SETTING_NOT_FOUND"								: {"rc" : 760,	"message" : "setting not found"},
+	"ERR_SETTING_NAME_ALREADY_EXISTS"					: {"rc" : 761,	"message" : "a setting with this name already exists"},
+	"ERR_GPS_INTERVAL_NORMAL_OUT_OF_RANGE"				: {"rc" : 762,	"message" : "gps_interval_normal out of range (must be 10-120)"},
+	"ERR_GPS_INTERVAL_EMERGENCY_OUT_OF_RANGE"			: {"rc" : 763,	"message" : "gps_interval_emergency out of range (must be 5-30)"},
 
-	// Asset & Post (750-769)
-	"ERR_ASSET_NOT_FOUND"								: {"rc" : 750,	"message" : "asset not found"},
-	"ERR_ASSET_INVALID_TYPE"							: {"rc" : 751,	"message" : "invalid asset type"},
-	"ERR_POST_NOT_FOUND"								: {"rc" : 752,	"message" : "post not found"},
-	"ERR_POST_NAME_ALREADY_EXISTS"						: {"rc" : 753,	"message" : "a post with this name already exists in this community"},
-	"ERR_MAP_ZONE_NOT_FOUND"							: {"rc" : 754,	"message" : "map zone not found"},
-	"ERR_ASSET_INVALID_SHAPE"							: {"rc" : 755,	"message" : "invalid asset shape"},
-	"ERR_POST_INVALID_PRIORITY"							: {"rc" : 756,	"message" : "invalid post priority"},
-	"ERR_POST_INVALID_SHAPE"							: {"rc" : 757,	"message" : "invalid post shape"},
-	"ERR_MAP_ZONE_INVALID_TYPE"							: {"rc" : 758,	"message" : "invalid map zone type"},
-	"ERR_POST_HAS_SHIFT_HISTORY"						: {"rc" : 759,	"message" : "post has been used in a shift and cannot be deleted, only deactivated"},
-	"ERR_ASSET_BATCH_EMPTY"								: {"rc" : 760,	"message" : "batch asset list is empty"},
-	"ERR_ASSET_BATCH_LIMIT_EXCEEDED"					: {"rc" : 761,	"message" : "batch asset list exceeds maximum allowed size"},
-	"ERR_MAP_ITEM_LIMIT_EXCEEDED"						: {"rc" : 762,	"message" : "maximum number of map items reached for this community"},
-	"ERR_ASSET_INVALID_DATE"							: {"rc" : 763,	"message" : "invalid date format"},
+	// Asset & Post (770-789)
+	"ERR_ASSET_NOT_FOUND"								: {"rc" : 770,	"message" : "asset not found"},
+	"ERR_ASSET_INVALID_TYPE"							: {"rc" : 771,	"message" : "invalid asset type"},
+	"ERR_POST_NOT_FOUND"								: {"rc" : 772,	"message" : "post not found"},
+	"ERR_POST_NAME_ALREADY_EXISTS"						: {"rc" : 773,	"message" : "a post with this name already exists in this community"},
+	"ERR_MAP_ZONE_NOT_FOUND"							: {"rc" : 774,	"message" : "map zone not found"},
+	"ERR_ASSET_INVALID_SHAPE"							: {"rc" : 775,	"message" : "invalid asset shape"},
+	"ERR_POST_INVALID_PRIORITY"							: {"rc" : 776,	"message" : "invalid post priority"},
+	"ERR_POST_INVALID_SHAPE"							: {"rc" : 777,	"message" : "invalid post shape"},
+	"ERR_MAP_ZONE_INVALID_TYPE"							: {"rc" : 778,	"message" : "invalid map zone type"},
+	"ERR_POST_HAS_SHIFT_HISTORY"						: {"rc" : 779,	"message" : "post has been used in a shift and cannot be deleted, only deactivated"},
+	"ERR_ASSET_BATCH_EMPTY"								: {"rc" : 780,	"message" : "batch asset list is empty"},
+	"ERR_ASSET_BATCH_LIMIT_EXCEEDED"					: {"rc" : 781,	"message" : "batch asset list exceeds maximum allowed size"},
+	"ERR_MAP_ITEM_LIMIT_EXCEEDED"						: {"rc" : 782,	"message" : "maximum number of map items reached for this community"},
+	"ERR_ASSET_INVALID_DATE"							: {"rc" : 783,	"message" : "invalid date format"},
 
-	// Admin User (770-779)
-	"ERR_ADMIN_USER_NOT_FOUND"							: {"rc" : 770,	"message" : "admin user not found"},
-	"ERR_ADMIN_CANNOT_DELETE_SELF"						: {"rc" : 771,	"message" : "cannot delete your own account"},
-	"ERR_ADMIN_CANNOT_EDIT_SELF_ROLE"					: {"rc" : 772,	"message" : "cannot change your own role"},
+	// Admin User (790-799)
+	"ERR_ADMIN_USER_NOT_FOUND"							: {"rc" : 790,	"message" : "admin user not found"},
+	"ERR_ADMIN_CANNOT_DELETE_SELF"						: {"rc" : 791,	"message" : "cannot delete your own account"},
+	"ERR_ADMIN_CANNOT_EDIT_SELF_ROLE"					: {"rc" : 792,	"message" : "cannot change your own role"},
 
 };

@@ -27,6 +27,7 @@ module.exports =
     user: [
         "call_utils",
         "funcs",
+        "report_pdf",
         "route_utils",
         "shift_utils",
         "task_utils",
@@ -37,5 +38,6 @@ module.exports =
         "test_api_post_order",
         "test_api_poi",
         "test_api_report_template",
+        "test_api_report",
     ]
 };

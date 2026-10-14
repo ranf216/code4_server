@@ -186,6 +186,7 @@ module.exports =
                                                     "poi_expiring_enabled"          : "o:b:true***Enable notification for POI expiring soon",
                                                     "poi_expired_enabled"           : "o:b:true***Enable notification for POI expired",
                                                     "report_submitted_enabled"      : "o:b:true***Enable notification for report submitted",
+                                                    "report_under_review_enabled"   : "o:b:true***Enable notification for report under review",
                                                     "report_approved_enabled"       : "o:b:true***Enable notification for report approved",
                                                     "report_changes_enabled"        : "o:b:true***Enable notification for report changes requested",
                                                     "report_delivered_enabled"      : "o:b:true***Enable notification for report delivered",

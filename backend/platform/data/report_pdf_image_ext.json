@@ -1,0 +1,5 @@
+{
+    "jpg":   {"name": {"en": "JPEG"}},
+    "jpeg":  {"name": {"en": "JPEG"}},
+    "png":   {"name": {"en": "PNG"}}
+}

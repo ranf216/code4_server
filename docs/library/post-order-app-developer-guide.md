@@ -197,7 +197,7 @@ Creates a new post order in `draft` status with initial sections.
 ```
 
 **Errors:**
-- `ERR_POST_NOT_FOUND` (rc 752) — Post does not exist.
+- `ERR_POST_NOT_FOUND` (rc 772) — Post does not exist.
 - `ERR_POST_ORDER_ALREADY_EXISTS` (rc 681) — An active post order already exists for this post.
 - `ERR_POST_ORDER_INVALID_SECTION_TYPE` (rc 676) — Invalid section type key.
 - `ERR_POST_ORDER_MEDIA_LIMIT_REACHED` (rc 679) — More than 5 attachments in a section.

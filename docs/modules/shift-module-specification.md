@@ -546,7 +546,7 @@ totalHours = Math.round(((checkOutTime - checkInTime) / (1000 * 60 * 60)) * 100)
 
 ### 12.3 Asset Module
 
-- **Post deletion guard:** `asset.js` queries `SHP_PST_ID` to check if a post has been used in shift assignments. Error: `ERR_POST_HAS_SHIFT_HISTORY` (rc: 759).
+- **Post deletion guard:** `asset.js` queries `SHP_PST_ID` to check if a post has been used in shift assignments. Error: `ERR_POST_HAS_SHIFT_HISTORY` (rc: 779).
 
 ### 12.4 Future Integration Points
 

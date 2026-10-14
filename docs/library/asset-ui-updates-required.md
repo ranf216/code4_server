@@ -278,7 +278,7 @@ A modal dialog for creating or editing an asset.
 | 8 | Eligibility Requirements | Multi-select panel | No | See Section 1.5 |
 | 9 | Active | Toggle switch | No (default: on) | |
 
-**Uniqueness error handling:** If `rc: 753` is returned on save, display inline validation error: *"A post with this name already exists in the selected community."*
+**Uniqueness error handling:** If `rc: 773` is returned on save, display inline validation error: *"A post with this name already exists in the selected community."*
 
 ---
 
@@ -316,7 +316,7 @@ On upload success, refresh the map canvas background with the new image URL retu
 
 **Post deletion with shift history:**
 
-When `delete_post` returns `rc: 759`:
+When `delete_post` returns `rc: 779`:
 
 > **Cannot Delete Post**
 > "Main Gate" has been used in shift scheduling and cannot be deleted.

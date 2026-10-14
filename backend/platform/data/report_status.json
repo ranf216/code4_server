@@ -1,0 +1,8 @@
+{
+    "draft":              {"name": {"en": "Draft"},             "define": "REPORT_STATUS_DRAFT",              "is_open": false,  "manager_visible": false},
+    "submitted":          {"name": {"en": "Submitted"},         "define": "REPORT_STATUS_SUBMITTED",          "is_open": true,   "manager_visible": true},
+    "under_review":       {"name": {"en": "Under Review"},      "define": "REPORT_STATUS_UNDER_REVIEW",       "is_open": true,   "manager_visible": true},
+    "changes_requested":  {"name": {"en": "Changes Requested"}, "define": "REPORT_STATUS_CHANGES_REQUESTED",  "is_open": true,   "manager_visible": true},
+    "approved":           {"name": {"en": "Approved"},          "define": "REPORT_STATUS_APPROVED",           "is_open": false,  "manager_visible": true},
+    "delivered":          {"name": {"en": "Delivered"},         "define": "REPORT_STATUS_DELIVERED",          "is_open": false,  "manager_visible": true}
+}

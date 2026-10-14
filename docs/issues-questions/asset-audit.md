@@ -13,4 +13,4 @@ Items discovered during the `brain.md` + `code_review_checklist.md` audit that r
 
 2. ~~**Optional date fields not validated with `$Utils.validateDateStr()`**~~ **RESOLVED**
 
-   Added explicit `$Utils.validateDateStr()` validation for `installation_date` and `replacement_date` in `create_asset`, `create_assets_batch`, and `update_asset`. Created new error code `ERR_ASSET_INVALID_DATE` (rc 763). Empty values are allowed (clear the date); non-empty values must pass validation.
+   Added explicit `$Utils.validateDateStr()` validation for `installation_date` and `replacement_date` in `create_asset`, `create_assets_batch`, and `update_asset`. Created new error code `ERR_ASSET_INVALID_DATE` (rc 783). Empty values are allowed (clear the date); non-empty values must pass validation.

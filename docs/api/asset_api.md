@@ -217,7 +217,7 @@ Admins can upload or replace a 2D community map image used as a visual backdrop 
     | 103 | current user does not have privileges | The caller is not an Admin. |
     | 201 | invalid user token | Invalid or expired token. |
     | 500 | community not found | The specified `community_id` does not exist or has been deleted. |
-    | 751 | invalid asset type | The provided `asset_type` filter is not a recognized asset type key. |
+    | 771 | invalid asset type | The provided `asset_type` filter is not a recognized asset type key. |
 
 - **Usage & Flows:**
     Called to populate the asset list view in the management portal (SDS 4.2.7). The consumer app should present this alongside the post list, allowing the user to toggle between them. Supports the free-text search (SDS 4.2.7, item 5) and filtering by asset type. Pagination is 0-based; page size is server-configured.
@@ -265,7 +265,7 @@ Admins can upload or replace a 2D community map image used as a visual backdrop 
     |----|---------|----------|
     | 103 | current user does not have privileges | The caller is not an Admin. |
     | 201 | invalid user token | Invalid or expired token. |
-    | 750 | asset not found | The specified `asset_id` does not exist or has been soft-deleted. |
+    | 770 | asset not found | The specified `asset_id` does not exist or has been soft-deleted. |
 
 - **Usage & Flows:**
     Called when the user clicks on an asset in the map or list view to open its detail panel (SDS 4.2.6.1, review/edit/delete). The consumer app displays all asset fields and provides Edit and Delete actions.
@@ -306,10 +306,10 @@ Admins can upload or replace a 2D community map image used as a visual backdrop 
     | 103 | current user does not have privileges | The caller is not an Admin. |
     | 201 | invalid user token | Invalid or expired token. |
     | 500 | community not found | The specified `community_id` does not exist or has been deleted. |
-    | 751 | invalid asset type | The provided `asset_type` is not a recognized asset type key. |
-    | 755 | invalid asset shape | The provided `shape` is not one of `place`, `circle`, `line`. |
-    | 762 | maximum number of map items reached | The community has reached the combined limit for assets, posts, and map zones. |
-    | 763 | invalid date format | One of the date fields is not in valid `YYYY-MM-DD` format. |
+    | 771 | invalid asset type | The provided `asset_type` is not a recognized asset type key. |
+    | 775 | invalid asset shape | The provided `shape` is not one of `place`, `circle`, `line`. |
+    | 782 | maximum number of map items reached | The community has reached the combined limit for assets, posts, and map zones. |
+    | 783 | invalid date format | One of the date fields is not in valid `YYYY-MM-DD` format. |
 
 - **Usage & Flows:**
     Called when the user adds a single asset on the community map (SDS 4.2.6.1). The consumer app should:
@@ -356,12 +356,12 @@ Admins can upload or replace a 2D community map image used as a visual backdrop 
     | 103 | current user does not have privileges | The caller is not an Admin. |
     | 201 | invalid user token | Invalid or expired token. |
     | 500 | community not found | The specified `community_id` does not exist or has been deleted. |
-    | 751 | invalid asset type | The provided `asset_type` is not a recognized asset type key. |
-    | 755 | invalid asset shape | The provided `shape` is not one of `place`, `circle`, `line`. |
-    | 760 | batch asset list is empty | The `locations` array is empty. |
-    | 761 | batch asset list exceeds maximum allowed size | The `locations` array contains more than 100 items. |
-    | 762 | maximum number of map items reached | Adding all batch items would exceed the community's combined map item limit. |
-    | 763 | invalid date format | One of the date fields is not in valid `YYYY-MM-DD` format. |
+    | 771 | invalid asset type | The provided `asset_type` is not a recognized asset type key. |
+    | 775 | invalid asset shape | The provided `shape` is not one of `place`, `circle`, `line`. |
+    | 780 | batch asset list is empty | The `locations` array is empty. |
+    | 781 | batch asset list exceeds maximum allowed size | The `locations` array contains more than 100 items. |
+    | 782 | maximum number of map items reached | Adding all batch items would exceed the community's combined map item limit. |
+    | 783 | invalid date format | One of the date fields is not in valid `YYYY-MM-DD` format. |
 
 - **Usage & Flows:**
     Called when the user uses the "Add Multiple Assets" feature (SDS 4.2.6.1, batch activity). The consumer app should:
@@ -402,10 +402,10 @@ Admins can upload or replace a 2D community map image used as a visual backdrop 
     |----|---------|----------|
     | 103 | current user does not have privileges | The caller is not an Admin. |
     | 201 | invalid user token | Invalid or expired token. |
-    | 750 | asset not found | The specified `asset_id` does not exist or has been soft-deleted. |
-    | 751 | invalid asset type | The provided `asset_type` is not a recognized asset type key. |
-    | 755 | invalid asset shape | The provided `shape` is not one of `place`, `circle`, `line`. |
-    | 763 | invalid date format | One of the date fields is not in valid `YYYY-MM-DD` format. |
+    | 770 | asset not found | The specified `asset_id` does not exist or has been soft-deleted. |
+    | 771 | invalid asset type | The provided `asset_type` is not a recognized asset type key. |
+    | 775 | invalid asset shape | The provided `shape` is not one of `place`, `circle`, `line`. |
+    | 783 | invalid date format | One of the date fields is not in valid `YYYY-MM-DD` format. |
 
 - **Usage & Flows:**
     Called when the user clicks Edit on an asset detail panel (SDS 4.2.6.1, review/edit). The consumer app should:
@@ -439,7 +439,7 @@ Admins can upload or replace a 2D community map image used as a visual backdrop 
     |----|---------|----------|
     | 103 | current user does not have privileges | The caller is not an Admin. |
     | 201 | invalid user token | Invalid or expired token. |
-    | 750 | asset not found | The specified `asset_id` does not exist or has already been soft-deleted. |
+    | 770 | asset not found | The specified `asset_id` does not exist or has already been soft-deleted. |
 
 - **Usage & Flows:**
     Called when the user clicks Delete on an asset (SDS 4.2.6.1, review/edit/delete). The consumer app should present a confirmation dialog: *"Are you sure you would like to delete the asset?"* with Yes/Close buttons. On confirmation, call this endpoint and remove the asset from the map display.
@@ -573,7 +573,7 @@ Admins can upload or replace a 2D community map image used as a visual backdrop 
     |----|---------|----------|
     | 103 | current user does not have privileges | The caller is not an Admin or Officer. |
     | 201 | invalid user token | Invalid or expired token. |
-    | 752 | post not found | The specified `post_id` does not exist, has been soft-deleted, or (for officers) belongs to a different community. |
+    | 772 | post not found | The specified `post_id` does not exist, has been soft-deleted, or (for officers) belongs to a different community. |
 
 - **Usage & Flows:**
     Called when the user clicks on a post in the map or list view to open its detail panel. Officers see this when viewing their assigned post during shift check-in (SDS 3.11). The consumer app displays post name, location, equipment, permissions, and a link to the associated post order document if one exists (SDS 4.2.6.2).
@@ -616,10 +616,10 @@ Admins can upload or replace a 2D community map image used as a visual backdrop 
     | 103 | current user does not have privileges | The caller is not an Admin. |
     | 201 | invalid user token | Invalid or expired token. |
     | 500 | community not found | The specified `community_id` does not exist or has been deleted. |
-    | 753 | a post with this name already exists | Another active post in the same community already has this name. |
-    | 756 | invalid post priority | The provided `priority` is not one of `urgent`, `important`, `normal`, `low`. |
-    | 757 | invalid post shape | The provided `shape` is not one of `place`, `circle`, `line`. |
-    | 762 | maximum number of map items reached | The community has reached the combined limit for assets, posts, and map zones. |
+    | 773 | a post with this name already exists | Another active post in the same community already has this name. |
+    | 776 | invalid post priority | The provided `priority` is not one of `urgent`, `important`, `normal`, `low`. |
+    | 777 | invalid post shape | The provided `shape` is not one of `place`, `circle`, `line`. |
+    | 782 | maximum number of map items reached | The community has reached the combined limit for assets, posts, and map zones. |
 
 - **Usage & Flows:**
     Called when the user adds a post on the community map (SDS 4.2.6.2). The process is analogous to adding an asset:
@@ -661,10 +661,10 @@ Admins can upload or replace a 2D community map image used as a visual backdrop 
     |----|---------|----------|
     | 103 | current user does not have privileges | The caller is not an Admin. |
     | 201 | invalid user token | Invalid or expired token. |
-    | 752 | post not found | The specified `post_id` does not exist or has been soft-deleted. |
-    | 753 | a post with this name already exists | Another active post in the same community already has the new name. |
-    | 756 | invalid post priority | The provided `priority` is not a recognized priority key. |
-    | 757 | invalid post shape | The provided `shape` is not one of `place`, `circle`, `line`. |
+    | 772 | post not found | The specified `post_id` does not exist or has been soft-deleted. |
+    | 773 | a post with this name already exists | Another active post in the same community already has the new name. |
+    | 776 | invalid post priority | The provided `priority` is not a recognized priority key. |
+    | 777 | invalid post shape | The provided `shape` is not one of `place`, `circle`, `line`. |
 
 - **Usage & Flows:**
     Called when the user edits a post from the detail panel or list view (SDS 4.2.7). To deactivate a post that cannot be deleted (because it has shift history), send `is_active: false`. The consumer app should visually distinguish inactive posts in the list (e.g., greyed out or with an "Inactive" badge).
@@ -693,11 +693,11 @@ Admins can upload or replace a 2D community map image used as a visual backdrop 
     |----|---------|----------|
     | 103 | current user does not have privileges | The caller is not an Admin. |
     | 201 | invalid user token | Invalid or expired token. |
-    | 752 | post not found | The specified `post_id` does not exist or has already been soft-deleted. |
-    | 759 | post has been used in a shift | The post has shift history and cannot be deleted. Use `update_post` with `is_active: false` to deactivate it instead. |
+    | 772 | post not found | The specified `post_id` does not exist or has already been soft-deleted. |
+    | 779 | post has been used in a shift | The post has shift history and cannot be deleted. Use `update_post` with `is_active: false` to deactivate it instead. |
 
 - **Usage & Flows:**
-    Called when the user clicks Delete on a post (SDS 4.2.7, item 2). The consumer app should present a confirmation dialog before calling this endpoint. If the server returns `rc: 759`, the consumer should inform the user that the post cannot be deleted because it has been used in a shift, and offer to deactivate it instead.
+    Called when the user clicks Delete on a post (SDS 4.2.7, item 2). The consumer app should present a confirmation dialog before calling this endpoint. If the server returns `rc: 779`, the consumer should inform the user that the post cannot be deleted because it has been used in a shift, and offer to deactivate it instead.
 
 ---
 
@@ -757,7 +757,7 @@ Admins can upload or replace a 2D community map image used as a visual backdrop 
     | 103 | current user does not have privileges | The caller is not an Admin or Officer. |
     | 201 | invalid user token | Invalid or expired token. |
     | 500 | community not found | The specified `community_id` does not exist or has been deleted. |
-    | 758 | invalid map zone type | The provided `zone_type` filter is not `entry_exit` or `high_priority`. |
+    | 778 | invalid map zone type | The provided `zone_type` filter is not `entry_exit` or `high_priority`. |
 
 - **Usage & Flows:**
     Called to load map zones for display on the community map (SDS 4.2.6). Entry/exit points and high-priority zones are rendered as distinct overlays. The `zone_type` filter can be used to load only one category at a time if needed by the UI.
@@ -795,8 +795,8 @@ Admins can upload or replace a 2D community map image used as a visual backdrop 
     | 103 | current user does not have privileges | The caller is not an Admin. |
     | 201 | invalid user token | Invalid or expired token. |
     | 500 | community not found | The specified `community_id` does not exist or has been deleted. |
-    | 758 | invalid map zone type | The provided `zone_type` is not `entry_exit` or `high_priority`. |
-    | 762 | maximum number of map items reached | The community has reached the combined limit for assets, posts, and map zones. |
+    | 778 | invalid map zone type | The provided `zone_type` is not `entry_exit` or `high_priority`. |
+    | 782 | maximum number of map items reached | The community has reached the combined limit for assets, posts, and map zones. |
 
 - **Usage & Flows:**
     Called when the user adds an entry/exit point or high-priority zone on the community map (SDS 4.2.6). The user marks a location or area on the map, selects the zone type, enters a name, and saves.
@@ -828,8 +828,8 @@ Admins can upload or replace a 2D community map image used as a visual backdrop 
     |----|---------|----------|
     | 103 | current user does not have privileges | The caller is not an Admin. |
     | 201 | invalid user token | Invalid or expired token. |
-    | 754 | map zone not found | The specified `zone_id` does not exist or has been soft-deleted. |
-    | 758 | invalid map zone type | The provided `zone_type` is not `entry_exit` or `high_priority`. |
+    | 774 | map zone not found | The specified `zone_id` does not exist or has been soft-deleted. |
+    | 778 | invalid map zone type | The provided `zone_type` is not `entry_exit` or `high_priority`. |
 
 - **Usage & Flows:**
     Called when the user edits a map zone from the map view. The consumer app should pre-populate the edit form with the current zone values from `get_map_zones`.
@@ -858,7 +858,7 @@ Admins can upload or replace a 2D community map image used as a visual backdrop 
     |----|---------|----------|
     | 103 | current user does not have privileges | The caller is not an Admin. |
     | 201 | invalid user token | Invalid or expired token. |
-    | 754 | map zone not found | The specified `zone_id` does not exist or has already been soft-deleted. |
+    | 774 | map zone not found | The specified `zone_id` does not exist or has already been soft-deleted. |
 
 - **Usage & Flows:**
     Called when the user deletes a map zone from the map view. The consumer app should present a confirmation dialog before calling this endpoint.
@@ -974,17 +974,17 @@ All three keys are optional. When provided, they are used during shift schedulin
 | 103 | ERR_NO_PRIVILEGES | current user does not have privileges |
 | 201 | ERR_INVALID_TOKEN | invalid user token |
 | 500 | ERR_COMMUNITY_NOT_FOUND | community not found |
-| 750 | ERR_ASSET_NOT_FOUND | asset not found |
-| 751 | ERR_ASSET_INVALID_TYPE | invalid asset type |
-| 752 | ERR_POST_NOT_FOUND | post not found |
-| 753 | ERR_POST_NAME_ALREADY_EXISTS | a post with this name already exists in this community |
-| 754 | ERR_MAP_ZONE_NOT_FOUND | map zone not found |
-| 755 | ERR_ASSET_INVALID_SHAPE | invalid asset shape |
-| 756 | ERR_POST_INVALID_PRIORITY | invalid post priority |
-| 757 | ERR_POST_INVALID_SHAPE | invalid post shape |
-| 758 | ERR_MAP_ZONE_INVALID_TYPE | invalid map zone type |
-| 759 | ERR_POST_HAS_SHIFT_HISTORY | post has been used in a shift and cannot be deleted |
-| 760 | ERR_ASSET_BATCH_EMPTY | batch asset list is empty |
-| 761 | ERR_ASSET_BATCH_LIMIT_EXCEEDED | batch asset list exceeds maximum allowed size |
-| 762 | ERR_MAP_ITEM_LIMIT_EXCEEDED | maximum number of map items reached for this community |
-| 763 | ERR_ASSET_INVALID_DATE | invalid date format |
+| 770 | ERR_ASSET_NOT_FOUND | asset not found |
+| 771 | ERR_ASSET_INVALID_TYPE | invalid asset type |
+| 772 | ERR_POST_NOT_FOUND | post not found |
+| 773 | ERR_POST_NAME_ALREADY_EXISTS | a post with this name already exists in this community |
+| 774 | ERR_MAP_ZONE_NOT_FOUND | map zone not found |
+| 775 | ERR_ASSET_INVALID_SHAPE | invalid asset shape |
+| 776 | ERR_POST_INVALID_PRIORITY | invalid post priority |
+| 777 | ERR_POST_INVALID_SHAPE | invalid post shape |
+| 778 | ERR_MAP_ZONE_INVALID_TYPE | invalid map zone type |
+| 779 | ERR_POST_HAS_SHIFT_HISTORY | post has been used in a shift and cannot be deleted |
+| 780 | ERR_ASSET_BATCH_EMPTY | batch asset list is empty |
+| 781 | ERR_ASSET_BATCH_LIMIT_EXCEEDED | batch asset list exceeds maximum allowed size |
+| 782 | ERR_MAP_ITEM_LIMIT_EXCEEDED | maximum number of map items reached for this community |
+| 783 | ERR_ASSET_INVALID_DATE | invalid date format |

@@ -643,8 +643,8 @@ GPS, Notification, POI, Working Hours, and Route settings are global configurati
     |----|---------|----------|
     | 103 | current user does not have privileges | The caller is not an Admin. |
     | 201 | invalid user token | Invalid or expired token. |
-    | 742 | gps_interval_normal out of range (must be 10-120) | `gps_interval_normal` value is outside the permitted 10–120 seconds range. |
-    | 743 | gps_interval_emergency out of range (must be 5-30) | `gps_interval_emergency` value is outside the permitted 5–30 seconds range. |
+    | 762 | gps_interval_normal out of range (must be 10-120) | `gps_interval_normal` value is outside the permitted 10–120 seconds range. |
+    | 763 | gps_interval_emergency out of range (must be 5-30) | `gps_interval_emergency` value is outside the permitted 5–30 seconds range. |
 
 - **Usage & Flows:**
     Used by the admin to configure GPS behaviour from the Settings page (SDS 5.3). Changes take effect immediately for officer apps and the Live Tracking portal view. Lower `gps_interval_emergency` values improve real-time tracking accuracy during emergencies but increase battery usage on officer devices.
@@ -681,6 +681,7 @@ GPS, Notification, POI, Working Hours, and Route settings are global configurati
         "poi_expiring_enabled": true,
         "poi_expired_enabled": true,
         "report_submitted_enabled": true,
+        "report_under_review_enabled": true,
         "report_approved_enabled": true,
         "report_changes_enabled": true,
         "report_delivered_enabled": true,
@@ -705,9 +706,10 @@ GPS, Notification, POI, Working Hours, and Route settings are global configurati
     | `poi_expiring_enabled` | boolean | Notify manager/admin when a POI record is expiring soon. |
     | `poi_expired_enabled` | boolean | Notify manager/admin and officers when a POI record has expired. |
     | `report_submitted_enabled` | boolean | Notify the responsible manager when an incident report is submitted. |
+    | `report_under_review_enabled` | boolean | Notify the officer when a manager starts reviewing their incident report. |
     | `report_approved_enabled` | boolean | Notify the officer when their incident report is approved. |
     | `report_changes_enabled` | boolean | Notify the officer when changes are requested on their report. |
-    | `report_delivered_enabled` | boolean | Notify the client when an incident report is delivered. |
+    | `report_delivered_enabled` | boolean | Notify the officer and the client recipient when an incident report is delivered. |
     | `notification_retention_days` | integer | Number of days to retain notifications before automatic cleanup. |
 
 - **Error Cases:**
@@ -743,6 +745,7 @@ GPS, Notification, POI, Working Hours, and Route settings are global configurati
     | `poi_expiring_enabled` | boolean | No | Enable notification for POI expiring soon. Default: `true`. |
     | `poi_expired_enabled` | boolean | No | Enable notification for POI expired. Default: `true`. |
     | `report_submitted_enabled` | boolean | No | Enable notification for report submitted. Default: `true`. |
+    | `report_under_review_enabled` | boolean | No | Enable notification for report under review. Default: `true`. |
     | `report_approved_enabled` | boolean | No | Enable notification for report approved. Default: `true`. |
     | `report_changes_enabled` | boolean | No | Enable notification for report changes requested. Default: `true`. |
     | `report_delivered_enabled` | boolean | No | Enable notification for report delivered. Default: `true`. |

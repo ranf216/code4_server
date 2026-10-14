@@ -72,9 +72,9 @@ These error codes are specific to the Notification module:
 
 | RC | Message | When Returned | Recommended UI Action |
 |---|---|---|---|
-| 730 | "invalid notification type" | An invalid notification type was specified | This should not occur in normal frontend use. Log the error. |
-| 731 | "notification not found" | The notification does not exist, belongs to another user, or was already deleted | Show "Notification not found" and refresh the notifications list. |
-| 732 | "notification is already read" | `mark_as_read` called on a notification already marked as read | No user-facing error needed — the notification is already in the desired state. Silently ignore. |
+| 750 | "notification not found" | The notification does not exist, belongs to another user, or was already deleted | Show "Notification not found" and refresh the notifications list. |
+| 751 | "invalid notification type" | An invalid notification type was specified | This should not occur in normal frontend use. Log the error. |
+| 752 | "notification is already read" | `mark_as_read` called on a notification already marked as read | No user-facing error needed — the notification is already in the desired state. Silently ignore. |
 
 ### 1.6 Key Concepts
 
@@ -279,8 +279,8 @@ Marks a single notification as read. Call this when the user opens/views a notif
 
 | RC | Message | Scenario | Recommended Action |
 |---|---|---|---|
-| 731 | "notification not found" | Notification doesn't exist or belongs to another user | Refresh the notifications list |
-| 732 | "notification is already read" | Notification was already marked as read | Silently ignore — no user-facing error needed |
+| 750 | "notification not found" | Notification doesn't exist or belongs to another user | Refresh the notifications list |
+| 752 | "notification is already read" | Notification was already marked as read | Silently ignore — no user-facing error needed |
 
 #### Client Behaviour After Success
 
@@ -361,7 +361,7 @@ Soft-deletes a notification. The notification will no longer appear in `get_noti
 
 | RC | Message | Scenario | Recommended Action |
 |---|---|---|---|
-| 731 | "notification not found" | Notification doesn't exist, belongs to another user, or was already deleted | Refresh the notifications list |
+| 750 | "notification not found" | Notification doesn't exist, belongs to another user, or was already deleted | Refresh the notifications list |
 
 #### Client Behaviour After Success
 

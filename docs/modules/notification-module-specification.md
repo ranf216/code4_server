@@ -35,7 +35,7 @@ All endpoints are accessible to every authenticated user type (`USER_TYPE_ADMIN`
 | `platform/api/notification.js` | API definition — parameter schemas, ACL, documentation hints |
 | `platform/funcs/notification.js` | API implementation — all business logic, database interaction, validation |
 | `platform/data/notification_type.json` | Static `$DataItems` table defining valid notification types with template attributes |
-| `platform/definitions/errorcodes.en.js` | Error code definitions (RC 730–732 for notification module) |
+| `platform/definitions/errorcodes.en.js` | Error code definitions (RC 750–752 for notification module) |
 | `platform/config/using_api.js` | Module registration (`"notification"` entry) |
 | `db/UpgradeDB.sql` | Database migration — creates the `notification` table |
 | `db/triggers_def.js` | Audit trail trigger definitions for the `notification` table |
@@ -424,9 +424,9 @@ The retention period is configurable by administrators via `Settings/update_noti
 
 | RC | Constant | Message | When Returned |
 |---|---|---|---|
-| 730 | `ERR_NOTIFICATION_INVALID_TYPE` | "invalid notification type" | The `type` parameter does not match any key in `notification_type.json` |
-| 731 | `ERR_NOTIFICATION_NOT_FOUND` | "notification not found" | The notification does not exist, belongs to another user, or was already deleted |
-| 732 | `ERR_NOTIFICATION_ALREADY_READ` | "notification is already read" | `mark_as_read` called on a notification that was already marked as read |
+| 750 | `ERR_NOTIFICATION_NOT_FOUND` | "notification not found" | The notification does not exist, belongs to another user, or was already deleted |
+| 751 | `ERR_NOTIFICATION_INVALID_TYPE` | "invalid notification type" | The `type` parameter does not match any key in `notification_type.json` |
+| 752 | `ERR_NOTIFICATION_ALREADY_READ` | "notification is already read" | `mark_as_read` called on a notification that was already marked as read |
 
 Additional infrastructure error codes that may be returned:
 
