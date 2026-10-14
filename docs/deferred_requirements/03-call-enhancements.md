@@ -86,13 +86,26 @@ These features are documented in the SDS but are **not implemented** in the init
 
 ---
 
-## 8. Call Statistics & Advanced Analytics (SDS 4.5.1.1, 4.5.1.3)
+## 8. Call Statistics & Advanced Analytics (SDS 4.5.1.1, 4.5.1.3) — ✅ Partially Implemented
 
 **Requirement:** Dashboard showing call statistics: open calls, average response time, calls by category, calls by officer, trends over time.
 
-**Current behavior:** Not implemented. Basic `get_calls` with pagination covers listing.
+**Current behavior:** ✅ **Partially implemented (Phase 8.1 Dashboard).**
+- [x] Open calls count (`Dashboard/get_overview`, `Dashboard/get_calls_statistics`)
+- [x] Average response time — emergencies: creation → acceptance (`avg_response_time_minutes`)
+- [x] Average handling time — service calls: creation → resolution and acceptance → resolution
+- [x] Calls by category breakdown (medical_emergency, security_emergency, concierge_service, panic, test)
+- [x] Calls by status breakdown (new, accepted, resolved, canceled)
+- [x] Calls by priority breakdown
+- [x] Emergency vs. service call counts
+- [x] False emergencies count (canceled emergencies)
+- [x] Accidental requests count (canceled service calls)
+- [x] Community and date-range filters
+- [x] 5 recent open calls with resident/officer/community names
+- [ ] Calls by officer (per-officer workload/statistics) — deferred to advanced analytics
+- [ ] Trends over time (daily/weekly/monthly charts) — deferred to advanced analytics (SDS 4.5.1.3)
 
-**Dependencies:** Analytics/dashboard module. Can be built as separate read-only endpoints using aggregate queries.
+**Dependencies:** ~~Analytics/dashboard module.~~ Dashboard module (Phase 8.1 ✅). Advanced analytics (SDS 4.5.1.3) still deferred — see `docs/deferred_requirements/10-dashboard-enhancements.md`.
 
 ---
 

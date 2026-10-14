@@ -37,6 +37,7 @@ module.exports =
         "test_api_tracking",
         "test_api_post_order",
         "test_api_poi",
+        "test_api_dashboard",
         "test_api_report_template",
         "test_api_report",
     ]

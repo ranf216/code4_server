@@ -1,7 +1,7 @@
 # Code4 - Development Flow
 
-**Document Version:** 1.0
-**Last Updated:** 2026-10-12
+**Document Version:** 1.1
+**Last Updated:** 2026-10-14
 **Purpose:** Recommended order of implementation for the Code4 Security Operations Platform server modules
 
 ---
@@ -33,7 +33,7 @@ The project infrastructure is set up with the following **built-in platform modu
 - `USER_ROLE_LOGISTICS` = 5
 - `USER_ROLE_FINANCE` = 6
 
-**Implemented project-specific API modules:** `settings` (Phase 1.1), `community` (Phase 1.2), `admin_user` (Phase 1.3), `officer` (Phase 2.1), `resident` (Phase 2.2), `notification` (Phase 2.3), `call` (Phase 3.1), `task` (Phase 3.2), `asset` (Phase 4.1), `shift` (Phase 5.1), `route` (Phase 5.2), `tracking` (Phase 5.3), `post_order` (Phase 6.1), `poi` (Phase 6.2), `report_template` (Phase 7.1), `report` (Phase 7.2)
+**Implemented project-specific API modules:** `settings` (Phase 1.1), `community` (Phase 1.2), `admin_user` (Phase 1.3), `officer` (Phase 2.1), `resident` (Phase 2.2), `notification` (Phase 2.3), `call` (Phase 3.1), `task` (Phase 3.2), `asset` (Phase 4.1), `shift` (Phase 5.1), `route` (Phase 5.2), `tracking` (Phase 5.3), `post_order` (Phase 6.1), `poi` (Phase 6.2), `report_template` (Phase 7.1), `report` (Phase 7.2), `dashboard` (Phase 8.1)
 
 ---
 
@@ -227,10 +227,13 @@ Reports depend on templates and are generated from calls, making them late-stage
 
 Dashboard aggregates data from all other modules, so it must be last.
 
-#### 8.1 Dashboard (`platform/api/dashboard.js`)
-- Overview (counts, recent items), calls statistics, tasks summary, reports summary
-- **DB tables:** None (reads from all other tables)
-- **Depends on:** Call, Task, Report, Tracking (essentially everything)
+#### ~~8.1 Dashboard (`platform/api/dashboard.js`)~~ ✅ Done
+- ~~Overview (counts, recent items), calls statistics, tasks summary, reports summary~~
+- **DB tables:** None — read-only aggregation across `service_call`, `task`, `incident_report`, `community`, `officer`, `user_details`
+- **Depends on:** Call, Task, Report, Community, Officer (essentially everything)
+- **Implementation:** 4 API endpoints — `get_overview`, `get_calls_statistics`, `get_tasks_summary`, `get_reports_summary`. Read-only aggregation layer with no new database tables. `get_overview` returns 5 KPI counters (active calls, open tasks, open reports, active communities, active officers) plus 5 most recent open items per domain (calls, tasks, reports). `get_calls_statistics` returns call volume analytics over configurable date ranges (default: last 30 days): total calls, breakdowns by category/status/priority, emergency/false-emergency/accidental-request counts, average response time (emergency creation → officer acceptance) and average handling time (concierge creation → resolution, and from assignment → resolution), plus 5 recent open calls. `get_tasks_summary` returns open task count, breakdowns by status and type (date-filterable), and 5 recent open tasks sorted by priority; supports `scope=my` (assigned to current admin) vs `scope=all`. `get_reports_summary` returns open report count, total reports in last 14 days, breakdown by status (date-filterable), and 5 recent open reports; supports `scope=my` (assigned reviewer) vs `scope=all`. All endpoints accept `community_id` for single-community filtering. Open statuses resolved dynamically via `$DataItems.filterItemsIdByAttr("is_open", true, ...)`. All category/status/priority references use `$Const` constants from `$DataItems.define()`. Graceful degradation for invalid inputs (zero counts, empty arrays). `SUM()` results explicitly coerced to `Number()` to ensure consistent numeric types in API responses. Task `title` field derived from `$DataItems.getItemName()` for the task type (Q4). Name concatenation in JS per brain.md rules.
+- **Architectural decisions Q1–Q6 implemented:** `scope=my` for reports filters by reviewer (Q1); `scope=my` for tasks filters by assignee only (Q2); open task statuses include `new`, `accepted`, `approved` dynamically (Q3); task `title` maps to task type display name (Q4); overview returns 5 counters + recent items (Q5); `get_tasks_summary` and `get_reports_summary` accept optional `from_date`/`to_date` (Q6) — see `docs/issues-questions/dashboard-issues-questions.md`.
+- **Deferred:** Advanced call statistics (calls by officer, trend analysis — SDS 4.5.1.3), calls list real-time alerts table (SDS 4.5.1.2), live tracking map integration (SDS 4.5.4), overall information expansion (SDS 4.5.3), reports all-statuses toggle, real-time WebSocket live counter push, predictive analytics, officer performance analytics — see `docs/deferred_requirements/10-dashboard-enhancements.md`.
 
 ---
 
@@ -255,7 +258,7 @@ Dashboard aggregates data from all other modules, so it must be last.
 | ~~6.2~~ | ~~POI~~ ✅ | Community, Call | `api/poi.js`, `funcs/poi.js` |
 | ~~7.1~~ | ~~Report Template~~ ✅ | Community | `api/report_template.js`, `funcs/report_template.js` |
 | ~~7.2~~ | ~~Report~~ ✅ | Template, Call, Officer | `api/report.js`, `funcs/report.js` |
-| 8.1 | Dashboard | All modules | `api/dashboard.js`, `funcs/dashboard.js` |
+| ~~8.1~~ | ~~Dashboard~~ ✅ | All modules | `api/dashboard.js`, `funcs/dashboard.js` |
 
 ---
 

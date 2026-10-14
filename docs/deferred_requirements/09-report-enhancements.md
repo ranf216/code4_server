@@ -7,13 +7,18 @@ Requirements identified while implementing the Report module (Phase 7.2) that ar
 
 ---
 
-## 1. Dashboard — Incident Reports Section (SDS §4.5.5)
+## ~~1. Dashboard — Incident Reports Section (SDS §4.5.5)~~ ✅ Done
 
 **Requirement:** Dashboard widget with the number of open reports (submitted, under review, changes requested), total reports in the last 2 weeks, "assigned to me" toggle, 5 most recent open reports (title, officer, creation date), "select" and "show all" navigation.
 
-**Current behavior:** Not implemented (Phase 8.1 Dashboard). The data is available: `report_status.json` exposes an `is_open` attribute, and `incident_report.IRP_REVIEWER_USR_ID` / the responsible-manager rule can back the "assigned to me" filter.
+**Status:** ✅ **Implemented (Phase 8.1 Dashboard).**
+- [x] Open reports count — submitted, under_review, changes_requested (`Dashboard/get_reports_summary`)
+- [x] Total reports in last 14 days
+- [x] "Assigned to me" toggle via `scope=my` (filters by `IRP_REVIEWER_USR_ID`)
+- [x] 5 most recent open reports with title, officer name, creation date
+- [x] Community filter
 
-**Dependencies:** Dashboard module (Phase 8.1) — `Dashboard/get_reports_summary` in `docs/api_list.md`. The meaning of "assigned to me" for reports must be defined (reviewer vs. responsible community manager).
+**Dependencies:** ~~Dashboard module (Phase 8.1).~~ Dashboard module (Phase 8.1 ✅).
 
 ---
 

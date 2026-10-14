@@ -41,15 +41,18 @@
 
 ---
 
-## 4. Task Statistics & Dashboard Integration (SDS 4.5.2)
+## ~~4. Task Statistics & Dashboard Integration (SDS 4.5.2)~~ ✅ Done
 
 **Requirement:** Dashboard section showing open task count, recent tasks sorted by priority, task totals by type and status.
 
-**Current behavior:** Not implemented. The `get_tasks_list` API provides filtered listing but no aggregate statistics.
+**Status:** ✅ **Implemented (Phase 8.1 Dashboard).**
+- [x] Open tasks count (`Dashboard/get_tasks_summary`)
+- [x] Recent open tasks sorted by priority (urgent → important → normal → low)
+- [x] Tasks by status breakdown
+- [x] Tasks by type breakdown
+- [x] Community filter and scope filter (`all`/`my`)
 
-**Dependencies:** Dashboard module (Phase 8.1).
-
-**Implementation notes:** Add a `get_task_statistics` API endpoint that returns aggregate counts by status, type, and priority. Can be built as a read-only endpoint using SQL aggregate queries.
+**Dependencies:** ~~Dashboard module (Phase 8.1).~~ Dashboard module (Phase 8.1 ✅).
 
 ---
 
