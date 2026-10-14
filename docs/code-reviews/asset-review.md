@@ -16,7 +16,7 @@
 | `backend/platform/data/asset_shape.json` | Asset shape data items (static) |
 | `backend/platform/data/post_priority.json` | Post priority data items (static) |
 | `backend/platform/data/map_zone_type.json` | Map zone type data items (static) |
-| `backend/platform/definitions/errorcodes.en.js` | Error code definitions (rc 750-762) |
+| `backend/platform/definitions/errorcodes.en.js` | Error code definitions (rc 770-782) |
 | `backend/platform/config/using_api.js` | API registration |
 | `backend/platform/config/runtime_config.js` | Page size configuration |
 | `db/db.sql` | Full schema — `asset`, `post`, `map_zone` tables |
@@ -106,7 +106,7 @@ let effectiveLocation = (this.$location !== null && this.$location !== undefined
 
 **Before:** Optional date strings passed directly to MySQL `date` columns without server-side format validation.
 
-**After:** Both fields validated with `$Utils.validateDateStr()` when non-empty. Invalid dates return `ERR_ASSET_INVALID_DATE` (rc 763). Empty values are allowed (clear the date to `null`).
+**After:** Both fields validated with `$Utils.validateDateStr()` when non-empty. Invalid dates return `ERR_ASSET_INVALID_DATE` (rc 783). Empty values are allowed (clear the date to `null`).
 
 ---
 
@@ -141,7 +141,7 @@ let effectiveLocation = (this.$location !== null && this.$location !== undefined
 
 ### API Response Quality
 - [x] No database column names exposed — all responses use clean `snake_case` names via `mapAssetRow`, `mapPostRow`, `mapZoneRow`
-- [x] Proper error codes from `$ERRS` (rc 750-762)
+- [x] Proper error codes from `$ERRS` (rc 770-782)
 
 ### Data Items & Enums
 - [x] No hardcoded arrays for enum values — all use `$DataItems` with JSON files in `platform/data/`
@@ -196,7 +196,7 @@ let effectiveLocation = (this.$location !== null && this.$location !== undefined
 - [x] `"asset"` registered in `using_api.js`
 
 ### Error Code Allocation
-- [x] Asset & Post block: rc 750-762, within the project-specific 500+ range
+- [x] Asset & Post block: rc 770-782, within the project-specific 500+ range
 - [x] No overlapping rc values with other modules
 - [x] Error names follow `ERR_` prefix convention
 - [x] Error messages are descriptive and user-friendly
@@ -212,7 +212,7 @@ let effectiveLocation = (this.$location !== null && this.$location !== undefined
 | 3 | `backend/platform/api/asset.js` | Replace `offset`/`limit` params with `page` on list endpoints | High |
 | 4 | `backend/platform/funcs/asset.js` | Use `$Config.get()` page size, return `num_of_pages`/`num_of_items` | High |
 | 5 | `backend/platform/config/runtime_config.js` | Add `ASSETS_LIST_PAGE_SIZE` and `POSTS_LIST_PAGE_SIZE` (50) | High |
-| 6 | `backend/platform/definitions/errorcodes.en.js` | Add `ERR_ASSET_INVALID_DATE` (rc 763) | High |
+| 6 | `backend/platform/definitions/errorcodes.en.js` | Add `ERR_ASSET_INVALID_DATE` (rc 783) | High |
 | 7 | `backend/platform/funcs/asset.js` | Add `$Utils.validateDateStr()` for date fields in create/batch/update | High |
 
 ---

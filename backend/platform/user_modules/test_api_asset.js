@@ -514,20 +514,20 @@ module.exports =
 				}
 			}
 
-			// --- Batch: empty locations (expect rc 760) ---
+			// --- Batch: empty locations (expect rc 780) ---
 			testResults.push({step: "Test 17: create_assets_batch (empty locations)", status: "running"});
 			rv = $executeAPI(session, "Asset/create_assets_batch", {
 				community_id: testCommunityId,
 				asset_type: testAssetTypeId,
 				locations: []
 			});
-			if (rv.rc === 760)
+			if (rv.rc === 780)
 			{
-				testResults.push({step: "Test 17: create_assets_batch (empty locations)", status: "passed", message: "correctly rejected empty batch with rc 760"});
+				testResults.push({step: "Test 17: create_assets_batch (empty locations)", status: "passed", message: "correctly rejected empty batch with rc 780"});
 			}
 			else
 			{
-				testResults.push({step: "Test 17: create_assets_batch (empty locations)", status: "warning", message: "expected rc 760", rc: rv.rc});
+				testResults.push({step: "Test 17: create_assets_batch (empty locations)", status: "warning", message: "expected rc 780", rc: rv.rc});
 			}
 
 			// =================================================================
@@ -542,13 +542,13 @@ module.exports =
 				shape: "place",
 				location: JSON.stringify({lat: 25.276, lng: 55.296})
 			});
-			if (rv.rc === 751)
+			if (rv.rc === 771)
 			{
-				testResults.push({step: "Test 18: create_asset (invalid type)", status: "passed", message: "correctly rejected invalid type with rc 751"});
+				testResults.push({step: "Test 18: create_asset (invalid type)", status: "passed", message: "correctly rejected invalid type with rc 771"});
 			}
 			else
 			{
-				testResults.push({step: "Test 18: create_asset (invalid type)", status: "warning", message: "expected rc 751", rc: rv.rc});
+				testResults.push({step: "Test 18: create_asset (invalid type)", status: "warning", message: "expected rc 771", rc: rv.rc});
 			}
 
 			// --- Create asset with invalid shape ---
@@ -559,13 +559,13 @@ module.exports =
 				shape: "hexagon",
 				location: JSON.stringify({lat: 25.276, lng: 55.296})
 			});
-			if (rv.rc === 755)
+			if (rv.rc === 775)
 			{
-				testResults.push({step: "Test 19: create_asset (invalid shape)", status: "passed", message: "correctly rejected invalid shape with rc 755"});
+				testResults.push({step: "Test 19: create_asset (invalid shape)", status: "passed", message: "correctly rejected invalid shape with rc 775"});
 			}
 			else
 			{
-				testResults.push({step: "Test 19: create_asset (invalid shape)", status: "warning", message: "expected rc 755", rc: rv.rc});
+				testResults.push({step: "Test 19: create_asset (invalid shape)", status: "warning", message: "expected rc 775", rc: rv.rc});
 			}
 
 			// --- Create asset with invalid date ---
@@ -577,13 +577,13 @@ module.exports =
 				location: JSON.stringify({lat: 25.276, lng: 55.296}),
 				installation_date: "not-a-date"
 			});
-			if (rv.rc === 763)
+			if (rv.rc === 783)
 			{
-				testResults.push({step: "Test 20: create_asset (invalid date)", status: "passed", message: "correctly rejected invalid date with rc 763"});
+				testResults.push({step: "Test 20: create_asset (invalid date)", status: "passed", message: "correctly rejected invalid date with rc 783"});
 			}
 			else
 			{
-				testResults.push({step: "Test 20: create_asset (invalid date)", status: "warning", message: "expected rc 763", rc: rv.rc});
+				testResults.push({step: "Test 20: create_asset (invalid date)", status: "warning", message: "expected rc 783", rc: rv.rc});
 			}
 
 			// --- Create asset with invalid community ---
@@ -606,25 +606,25 @@ module.exports =
 			// --- Get asset with invalid ID ---
 			testResults.push({step: "Test 22: get_asset (invalid ID)", status: "running"});
 			rv = $executeAPI(session, "Asset/get_asset", {asset_id: 999999999});
-			if (rv.rc === 750)
+			if (rv.rc === 770)
 			{
-				testResults.push({step: "Test 22: get_asset (invalid ID)", status: "passed", message: "correctly returned not found with rc 750"});
+				testResults.push({step: "Test 22: get_asset (invalid ID)", status: "passed", message: "correctly returned not found with rc 770"});
 			}
 			else
 			{
-				testResults.push({step: "Test 22: get_asset (invalid ID)", status: "warning", message: "expected rc 750", rc: rv.rc});
+				testResults.push({step: "Test 22: get_asset (invalid ID)", status: "warning", message: "expected rc 770", rc: rv.rc});
 			}
 
 			// --- Update asset with invalid ID ---
 			testResults.push({step: "Test 23: update_asset (invalid ID)", status: "running"});
 			rv = $executeAPI(session, "Asset/update_asset", {asset_id: 999999999, description: "Should fail"});
-			if (rv.rc === 750)
+			if (rv.rc === 770)
 			{
-				testResults.push({step: "Test 23: update_asset (invalid ID)", status: "passed", message: "correctly rejected invalid ID with rc 750"});
+				testResults.push({step: "Test 23: update_asset (invalid ID)", status: "passed", message: "correctly rejected invalid ID with rc 770"});
 			}
 			else
 			{
-				testResults.push({step: "Test 23: update_asset (invalid ID)", status: "warning", message: "expected rc 750", rc: rv.rc});
+				testResults.push({step: "Test 23: update_asset (invalid ID)", status: "warning", message: "expected rc 770", rc: rv.rc});
 			}
 
 			// --- Update asset with invalid type ---
@@ -636,13 +636,13 @@ module.exports =
 			else
 			{
 				rv = $executeAPI(session, "Asset/update_asset", {asset_id: testAssetId, asset_type: "nonexistent_type_xyz"});
-				if (rv.rc === 751)
+				if (rv.rc === 771)
 				{
-					testResults.push({step: "Test 24: update_asset (invalid type)", status: "passed", message: "correctly rejected invalid type with rc 751"});
+					testResults.push({step: "Test 24: update_asset (invalid type)", status: "passed", message: "correctly rejected invalid type with rc 771"});
 				}
 				else
 				{
-					testResults.push({step: "Test 24: update_asset (invalid type)", status: "warning", message: "expected rc 751", rc: rv.rc});
+					testResults.push({step: "Test 24: update_asset (invalid type)", status: "warning", message: "expected rc 771", rc: rv.rc});
 				}
 			}
 
@@ -655,13 +655,13 @@ module.exports =
 			else
 			{
 				rv = $executeAPI(session, "Asset/update_asset", {asset_id: testAssetId, replacement_date: "invalid-date"});
-				if (rv.rc === 763)
+				if (rv.rc === 783)
 				{
-					testResults.push({step: "Test 25: update_asset (invalid date)", status: "passed", message: "correctly rejected invalid date with rc 763"});
+					testResults.push({step: "Test 25: update_asset (invalid date)", status: "passed", message: "correctly rejected invalid date with rc 783"});
 				}
 				else
 				{
-					testResults.push({step: "Test 25: update_asset (invalid date)", status: "warning", message: "expected rc 763", rc: rv.rc});
+					testResults.push({step: "Test 25: update_asset (invalid date)", status: "warning", message: "expected rc 783", rc: rv.rc});
 				}
 			}
 
@@ -672,13 +672,13 @@ module.exports =
 				asset_type: "nonexistent_type_xyz",
 				page: 0
 			});
-			if (rv.rc === 751)
+			if (rv.rc === 771)
 			{
-				testResults.push({step: "Test 26: get_assets_list (invalid type filter)", status: "passed", message: "correctly rejected invalid type filter with rc 751"});
+				testResults.push({step: "Test 26: get_assets_list (invalid type filter)", status: "passed", message: "correctly rejected invalid type filter with rc 771"});
 			}
 			else
 			{
-				testResults.push({step: "Test 26: get_assets_list (invalid type filter)", status: "warning", message: "expected rc 751", rc: rv.rc});
+				testResults.push({step: "Test 26: get_assets_list (invalid type filter)", status: "warning", message: "expected rc 771", rc: rv.rc});
 			}
 
 			// --- Update asset with no changes (should succeed with noop) ---
@@ -1015,13 +1015,13 @@ module.exports =
 					name: updatedPostName,
 					location: JSON.stringify({lat: 25.276, lng: 55.296})
 				});
-				if (rv.rc === 753)
+				if (rv.rc === 773)
 				{
-					testResults.push({step: "Test 39: create_post (duplicate name)", status: "passed", message: "correctly rejected duplicate name with rc 753"});
+					testResults.push({step: "Test 39: create_post (duplicate name)", status: "passed", message: "correctly rejected duplicate name with rc 773"});
 				}
 				else
 				{
-					testResults.push({step: "Test 39: create_post (duplicate name)", status: "warning", message: "expected rc 753", rc: rv.rc});
+					testResults.push({step: "Test 39: create_post (duplicate name)", status: "warning", message: "expected rc 773", rc: rv.rc});
 				}
 			}
 
@@ -1033,13 +1033,13 @@ module.exports =
 				priority: "super_urgent",
 				location: JSON.stringify({lat: 25.276, lng: 55.296})
 			});
-			if (rv.rc === 756)
+			if (rv.rc === 776)
 			{
-				testResults.push({step: "Test 40: create_post (invalid priority)", status: "passed", message: "correctly rejected invalid priority with rc 756"});
+				testResults.push({step: "Test 40: create_post (invalid priority)", status: "passed", message: "correctly rejected invalid priority with rc 776"});
 			}
 			else
 			{
-				testResults.push({step: "Test 40: create_post (invalid priority)", status: "warning", message: "expected rc 756", rc: rv.rc});
+				testResults.push({step: "Test 40: create_post (invalid priority)", status: "warning", message: "expected rc 776", rc: rv.rc});
 			}
 
 			// --- Create post with invalid shape ---
@@ -1050,13 +1050,13 @@ module.exports =
 				shape: "triangle",
 				location: JSON.stringify({lat: 25.276, lng: 55.296})
 			});
-			if (rv.rc === 757)
+			if (rv.rc === 777)
 			{
-				testResults.push({step: "Test 41: create_post (invalid shape)", status: "passed", message: "correctly rejected invalid shape with rc 757"});
+				testResults.push({step: "Test 41: create_post (invalid shape)", status: "passed", message: "correctly rejected invalid shape with rc 777"});
 			}
 			else
 			{
-				testResults.push({step: "Test 41: create_post (invalid shape)", status: "warning", message: "expected rc 757", rc: rv.rc});
+				testResults.push({step: "Test 41: create_post (invalid shape)", status: "warning", message: "expected rc 777", rc: rv.rc});
 			}
 
 			// --- Create post with empty name ---
@@ -1097,25 +1097,25 @@ module.exports =
 			// --- Get post with invalid ID ---
 			testResults.push({step: "Test 44: get_post (invalid ID)", status: "running"});
 			rv = $executeAPI(session, "Asset/get_post", {post_id: 999999999});
-			if (rv.rc === 752)
+			if (rv.rc === 772)
 			{
-				testResults.push({step: "Test 44: get_post (invalid ID)", status: "passed", message: "correctly returned not found with rc 752"});
+				testResults.push({step: "Test 44: get_post (invalid ID)", status: "passed", message: "correctly returned not found with rc 772"});
 			}
 			else
 			{
-				testResults.push({step: "Test 44: get_post (invalid ID)", status: "warning", message: "expected rc 752", rc: rv.rc});
+				testResults.push({step: "Test 44: get_post (invalid ID)", status: "warning", message: "expected rc 772", rc: rv.rc});
 			}
 
 			// --- Update post with invalid ID ---
 			testResults.push({step: "Test 45: update_post (invalid ID)", status: "running"});
 			rv = $executeAPI(session, "Asset/update_post", {post_id: 999999999, name: "Should Fail"});
-			if (rv.rc === 752)
+			if (rv.rc === 772)
 			{
-				testResults.push({step: "Test 45: update_post (invalid ID)", status: "passed", message: "correctly rejected invalid ID with rc 752"});
+				testResults.push({step: "Test 45: update_post (invalid ID)", status: "passed", message: "correctly rejected invalid ID with rc 772"});
 			}
 			else
 			{
-				testResults.push({step: "Test 45: update_post (invalid ID)", status: "warning", message: "expected rc 752", rc: rv.rc});
+				testResults.push({step: "Test 45: update_post (invalid ID)", status: "warning", message: "expected rc 772", rc: rv.rc});
 			}
 
 			// --- Update post with no changes (should succeed as noop) ---
@@ -1313,13 +1313,13 @@ module.exports =
 				name: `Bad Zone ${uniqueId}`,
 				location: JSON.stringify({lat: 25.276, lng: 55.296})
 			});
-			if (rv.rc === 758)
+			if (rv.rc === 778)
 			{
-				testResults.push({step: "Test 54: create_map_zone (invalid type)", status: "passed", message: "correctly rejected invalid zone type with rc 758"});
+				testResults.push({step: "Test 54: create_map_zone (invalid type)", status: "passed", message: "correctly rejected invalid zone type with rc 778"});
 			}
 			else
 			{
-				testResults.push({step: "Test 54: create_map_zone (invalid type)", status: "warning", message: "expected rc 758", rc: rv.rc});
+				testResults.push({step: "Test 54: create_map_zone (invalid type)", status: "warning", message: "expected rc 778", rc: rv.rc});
 			}
 
 			// --- Get map zones with invalid type filter ---
@@ -1328,37 +1328,37 @@ module.exports =
 				community_id: testCommunityId,
 				zone_type: "nonexistent_zone_type"
 			});
-			if (rv.rc === 758)
+			if (rv.rc === 778)
 			{
-				testResults.push({step: "Test 55: get_map_zones (invalid type filter)", status: "passed", message: "correctly rejected invalid type filter with rc 758"});
+				testResults.push({step: "Test 55: get_map_zones (invalid type filter)", status: "passed", message: "correctly rejected invalid type filter with rc 778"});
 			}
 			else
 			{
-				testResults.push({step: "Test 55: get_map_zones (invalid type filter)", status: "warning", message: "expected rc 758", rc: rv.rc});
+				testResults.push({step: "Test 55: get_map_zones (invalid type filter)", status: "warning", message: "expected rc 778", rc: rv.rc});
 			}
 
 			// --- Update map zone with invalid ID ---
 			testResults.push({step: "Test 56: update_map_zone (invalid ID)", status: "running"});
 			rv = $executeAPI(session, "Asset/update_map_zone", {zone_id: 999999999, name: "Should Fail"});
-			if (rv.rc === 754)
+			if (rv.rc === 774)
 			{
-				testResults.push({step: "Test 56: update_map_zone (invalid ID)", status: "passed", message: "correctly rejected invalid ID with rc 754"});
+				testResults.push({step: "Test 56: update_map_zone (invalid ID)", status: "passed", message: "correctly rejected invalid ID with rc 774"});
 			}
 			else
 			{
-				testResults.push({step: "Test 56: update_map_zone (invalid ID)", status: "warning", message: "expected rc 754", rc: rv.rc});
+				testResults.push({step: "Test 56: update_map_zone (invalid ID)", status: "warning", message: "expected rc 774", rc: rv.rc});
 			}
 
 			// --- Delete map zone with invalid ID ---
 			testResults.push({step: "Test 57: delete_map_zone (invalid ID)", status: "running"});
 			rv = $executeAPI(session, "Asset/delete_map_zone", {zone_id: 999999999});
-			if (rv.rc === 754)
+			if (rv.rc === 774)
 			{
-				testResults.push({step: "Test 57: delete_map_zone (invalid ID)", status: "passed", message: "correctly returned not found with rc 754"});
+				testResults.push({step: "Test 57: delete_map_zone (invalid ID)", status: "passed", message: "correctly returned not found with rc 774"});
 			}
 			else
 			{
-				testResults.push({step: "Test 57: delete_map_zone (invalid ID)", status: "warning", message: "expected rc 754", rc: rv.rc});
+				testResults.push({step: "Test 57: delete_map_zone (invalid ID)", status: "warning", message: "expected rc 774", rc: rv.rc});
 			}
 
 			// --- Update map zone with invalid type ---
@@ -1370,13 +1370,13 @@ module.exports =
 			else
 			{
 				rv = $executeAPI(session, "Asset/update_map_zone", {zone_id: testZoneId, zone_type: "nonexistent_zone_type"});
-				if (rv.rc === 758)
+				if (rv.rc === 778)
 				{
-					testResults.push({step: "Test 58: update_map_zone (invalid type)", status: "passed", message: "correctly rejected invalid type with rc 758"});
+					testResults.push({step: "Test 58: update_map_zone (invalid type)", status: "passed", message: "correctly rejected invalid type with rc 778"});
 				}
 				else
 				{
-					testResults.push({step: "Test 58: update_map_zone (invalid type)", status: "warning", message: "expected rc 758", rc: rv.rc});
+					testResults.push({step: "Test 58: update_map_zone (invalid type)", status: "warning", message: "expected rc 778", rc: rv.rc});
 				}
 			}
 
@@ -1411,7 +1411,7 @@ module.exports =
 			else
 			{
 				rv = $executeAPI(session, "Asset/get_asset", {asset_id: testAssetId});
-				if (rv.rc === 750)
+				if (rv.rc === 770)
 				{
 					testResults.push({step: "Test 60: get_asset (verify deletion)", status: "passed", verified_deleted: true});
 				}
@@ -1448,7 +1448,7 @@ module.exports =
 				}
 			}
 
-			// --- Delete already-deleted asset (expect rc 750) ---
+			// --- Delete already-deleted asset (expect rc 770) ---
 			testResults.push({step: "Test 62: delete_asset (already deleted)", status: "running"});
 			if (testAssetId === null)
 			{
@@ -1457,13 +1457,13 @@ module.exports =
 			else
 			{
 				rv = $executeAPI(session, "Asset/delete_asset", {asset_id: testAssetId});
-				if (rv.rc === 750)
+				if (rv.rc === 770)
 				{
 					testResults.push({step: "Test 62: delete_asset (already deleted)", status: "passed", message: "correctly returned not found for already-deleted asset"});
 				}
 				else
 				{
-					testResults.push({step: "Test 62: delete_asset (already deleted)", status: "warning", message: "expected rc 750 for already-deleted asset", rc: rv.rc});
+					testResults.push({step: "Test 62: delete_asset (already deleted)", status: "warning", message: "expected rc 770 for already-deleted asset", rc: rv.rc});
 				}
 			}
 
@@ -1498,7 +1498,7 @@ module.exports =
 			else
 			{
 				rv = $executeAPI(session, "Asset/get_post", {post_id: testPostId});
-				if (rv.rc === 752)
+				if (rv.rc === 772)
 				{
 					testResults.push({step: "Test 64: get_post (verify deletion)", status: "passed", verified_deleted: true});
 				}
@@ -1511,13 +1511,13 @@ module.exports =
 			// --- Delete post with invalid ID ---
 			testResults.push({step: "Test 65: delete_post (invalid ID)", status: "running"});
 			rv = $executeAPI(session, "Asset/delete_post", {post_id: 999999999});
-			if (rv.rc === 752)
+			if (rv.rc === 772)
 			{
-				testResults.push({step: "Test 65: delete_post (invalid ID)", status: "passed", message: "correctly returned not found with rc 752"});
+				testResults.push({step: "Test 65: delete_post (invalid ID)", status: "passed", message: "correctly returned not found with rc 772"});
 			}
 			else
 			{
-				testResults.push({step: "Test 65: delete_post (invalid ID)", status: "warning", message: "expected rc 752", rc: rv.rc});
+				testResults.push({step: "Test 65: delete_post (invalid ID)", status: "warning", message: "expected rc 772", rc: rv.rc});
 			}
 
 			// =================================================================

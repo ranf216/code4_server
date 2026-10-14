@@ -394,26 +394,6 @@ function softDeleteCommunities(templateId, now)
 	return null;
 }
 
-function parseStyleJson(style)
-{
-	if (!style)
-	{
-		return null;
-	}
-	if (typeof style === "string")
-	{
-		try
-		{
-			return JSON.parse(style);
-		}
-		catch (e)
-		{
-			return null;
-		}
-	}
-	return style;
-}
-
 // ---------------------------------------------------------------------------
 // Exported API class
 // ---------------------------------------------------------------------------
@@ -653,7 +633,7 @@ module.exports = class
 			is_global: record.RPT_IS_GLOBAL === 1,
 			review_before_client: record.RPT_REVIEW_BEFORE_CLIENT === 1,
 			allow_officer_editing: record.RPT_ALLOW_OFFICER_EDITING === 1,
-			style: parseStyleJson(record.RPT_STYLE),
+			style: $Funcs.parseJson(record.RPT_STYLE, null),
 			communities: communities.map(c => ({community_id: c.RTC_COM_ID, community_name: c.COM_NAME})),
 			sections: sections,
 			created_by: record.RPT_CREATED_BY,
@@ -1163,8 +1143,13 @@ module.exports = class
 		}
 
 		// Check for linked reports (Phase 7.2: incident_report table)
-		// When the report table exists, check: SELECT COUNT(*) FROM incident_report WHERE RPT_TEMPLATE_ID=? AND RPT_DELETED_ON IS NULL
-		// For now, drafts have no reports since Phase 7.2 is not yet implemented
+		let linkedReports = $Db.executeQuery(
+			`SELECT IRP_ID FROM \`incident_report\` WHERE IRP_RPT_ID=? AND IRP_DELETED_ON IS NULL LIMIT 1`,
+			[this.$template_id]);
+		if (linkedReports.length > 0)
+		{
+			return $ERRS.ERR_REPORT_TEMPLATE_HAS_LINKED_REPORTS;
+		}
 
 		// Pre-fetch section IDs for cascade soft-delete (read — before transaction)
 		let existingSectionIds = getExistingSectionIds(this.$template_id);
@@ -1216,7 +1201,7 @@ module.exports = class
 			return $ERRS.ERR_REPORT_TEMPLATE_NOT_FOUND;
 		}
 
-		let style = parseStyleJson(record.RPT_STYLE) || {
+		let style = $Funcs.parseJson(record.RPT_STYLE, null) || {
 			company_logo: null,
 			accent_color: null,
 			header_layout: $Const.REPORT_HEADER_LAYOUT_STANDARD,
@@ -1246,7 +1231,7 @@ module.exports = class
 		}
 
 		// Parse existing style or create defaults
-		let style = parseStyleJson(record.RPT_STYLE) || {
+		let style = $Funcs.parseJson(record.RPT_STYLE, null) || {
 			company_logo: null,
 			accent_color: null,
 			header_layout: $Const.REPORT_HEADER_LAYOUT_STANDARD,

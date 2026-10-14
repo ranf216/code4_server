@@ -19,7 +19,7 @@ module.exports =
 
             "get_poi_record"                    : {
                                                     "@acl"                          : [$ACL.USER_TYPE_ADMIN, $ACL.USER_TYPE_OFFICER],
-                                                    "@doc"                          : "Get full POI record details. Officers see only active records for their community; internal notes and legal documents are hidden from officers.",
+                                                    "@doc"                          : "Get full POI record details. Officers see only active records for their community; internal notes and legal documents are hidden from officers. Related incidents include linked calls (related_incidents) and incident reports created via Report Encounter (related_reports: admins see non-draft reports, officers see their own).",
                                                     "#token"                        : "s",
                                                     "record_id"                     : "i***POI Record ID",
                                                 },

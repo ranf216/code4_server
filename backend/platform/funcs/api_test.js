@@ -667,46 +667,46 @@ module.exports = class
 
             testResults.push({step: "Test 39: update_gps_settings (invalid - below min)", status: "running"});
             rv = $executeAPI(this.$Session, "Settings/update_gps_settings", { gps_interval_normal: 5 });
-            if ($Err.isERR(rv) && rv.rc === 742)
+            if ($Err.isERR(rv) && rv.rc === 762)
             {
-                testResults.push({step: "Test 39: update_gps_settings (invalid - below min)", status: "passed", message: "correctly rejected value below minimum with rc 742"});
+                testResults.push({step: "Test 39: update_gps_settings (invalid - below min)", status: "passed", message: "correctly rejected value below minimum with rc 762"});
             }
             else
             {
-                testResults.push({step: "Test 39: update_gps_settings (invalid - below min)", status: "warning", message: "expected rc 742 for value below minimum"});
+                testResults.push({step: "Test 39: update_gps_settings (invalid - below min)", status: "warning", message: "expected rc 762 for value below minimum"});
             }
 
             testResults.push({step: "Test 40: update_gps_settings (invalid - above max)", status: "running"});
             rv = $executeAPI(this.$Session, "Settings/update_gps_settings", { gps_interval_normal: 200 });
-            if ($Err.isERR(rv) && rv.rc === 742)
+            if ($Err.isERR(rv) && rv.rc === 762)
             {
-                testResults.push({step: "Test 40: update_gps_settings (invalid - above max)", status: "passed", message: "correctly rejected value above maximum with rc 742"});
+                testResults.push({step: "Test 40: update_gps_settings (invalid - above max)", status: "passed", message: "correctly rejected value above maximum with rc 762"});
             }
             else
             {
-                testResults.push({step: "Test 40: update_gps_settings (invalid - above max)", status: "warning", message: "expected rc 742 for value above maximum"});
+                testResults.push({step: "Test 40: update_gps_settings (invalid - above max)", status: "warning", message: "expected rc 762 for value above maximum"});
             }
 
             testResults.push({step: "Test 40a: update_gps_settings (emergency - below min)", status: "running"});
             rv = $executeAPI(this.$Session, "Settings/update_gps_settings", { gps_interval_emergency: 3 });
-            if ($Err.isERR(rv) && rv.rc === 743)
+            if ($Err.isERR(rv) && rv.rc === 763)
             {
-                testResults.push({step: "Test 40a: update_gps_settings (emergency - below min)", status: "passed", message: "correctly rejected emergency value below minimum with rc 743"});
+                testResults.push({step: "Test 40a: update_gps_settings (emergency - below min)", status: "passed", message: "correctly rejected emergency value below minimum with rc 763"});
             }
             else
             {
-                testResults.push({step: "Test 40a: update_gps_settings (emergency - below min)", status: "warning", message: "expected rc 743 for emergency value below minimum"});
+                testResults.push({step: "Test 40a: update_gps_settings (emergency - below min)", status: "warning", message: "expected rc 763 for emergency value below minimum"});
             }
 
             testResults.push({step: "Test 40b: update_gps_settings (emergency - above max)", status: "running"});
             rv = $executeAPI(this.$Session, "Settings/update_gps_settings", { gps_interval_emergency: 60 });
-            if ($Err.isERR(rv) && rv.rc === 743)
+            if ($Err.isERR(rv) && rv.rc === 763)
             {
-                testResults.push({step: "Test 40b: update_gps_settings (emergency - above max)", status: "passed", message: "correctly rejected emergency value above maximum with rc 743"});
+                testResults.push({step: "Test 40b: update_gps_settings (emergency - above max)", status: "passed", message: "correctly rejected emergency value above maximum with rc 763"});
             }
             else
             {
-                testResults.push({step: "Test 40b: update_gps_settings (emergency - above max)", status: "warning", message: "expected rc 743 for emergency value above maximum"});
+                testResults.push({step: "Test 40b: update_gps_settings (emergency - above max)", status: "warning", message: "expected rc 763 for emergency value above maximum"});
             }
 
             testResults.push({step: "Test 41: update_notification_settings (multiple parameters)", status: "running"});
@@ -2028,18 +2028,18 @@ module.exports = class
                 }
             }
 
-            testResults.push({step: "Test 16: change_admin_user_role (self, expect rc 772)", status: "running"});
+            testResults.push({step: "Test 16: change_admin_user_role (self, expect rc 792)", status: "running"});
             rv = $executeAPI(this.$Session, "AdminUser/change_admin_user_role", {
                 user_id: this.$Session.userId,
                 role: $Const.USER_ROLE_MANAGER
             });
-            if ($Err.isERR(rv) && rv.rc === 772)
+            if ($Err.isERR(rv) && rv.rc === 792)
             {
-                testResults.push({step: "Test 16: change_admin_user_role (self, expect rc 772)", status: "passed", message: "correctly rejected self-role change"});
+                testResults.push({step: "Test 16: change_admin_user_role (self, expect rc 792)", status: "passed", message: "correctly rejected self-role change"});
             }
             else
             {
-                testResults.push({step: "Test 16: change_admin_user_role (self, expect rc 772)", status: "warning", message: "expected rc 772", rc: rv.rc});
+                testResults.push({step: "Test 16: change_admin_user_role (self, expect rc 792)", status: "warning", message: "expected rc 792", rc: rv.rc});
             }
 
             testResults.push({step: "Test 17: change_admin_user_role (invalid role)", status: "running"});
@@ -2068,13 +2068,13 @@ module.exports = class
                 user_id: "NONEXISTENT_USER_ID",
                 role: $Const.USER_ROLE_MANAGER
             });
-            if ($Err.isERR(rv) && rv.rc === 770)
+            if ($Err.isERR(rv) && rv.rc === 790)
             {
-                testResults.push({step: "Test 18: change_admin_user_role (invalid user)", status: "passed", message: "correctly returned not found with rc 770"});
+                testResults.push({step: "Test 18: change_admin_user_role (invalid user)", status: "passed", message: "correctly returned not found with rc 790"});
             }
             else
             {
-                testResults.push({step: "Test 18: change_admin_user_role (invalid user)", status: "warning", message: "expected rc 770", rc: rv.rc});
+                testResults.push({step: "Test 18: change_admin_user_role (invalid user)", status: "warning", message: "expected rc 790", rc: rv.rc});
             }
 
             // =================================================================
@@ -2132,13 +2132,13 @@ module.exports = class
                 user_id: "NONEXISTENT_USER_ID",
                 password: "NewPass@123"
             });
-            if ($Err.isERR(rv) && rv.rc === 770)
+            if ($Err.isERR(rv) && rv.rc === 790)
             {
-                testResults.push({step: "Test 21: reset_admin_user_password (invalid user)", status: "passed", message: "correctly returned not found with rc 770"});
+                testResults.push({step: "Test 21: reset_admin_user_password (invalid user)", status: "passed", message: "correctly returned not found with rc 790"});
             }
             else
             {
-                testResults.push({step: "Test 21: reset_admin_user_password (invalid user)", status: "warning", message: "expected rc 770", rc: rv.rc});
+                testResults.push({step: "Test 21: reset_admin_user_password (invalid user)", status: "warning", message: "expected rc 790", rc: rv.rc});
             }
 
             testResults.push({step: "Test 22: change_my_password (wrong current)", status: "running"});
@@ -2347,46 +2347,46 @@ module.exports = class
                 user_id: "NONEXISTENT_USER_ID",
                 first_name: "Ghost"
             });
-            if ($Err.isERR(rv) && rv.rc === 770)
+            if ($Err.isERR(rv) && rv.rc === 790)
             {
-                testResults.push({step: "Test 34: update_admin_user (invalid user ID)", status: "passed", message: "correctly returned not found with rc 770"});
+                testResults.push({step: "Test 34: update_admin_user (invalid user ID)", status: "passed", message: "correctly returned not found with rc 790"});
             }
             else
             {
-                testResults.push({step: "Test 34: update_admin_user (invalid user ID)", status: "warning", message: "expected rc 770", rc: rv.rc});
+                testResults.push({step: "Test 34: update_admin_user (invalid user ID)", status: "warning", message: "expected rc 790", rc: rv.rc});
             }
 
             testResults.push({step: "Test 35: get_admin_user (invalid ID)", status: "running"});
             rv = $executeAPI(this.$Session, "AdminUser/get_admin_user", { user_id: "NONEXISTENT_USER_ID" });
-            if ($Err.isERR(rv) && rv.rc === 770)
+            if ($Err.isERR(rv) && rv.rc === 790)
             {
-                testResults.push({step: "Test 35: get_admin_user (invalid ID)", status: "passed", message: "correctly returned not found with rc 770"});
+                testResults.push({step: "Test 35: get_admin_user (invalid ID)", status: "passed", message: "correctly returned not found with rc 790"});
             }
             else
             {
-                testResults.push({step: "Test 35: get_admin_user (invalid ID)", status: "warning", message: "expected rc 770", rc: rv.rc});
+                testResults.push({step: "Test 35: get_admin_user (invalid ID)", status: "warning", message: "expected rc 790", rc: rv.rc});
             }
 
             testResults.push({step: "Test 36: delete_admin_user (self)", status: "running"});
             rv = $executeAPI(this.$Session, "AdminUser/delete_admin_user", { user_id: this.$Session.userId });
-            if ($Err.isERR(rv) && rv.rc === 771)
+            if ($Err.isERR(rv) && rv.rc === 791)
             {
-                testResults.push({step: "Test 36: delete_admin_user (self)", status: "passed", message: "correctly rejected self-delete with rc 771"});
+                testResults.push({step: "Test 36: delete_admin_user (self)", status: "passed", message: "correctly rejected self-delete with rc 791"});
             }
             else
             {
-                testResults.push({step: "Test 36: delete_admin_user (self)", status: "warning", message: "expected rc 771", rc: rv.rc});
+                testResults.push({step: "Test 36: delete_admin_user (self)", status: "warning", message: "expected rc 791", rc: rv.rc});
             }
 
             testResults.push({step: "Test 37: delete_admin_user (invalid user)", status: "running"});
             rv = $executeAPI(this.$Session, "AdminUser/delete_admin_user", { user_id: "NONEXISTENT_USER_ID" });
-            if ($Err.isERR(rv) && rv.rc === 770)
+            if ($Err.isERR(rv) && rv.rc === 790)
             {
-                testResults.push({step: "Test 37: delete_admin_user (invalid user)", status: "passed", message: "correctly returned not found with rc 770"});
+                testResults.push({step: "Test 37: delete_admin_user (invalid user)", status: "passed", message: "correctly returned not found with rc 790"});
             }
             else
             {
-                testResults.push({step: "Test 37: delete_admin_user (invalid user)", status: "warning", message: "expected rc 770", rc: rv.rc});
+                testResults.push({step: "Test 37: delete_admin_user (invalid user)", status: "warning", message: "expected rc 790", rc: rv.rc});
             }
 
             // =================================================================
@@ -2499,13 +2499,13 @@ module.exports = class
             else
             {
                 rv = $executeAPI(this.$Session, "AdminUser/get_admin_user", { user_id: addedUserId });
-                if ($Err.isERR(rv) && rv.rc === 770)
+                if ($Err.isERR(rv) && rv.rc === 790)
                 {
                     testResults.push({step: "Test 42: get_admin_user (verify soft delete)", status: "passed", message: "soft-deleted user correctly not found"});
                 }
                 else
                 {
-                    testResults.push({step: "Test 42: get_admin_user (verify soft delete)", status: "warning", message: "expected rc 770 after soft delete"});
+                    testResults.push({step: "Test 42: get_admin_user (verify soft delete)", status: "warning", message: "expected rc 790 after soft delete"});
                 }
             }
 
@@ -4788,13 +4788,13 @@ module.exports = class
                 send_push:      false
             });
 
-            if ($Err.isERR(rv) && rv.rc === 731)
+            if ($Err.isERR(rv) && rv.rc === 751)
             {
-                testResults.push({step: "Test 4: create_notification (invalid type)", status: "passed", message: "correctly rejected invalid type with rc 731"});
+                testResults.push({step: "Test 4: create_notification (invalid type)", status: "passed", message: "correctly rejected invalid type with rc 751"});
             }
             else
             {
-                testResults.push({step: "Test 4: create_notification (invalid type)", status: "warning", message: "expected rc 731 for invalid type", rc: rv.rc});
+                testResults.push({step: "Test 4: create_notification (invalid type)", status: "warning", message: "expected rc 751 for invalid type", rc: rv.rc});
             }
 
             // ==================================================================
@@ -5018,7 +5018,7 @@ module.exports = class
             }
 
             // ==================================================================
-            // Test 15: mark_as_read (already read — expect error 732)
+            // Test 15: mark_as_read (already read — expect error 752)
             // ==================================================================
             testResults.push({step: "Test 15: mark_as_read (already read)", status: "running"});
             if (createdNotificationId === null)
@@ -5028,28 +5028,28 @@ module.exports = class
             else
             {
                 rv = $executeAPI(this.$Session, "Notification/mark_as_read", {notification_id: createdNotificationId});
-                if ($Err.isERR(rv) && rv.rc === 732)
+                if ($Err.isERR(rv) && rv.rc === 752)
                 {
-                    testResults.push({step: "Test 15: mark_as_read (already read)", status: "passed", message: "correctly returned rc 732 for already-read notification"});
+                    testResults.push({step: "Test 15: mark_as_read (already read)", status: "passed", message: "correctly returned rc 752 for already-read notification"});
                 }
                 else
                 {
-                    testResults.push({step: "Test 15: mark_as_read (already read)", status: "warning", message: "expected rc 732", rc: rv.rc});
+                    testResults.push({step: "Test 15: mark_as_read (already read)", status: "warning", message: "expected rc 752", rc: rv.rc});
                 }
             }
 
             // ==================================================================
-            // Test 16: mark_as_read (invalid ID — expect error 731)
+            // Test 16: mark_as_read (invalid ID — expect error 751)
             // ==================================================================
             testResults.push({step: "Test 16: mark_as_read (invalid ID)", status: "running"});
             rv = $executeAPI(this.$Session, "Notification/mark_as_read", {notification_id: 999999999});
-            if ($Err.isERR(rv) && rv.rc === 730)
+            if ($Err.isERR(rv) && rv.rc === 750)
             {
-                testResults.push({step: "Test 16: mark_as_read (invalid ID)", status: "passed", message: "correctly returned rc 730 for nonexistent notification"});
+                testResults.push({step: "Test 16: mark_as_read (invalid ID)", status: "passed", message: "correctly returned rc 750 for nonexistent notification"});
             }
             else
             {
-                testResults.push({step: "Test 16: mark_as_read (invalid ID)", status: "warning", message: "expected rc 730", rc: rv.rc});
+                testResults.push({step: "Test 16: mark_as_read (invalid ID)", status: "warning", message: "expected rc 750", rc: rv.rc});
             }
 
             // ==================================================================
@@ -5217,13 +5217,13 @@ module.exports = class
                 send_push:       false
             });
 
-            if ($Err.isERR(rv) && rv.rc === 731)
+            if ($Err.isERR(rv) && rv.rc === 751)
             {
-                testResults.push({step: "Test 23: create_bulk_notifications (invalid type)", status: "passed", message: "correctly rejected invalid type with rc 731"});
+                testResults.push({step: "Test 23: create_bulk_notifications (invalid type)", status: "passed", message: "correctly rejected invalid type with rc 751"});
             }
             else
             {
-                testResults.push({step: "Test 23: create_bulk_notifications (invalid type)", status: "warning", message: "expected rc 731", rc: rv.rc});
+                testResults.push({step: "Test 23: create_bulk_notifications (invalid type)", status: "warning", message: "expected rc 751", rc: rv.rc});
             }
 
             // ==================================================================
@@ -5298,7 +5298,7 @@ module.exports = class
             }
 
             // ==================================================================
-            // Test 27: delete_notification (already deleted — expect 731)
+            // Test 27: delete_notification (already deleted — expect 751)
             // ==================================================================
             testResults.push({step: "Test 27: delete_notification (already deleted)", status: "running"});
             if (createdNotificationId === null)
@@ -5308,13 +5308,13 @@ module.exports = class
             else
             {
                 rv = $executeAPI(this.$Session, "Notification/delete_notification", {notification_id: createdNotificationId});
-                if ($Err.isERR(rv) && rv.rc === 730)
+                if ($Err.isERR(rv) && rv.rc === 750)
                 {
-                    testResults.push({step: "Test 27: delete_notification (already deleted)", status: "passed", message: "correctly returned rc 730 for already-deleted notification"});
+                    testResults.push({step: "Test 27: delete_notification (already deleted)", status: "passed", message: "correctly returned rc 750 for already-deleted notification"});
                 }
                 else
                 {
-                    testResults.push({step: "Test 27: delete_notification (already deleted)", status: "warning", message: "expected rc 730", rc: rv.rc});
+                    testResults.push({step: "Test 27: delete_notification (already deleted)", status: "warning", message: "expected rc 750", rc: rv.rc});
                 }
             }
 
@@ -5323,13 +5323,13 @@ module.exports = class
             // ==================================================================
             testResults.push({step: "Test 28: delete_notification (invalid ID)", status: "running"});
             rv = $executeAPI(this.$Session, "Notification/delete_notification", {notification_id: 999999999});
-            if ($Err.isERR(rv) && rv.rc === 730)
+            if ($Err.isERR(rv) && rv.rc === 750)
             {
-                testResults.push({step: "Test 28: delete_notification (invalid ID)", status: "passed", message: "correctly returned rc 730 for nonexistent notification"});
+                testResults.push({step: "Test 28: delete_notification (invalid ID)", status: "passed", message: "correctly returned rc 750 for nonexistent notification"});
             }
             else
             {
-                testResults.push({step: "Test 28: delete_notification (invalid ID)", status: "warning", message: "expected rc 730", rc: rv.rc});
+                testResults.push({step: "Test 28: delete_notification (invalid ID)", status: "warning", message: "expected rc 750", rc: rv.rc});
             }
 
             // ==================================================================
@@ -8857,5 +8857,10 @@ module.exports = class
     test_report_template_apis()
     {
         return $TestApiReportTemplate.test_report_template_apis(this.$Session);
+    }
+
+    test_report_apis()
+    {
+        return this._runTest(() => $TestApiReport.test_report_apis(this.$Session));
     }
 }

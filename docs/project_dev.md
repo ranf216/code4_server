@@ -1,7 +1,7 @@
 # Server Implementation Documentation
 
-**Document Version:** 1.8  
-**Last Updated:** 2026-10-04
+**Document Version:** 1.9  
+**Last Updated:** 2026-10-12
 **Purpose:** Comprehensive documentation of the project server business logic implementation
 
 ---
@@ -38,11 +38,11 @@ Project-specific error codes start at RC 500:
 - **660–669** — Tracking
 - **670–689** — Post Order
 - **690–709** — POI
-- **710–729** — Report
-- **730–739** — Notification
-- **740–749** — Settings
-- **750–769** — Asset & Post
-- **770–779** — Admin User
+- **710–749** — Report
+- **750–759** — Notification
+- **760–769** — Settings
+- **770–789** — Asset & Post
+- **790–799** — Admin User
 
 ### $DataItems Lookup Tables (`platform/data/`)
 | File | Description |
@@ -286,7 +286,7 @@ Manages management portal users (admin type). Full CRUD for admin users with sof
 Admin users are `USER_TYPE_ADMIN` (1) in the `user` table. Each user has a login email, first/last name, phone number, an assigned role, and active/inactive status. Soft deletion via `USD_DELETED_ON` on `user_details`.
 
 - **get_admin_users** — Lists all non-deleted admin users. Optional `include_inactive` (default: active only). Optional `search_text` for free-text search across first name, last name, email, phone. Sortable by `first_name`, `last_name`, `email`, `role`, `created_on`.
-- **get_admin_user** — Returns a single admin user by ID. Returns `ERR_ADMIN_USER_NOT_FOUND` (770) if not found.
+- **get_admin_user** — Returns a single admin user by ID. Returns `ERR_ADMIN_USER_NOT_FOUND` (790) if not found.
 - **add_admin_user** — Creates a new admin user via `User/add_user`. Validates email format & uniqueness, password criteria, and role validity. Sets phone number and role after creation. Password is stored as initial (user must change on first login).
 - **update_admin_user** — Dynamic partial update. Only provided fields are modified. If email is changed, `initial_password` is mandatory (SDS 5.2.3) — sessions are terminated and user must re-login. Deactivating the last active admin is blocked. Deactivation also terminates sessions.
 - **delete_admin_user** — Soft delete. Cannot delete self. Cannot delete the last active admin. Terminates sessions and appends `/DELETED` to email and phone to free uniqueness constraints.
@@ -311,12 +311,12 @@ Admin users are `USER_TYPE_ADMIN` (1) in the `user` table. Each user has a login
 | `AdminUser/reset_admin_user_password` | ADMIN | Reset a user's password |
 | `AdminUser/change_my_password` | ADMIN | Change own password |
 
-#### Admin User Error Codes (770–779)
+#### Admin User Error Codes (790–799)
 | Code | Constant | Message |
 |---|---|---|
-| 770 | `ERR_ADMIN_USER_NOT_FOUND` | admin user not found |
-| 771 | `ERR_ADMIN_CANNOT_DELETE_SELF` | cannot delete your own account |
-| 772 | `ERR_ADMIN_CANNOT_EDIT_SELF_ROLE` | cannot change your own role |
+| 790 | `ERR_ADMIN_USER_NOT_FOUND` | admin user not found |
+| 791 | `ERR_ADMIN_CANNOT_DELETE_SELF` | cannot delete your own account |
+| 792 | `ERR_ADMIN_CANNOT_EDIT_SELF_ROLE` | cannot change your own role |
 
 #### Design Notes
 - **Helper functions:** `fetchAdminUserRecord(userId)` and `getActiveAdminCount()` are module-level helpers. `mapAdminUserRow(row)` maps DB columns to API response fields using `$Utils.getCalculatedUserRoles()` for role resolution.
@@ -434,12 +434,12 @@ $executeAPI(this.$Session, "Notification/create_bulk_notifications", {
 
 Valid types: `new_emergency`, `new_service_call`, `call_accepted`, `call_resolved`, `call_updated`, `call_canceled`, `resident_like`, `new_incident_report`, `report_submitted`, `report_approved`, `report_changes_requested`, `report_delivered`, `shift_published`, `shift_updated`, `shift_cancelled`, `shift_starting_soon`, `route_updated`, `post_order_published`, `post_order_updated`, `poi_active`, `poi_updated`, `poi_inactivated`, `poi_expiring_soon`, `poi_expired`, `task_update`, `panic_button`, `gps_signal_lost`, `officer_off_route`, `general`.
 
-#### Notification Error Codes (730–739)
+#### Notification Error Codes (750–759)
 | Code | Constant | Message |
 |---|---|---|
-| 730 | `ERR_NOTIFICATION_NOT_FOUND` | notification not found |
-| 731 | `ERR_NOTIFICATION_INVALID_TYPE` | invalid notification type |
-| 732 | `ERR_NOTIFICATION_ALREADY_READ` | notification is already marked as read |
+| 750 | `ERR_NOTIFICATION_NOT_FOUND` | notification not found |
+| 751 | `ERR_NOTIFICATION_INVALID_TYPE` | invalid notification type |
+| 752 | `ERR_NOTIFICATION_ALREADY_READ` | notification is already marked as read |
 
 #### Design Notes
 - **Soft deletion:** Uses `NTF_DELETED_ON` timestamp pattern.
@@ -700,28 +700,28 @@ All three tables use the standard soft-delete pattern (`*_DELETED_ON`).
 - **Post uniqueness:** Post names must be unique within a community. Enforced both at DB level (`UQ_PST_COM_NAME`) and in application code.
 - **Post permissions:** `PST_PERMISSIONS` (JSON, nullable) stores scheduling allocation requirements: `{required_roles:[], required_badges:[], required_equipment:[]}`. Phase 4.1 stores and retrieves only; Phase 5.1 (Shift) will validate officer eligibility against these requirements during shift assignment (non-blocking warnings with manager override).
 - **Post deletion guard:** Posts that have been referenced by the Shift module (`shift_post` table) cannot be deleted — they can only be deactivated (`PST_IS_ACTIVE=0`). The guard uses `information_schema` to check if the `shift_post` table exists (graceful when Shift module is not yet deployed).
-- **Map item limit:** All creation endpoints enforce a configurable per-community cap (default 1,000) on total map items (assets + posts + zones). Configurable via `settings:asset → max_map_items_per_community` in `key_value`. Error: `ERR_MAP_ITEM_LIMIT_EXCEEDED` (762).
+- **Map item limit:** All creation endpoints enforce a configurable per-community cap (default 1,000) on total map items (assets + posts + zones). Configurable via `settings:asset → max_map_items_per_community` in `key_value`. Error: `ERR_MAP_ITEM_LIMIT_EXCEEDED` (782).
 - **Batch asset creation:** `create_assets_batch` creates up to 100 assets in a single transaction, sharing asset type, shape, description, and dates across all items. Each asset gets its own location from the `locations` array. The map item limit check validates `current_count + batch_size` before inserting.
 - **Community map upload:** Uses `$Utils.saveNewImageOrKeepOld()` to save the map image, updates `community.COM_MAP_IMAGE`, and returns the resolved URL via `$Files.SQL` + `$Files.getUrl()`.
 - **Officer access:** Officers can view posts and map zones in their own community. Community ID is auto-resolved from `user_details.USD_COM_ID`.
 
-#### Asset & Post Error Codes (750–769)
+#### Asset & Post Error Codes (770–789)
 
 | RC | Constant | Message |
 |----|----------|---------|
-| 750 | `ERR_ASSET_NOT_FOUND` | asset not found |
-| 751 | `ERR_ASSET_INVALID_TYPE` | invalid asset type |
-| 752 | `ERR_POST_NOT_FOUND` | post not found |
-| 753 | `ERR_POST_NAME_ALREADY_EXISTS` | a post with this name already exists in this community |
-| 754 | `ERR_MAP_ZONE_NOT_FOUND` | map zone not found |
-| 755 | `ERR_ASSET_INVALID_SHAPE` | invalid asset shape |
-| 756 | `ERR_POST_INVALID_PRIORITY` | invalid post priority |
-| 757 | `ERR_POST_INVALID_SHAPE` | invalid post shape |
-| 758 | `ERR_MAP_ZONE_INVALID_TYPE` | invalid map zone type |
-| 759 | `ERR_POST_HAS_SHIFT_HISTORY` | post has been used in a shift and cannot be deleted, only deactivated |
-| 760 | `ERR_ASSET_BATCH_EMPTY` | batch asset list is empty |
-| 761 | `ERR_ASSET_BATCH_LIMIT_EXCEEDED` | batch asset list exceeds maximum allowed size |
-| 762 | `ERR_MAP_ITEM_LIMIT_EXCEEDED` | maximum number of map items reached for this community |
+| 770 | `ERR_ASSET_NOT_FOUND` | asset not found |
+| 771 | `ERR_ASSET_INVALID_TYPE` | invalid asset type |
+| 772 | `ERR_POST_NOT_FOUND` | post not found |
+| 773 | `ERR_POST_NAME_ALREADY_EXISTS` | a post with this name already exists in this community |
+| 774 | `ERR_MAP_ZONE_NOT_FOUND` | map zone not found |
+| 775 | `ERR_ASSET_INVALID_SHAPE` | invalid asset shape |
+| 776 | `ERR_POST_INVALID_PRIORITY` | invalid post priority |
+| 777 | `ERR_POST_INVALID_SHAPE` | invalid post shape |
+| 778 | `ERR_MAP_ZONE_INVALID_TYPE` | invalid map zone type |
+| 779 | `ERR_POST_HAS_SHIFT_HISTORY` | post has been used in a shift and cannot be deleted, only deactivated |
+| 780 | `ERR_ASSET_BATCH_EMPTY` | batch asset list is empty |
+| 781 | `ERR_ASSET_BATCH_LIMIT_EXCEEDED` | batch asset list exceeds maximum allowed size |
+| 782 | `ERR_MAP_ITEM_LIMIT_EXCEEDED` | maximum number of map items reached for this community |
 
 #### Design Notes
 
@@ -1181,7 +1181,7 @@ POI settings stored in `key_value` under `settings:poi`. Defaults in `runtime_co
 
 #### Deferred Features
 
-- Report encounter (officer → incident creation, depends on Report module Phase 7)
+- ~~Report encounter (officer → incident creation)~~ ✅ Done in Phase 7.2 — `Report/create_report` with `poi_id`; linked reports returned as `related_reports` by `POI/get_poi_record`
 - Bulk operations (batch inactivate/archive/export)
 - POI settings guidance version notes (audit logging when default guidance text changes)
 - Community deletion guard
@@ -1276,7 +1276,7 @@ Pre-defined field keys for incident reports: `incident_type`, `incident_date`, `
 - **Section/field management:** Sections and fields use full-replacement strategy on update. Existing sections/fields are soft-deleted and new ones are bulk-inserted using the contiguous auto-increment ID pattern (no DB calls in loops).
 - **Duplicate:** Creates a deep copy of all sections, fields, style settings, and community assignments. New template starts in draft status. Supports custom name override.
 - **Style settings:** Stored as a JSON blob in `RPT_STYLE`. Includes logo, accent color, header layout, font, page numbering, confidentiality footer, date format, section breaks, and cover page toggle. Each setting is individually updatable.
-- **Deletion:** `delete_template` soft-deletes templates in `draft` status only. Cascade soft-deletes all communities, sections, and fields. When Phase 7.2 adds the `incident_report` table, the endpoint must also check for linked reports and return `ERR_REPORT_TEMPLATE_HAS_LINKED_REPORTS` if any exist.
+- **Deletion:** `delete_template` soft-deletes templates in `draft` status only. Cascade soft-deletes all communities, sections, and fields. Templates referenced by any non-deleted `incident_report` row return `ERR_REPORT_TEMPLATE_HAS_LINKED_REPORTS` (Phase 7.2).
 - **Lifecycle rules:** Draft→Active (requires sections/fields), Active→Archived, Archived→Active (re-activation), Draft→Archived, Draft→Deleted (soft-delete). Already-active templates return error on activate. Already-archived templates return error on archive.
 - **Field-level required:** `RTF_IS_REQUIRED` column enables per-field mandatory/optional configuration independently from the section-level `RTS_IS_REQUIRED` toggle. Default is required (1).
 - **No DB calls in loops:** Sections bulk-inserted in one query; fields bulk-inserted in one query using computed section IDs. Community assignments bulk-inserted. Section IDs for soft-delete are pre-fetched before the transaction.
@@ -1285,12 +1285,140 @@ Pre-defined field keys for incident reports: `incident_type`, `incident_date`, `
 - **Soft deletion:** All four tables use `*_DELETED_ON` timestamp pattern. All queries filter `*_DELETED_ON IS NULL`.
 
 #### Deferred Features
-- Report generation from templates (Phase 7.2) — must freeze JSON snapshot into `incident_report.RPT_CONTENT_SNAPSHOT`
-- Linked-report check in `delete_template` (Phase 7.2 — check `incident_report` table before allowing delete)
+- ~~Report generation from templates (Phase 7.2) — must freeze JSON snapshot~~ ✅ Done in Phase 7.2 (`incident_report.IRP_CONTENT_SNAPSHOT` — `IRP_` prefix used because `RPT_` belongs to `report_template`)
+- ~~Linked-report check in `delete_template`~~ ✅ Done in Phase 7.2
 - Template versioning (track changes across edits)
 - Template import/export between accounts
 - Bulk archive/activate operations
 - Template field validation rules beyond type (e.g., regex, min/max)
+
+---
+
+### 7.2 Report (`platform/api/report.js`, `platform/funcs/report.js`) — Phase 7.2 ✅ Done
+
+Incident reports written by officers from a report template — either linked to a call (fields auto-populated from the call) or standalone (daily activity) — then routed through the manager review workflow and delivered to the client as a formatted PDF (SDS §2.5.3, §3.4.4–§3.4.6, §4.4.7, §5.4.4).
+
+#### Database Tables (V 7.2.0, `IRP_POI_ID` added by a follow-up ALTER)
+
+| Table | Prefix | Purpose |
+|---|---|---|
+| `incident_report` | `IRP_` | Report header: template, source call, source POI record (`IRP_POI_ID`, Report Encounter), community, officer, client recipient, title, category, status, review flags, frozen template snapshot (`IRP_CONTENT_SNAPSHOT`), reviewer, changes comment, management summary, delivered PDF, lifecycle timestamps |
+| `incident_report_section` | `IRS_` | One row per enabled template section: current field values (`IRS_VALUES`, JSON keyed by snapshot field ID), officer-submitted values (`IRS_SUBMITTED_VALUES`), manager notes, client inclusion toggle |
+| `incident_report_attachment` | `IRA_` | Files of `file_upload` / `digital_signature` fields (per section + snapshot field ID), uploader, soft-deleted when removed |
+| `incident_report_history` | `IRH_` | Audit trail: every status transition and every post-submission content edit (field-level old/new values), with acting user and comments. No `DELETED_ON` (audit table) |
+
+#### Status Lifecycle (`platform/data/report_status.json`)
+
+```
+draft ──submit──► submitted ──start_review──► under_review ──approve──► approved ──deliver──► delivered
+  │                  ▲                            │   │
+  │                  └──────release_review────────┘   └──request_changes──► changes_requested
+  │                                                                              │
+  └── (template review_before_client = off) ──submit──► approved                 └──submit──► under_review (same reviewer)
+```
+
+| Status | `is_open` | `manager_visible` | Officer can edit |
+|---|---|---|---|
+| `draft` | no | no (creating officer only) | yes |
+| `submitted` | yes | yes | only if template `allow_officer_editing` |
+| `under_review` | yes | yes | no (reviewing manager can edit) |
+| `changes_requested` | yes | yes | yes |
+| `approved` | no | yes | no |
+| `delivered` | no | yes | no (final) |
+
+#### API Endpoints
+
+| API | ACL | Description |
+|---|---|---|
+| `Report/get_reports_list` | ADMIN, OFFICER, RESIDENT | Paginated list. Officers: own reports (all statuses). Residents: delivered reports addressed to them or community-wide in their community (with `pdf_url`). Admins: non-draft reports, community-scoped; filters: community_ids, statuses, category, review_required, call_id, submitted date range, free text (title, report ID, officer name), sorting |
+| `Report/get_report` | ADMIN, OFFICER, RESIDENT | Full content. Admin view adds original submitted values per field, manager notes, review lock info and history. Residents get the client view |
+| `Report/create_report` | OFFICER | Create a draft from an active template available to the officer's community, optionally linked to a call or a POI record (Report Encounter); optional resident recipient for standalone reports; optional initial values |
+| `Report/update_report` | ADMIN, OFFICER | Edit field values (officer); edit values, manager notes and section client inclusion (reviewing manager only). Locked auto-populated fields cannot be changed |
+| `Report/submit_report` | OFFICER | Validate required fields and submit / resubmit |
+| `Report/start_review` | ADMIN | Take the report under review (acquires the review lock) |
+| `Report/release_review` | ADMIN | Close without action — reverts to `submitted` and releases the lock |
+| `Report/approve_report` | ADMIN | Approve with section inclusion checklist and optional management summary (≤1000 chars) |
+| `Report/request_changes` | ADMIN | Send back to the officer with mandatory comments (≤1000 chars) |
+| `Report/deliver_report` | ADMIN | Generate the formatted client PDF and deliver (final) |
+| `Report/export_report_pdf` | ADMIN, RESIDENT | Signed, time-limited URL of the delivered client PDF; admins can regenerate it from the frozen content (`regenerate=true`, history action `pdf_regenerated`) |
+| `Report/get_report_history` | ADMIN | Full audit trail (status transitions, field-level edits, review actions, delivery, PDF regeneration) |
+| `Report/get_report_for_client` | RESIDENT | Delivered report (addressed to the resident or community-wide), client-included sections only |
+| `Report/get_report_metadata` | ADMIN, OFFICER, RESIDENT | Statuses, categories, history actions |
+
+#### Implementation Details
+
+- **Template snapshot (Report Template Q3):** `create_report` loads the template through `$executeAPI("ReportTemplate/get_template")` (reusing its officer access rules: active + global or assigned to the officer's community) and freezes the enabled sections, their fields and the effective style (template style merged over `$ReportPdf.getDefaultStyle()`) into `IRP_CONTENT_SNAPSHOT`. All subsequent rendering, validation and PDF generation use the snapshot, so template edits/archiving never alter existing reports. Disabled template sections are excluded entirely.
+- **Call linking:** `call_id` is validated through `$executeAPI("Call/get_call")` (reusing call access rules). The report community is the call's community. The client recipient (`IRP_CLIENT_USR_ID`) is the call creator when that user is a resident (Q13).
+- **Client recipient (Q1):** standalone reports accept an optional `client_user_id` (active resident of the report community, else `ERR_REPORT_INVALID_CLIENT`; not allowed on call-linked reports). Reports without a recipient (standalone without `client_user_id`, or call-linked reports whose call has no resident creator) are visible to all residents of the report community once delivered. Only reports with a specific recipient trigger the `new_incident_report` notification (issues file Q19).
+- **POI Report Encounter (Q3):** `poi_id` is validated through `$executeAPI("POI/get_poi_record")` (active record assigned to the officer's community, else `ERR_REPORT_INVALID_POI`) and stored in `IRP_POI_ID`. Pre-fill: `incident_type` ← record type name, `incident_description` ← subject name, aliases and POI Record ID, `incident_location` ← `latitude`/`longitude`/`location_address` parameters or the officer's latest `gps_log` point. Call values take precedence when a call is also linked. Linked reports are returned by `POI/get_poi_record` as `related_reports`.
+- **Auto-population:** system fields are filled from the session (`officer_name`, `community_name`) and, for call-linked reports, from the call (`incident_date`, `incident_time`, `incident_location`, `incident_type`, `incident_description`, `resident_name`, `call_reference`, `priority`, `officer_comments`). Populated non-file fields are flagged `is_auto_populated` in the snapshot; they are locked for both officer and manager (`ERR_REPORT_FIELD_LOCKED`) unless the `lock_on_auto` attribute in `report_system_field.json` is false — `incident_description` and `officer_comments` remain editable (Q10). Field responses expose `is_auto_populated` and `is_locked`. Call media is imported as attachments of the `media` system field and remains editable.
+- **Field values:** `text` (≤ `config.max_chars`, default 10,000), `date` (YYYY-MM-DD), `location` (`{address, latitude, longitude}` or address string), `dropdown` (validated against `config.dropdown_values`; array when `config.is_multi_select`), `file_upload` / `digital_signature` (`{attachment_ids: [kept], file_ids: [new uploads]}`, limited by `config.max_files` or the `default_max_files` attribute in `report_field_type.json`). File field types are identified via the `is_file` attribute in `report_field_type.json`.
+- **Required validation (submit):** required sections must be completed (their required fields filled, or at least one field when none is required). Optional sections may be skipped entirely; once any of their fields is filled, their required fields are enforced. Missing fields are returned in `missing_fields`.
+- **Review lock:** "only one manager can hold a report Under Review" is enforced with `$EntityLock` (table `incident_report`, default 30 min TTL) plus `IRP_REVIEWER_USR_ID`. Every reviewer action (edit, approve, request changes) re-acquires/refreshes the lock before the transaction. An expired lock can be taken over by another manager via `start_review` (logged in history).
+- **Resubmission:** after `changes_requested`, `submit_report` returns the report to `under_review` with the same reviewer (lock re-acquired on their behalf); falls back to `submitted` if the lock is held by someone else.
+- **Review not required:** when the template had `review_before_client` off at creation time, `submit_report` moves the report directly to `approved` (history: `submitted` + `auto_approved`, `IRP_APPROVED_BY` NULL); a manager then delivers it (see issues file Q4).
+- **Audit trail:** `IRS_SUBMITTED_VALUES` keeps the officer's last submitted values; every post-submission edit writes an `updated` history row with field-level `old_value`/`new_value`, attachment additions/removals, manager notes and inclusion changes. Status transitions are logged with actor and comment. Removed attachments are soft-deleted (files are never deleted).
+- **Delivery & PDF:** `deliver_report` builds the client-facing data (client-included sections only, manager notes excluded, embeddable JPEG/PNG images per `report_pdf_image_ext.json`) and renders it with `$ReportPdf.render()` through `$Export.generate()` (pdfkit). Style settings applied: logo, accent colour, header layout (compact / standard / full-width banner), font (mapped to pdfkit built-in fonts via `pdf_font` / `pdf_font_bold` attributes in `report_font.json`), page numbering, confidentiality footer, date format, section breaks, cover page. Every page also carries a diagonal `REPORT_PDF_WATERMARK_TEXT` watermark ("CONFIDENTIAL – AUTHORISED USE ONLY", `REPORT_PDF_WATERMARK_OPACITY` 15%), a running header (community, report title, Report ID) and a footer (delivery date/time, `REPORT_PDF_GENERATED_BY_TEXT`, page numbers) — all configurable in `runtime_config.js` (Q2). The file is saved with `limited` access and stored in `IRP_PDF_FILE_NAME`; status changes only after a successful render.
+- **Notifications:** `report_submitted` → responsible managers (active admins with the Manager role in the report community, fallback: Super Admins) or the returning reviewer on resubmission; `report_under_review` (new type) → officer; `report_approved`, `report_changes_requested` (message includes the comments), `report_delivered` → officer; `new_incident_report` → client recipient. `report_under_review` is governed by the new `report_under_review_enabled` setting (Q15); `new_incident_report` by `report_delivered_enabled`.
+- **Access & scoping:** officers see only their own reports; drafts are never visible to managers; non-super admins with an assigned community (`USD_COM_ID`) are scoped to it (same rule as Shift/Route); residents see delivered reports addressed to them plus community-wide delivered reports of their community (client-included sections only).
+- **Concurrency:** every status transition is a conditional `UPDATE ... WHERE IRP_STATUS=<expected>` checked with `affectedRows`, run in a transaction together with its history row (`commitStatusTransition`). Entity-lock calls are always made outside transactions.
+- **No DB calls in loops:** sections and attachments are bulk-inserted; section edits use a single `UPDATE ... CASE IRS_ID` statement; new file IDs are resolved in one query (`$Funcs.getFileNamesByIds`). All SELECTs run before `beginTransaction()`.
+- **Historical integrity (audit Q1 — confirmed exception):** report reads join `community`, `report_template` and `user_details` without `*_DELETED_ON` filters on the joined tables so reports stay readable and fully attributed after a community/template/user is soft-deleted. Rule: **active/operational queries** (choosing a template, call, POI, recipient or manager) must filter `*_DELETED_ON IS NULL`; **historical audit entities** (`incident_report`, `poi_export`, `shift_history`, `call_log`) join master tables unfiltered.
+- **List response key (audit Q2):** `get_reports_list` returns the domain-specific key `reports` with canonical `num_of_items` / `num_of_pages` (same convention as `templates` in Report Template).
+- **Report Template integration:** `ReportTemplate/delete_template` now returns `ERR_REPORT_TEMPLATE_HAS_LINKED_REPORTS` when any report references the template.
+- **Pagination:** `REPORTS_LIST_PAGE_SIZE` (`runtime_config.js`, default 20), 0-based with bounds check.
+- **Admin queue extras:** `get_reports_list` accepts `officer_user_ids` (author filter) and returns `reviewer_user_id`, `reviewer_name`, `review_started_on` and `review_lock {is_locked, locked_by, locked_by_name, expires_on}` per item for admins — active locks of the page read in one query via `$EntityLock.checkMany()` (new infrastructure batch method, brain.md v2.12.0; audit Q3), names batched.
+- **PDF storage & URLs:** `generateClientPdf()` (shared by `deliver_report` and `export_report_pdf`) stores the **stored** file name resolved from the export `file_id` (`$Export.generate()` returns the original export name in `file_name`). `pdf_url` is built with `$Files.getUrl({file_name, access_level: limited})` — a signed, time-limited URL when `file_access_level` is enabled. Default PDF accent colour: `#003366` (Code4 Navy, Q17).
+- **Documentation:** `docs/modules/report-module-specification.md`, `docs/library/report-app-developer-guide.md`, `docs/library/report-ui-updates-required.md`.
+
+#### $DataItems
+
+| File | Purpose |
+|---|---|
+| `report_status.json` | Report statuses with `is_open` / `manager_visible` attributes |
+| `report_history_action.json` | History actions: created, updated, submitted, auto_approved, review_started, review_released, changes_requested, approved, delivered, pdf_regenerated |
+| `report_field_type.json` | Added `is_file` and `default_max_files` attributes |
+| `report_font.json` | Added `pdf_font` / `pdf_font_bold` attributes (pdfkit font mapping) |
+| `report_system_field.json` | Added `lock_on_auto` attribute (false for `incident_description`, `officer_comments`, `media`) |
+| `report_pdf_image_ext.json` | Image extensions embeddable in the PDF (jpg, jpeg, png) |
+| `notification_type.json` | Added `report_under_review` |
+
+#### Error Codes (710, 712–714, 726–742)
+
+| Code | Constant | Message |
+|---|---|---|
+| 710 | `ERR_REPORT_NOT_FOUND` | report not found |
+| 712 | `ERR_REPORT_CANNOT_SUBMIT` | report cannot be submitted in its current status |
+| 713 | `ERR_REPORT_CANNOT_APPROVE` | report cannot be approved in its current status |
+| 714 | `ERR_REPORT_CANNOT_DELIVER` | report cannot be delivered in its current status |
+| 726 | `ERR_REPORT_CANNOT_EDIT` | report cannot be edited in its current status |
+| 727 | `ERR_REPORT_LOCKED` | report is under review by another manager (response adds `locked_by`, `locked_by_name`, `expires_on`) |
+| 728 | `ERR_REPORT_CANNOT_REVIEW` | report cannot be reviewed in its current status |
+| 729 | `ERR_REPORT_CANNOT_REQUEST_CHANGES` | changes cannot be requested for the report in its current status |
+| 730 | `ERR_REPORT_REQUIRED_FIELDS_MISSING` | required report fields are missing (response adds `missing_fields`) |
+| 731 | `ERR_REPORT_INVALID_FIELD_VALUE` | invalid report field value |
+| 732 | `ERR_REPORT_FIELD_LOCKED` | auto-populated report fields cannot be changed |
+| 733 | `ERR_REPORT_INVALID_SECTION` | invalid report section |
+| 734 | `ERR_REPORT_CHANGES_COMMENT_REQUIRED` | comments are required when requesting changes |
+| 735 | `ERR_REPORT_INVALID_CALL` | call not found or not accessible for this report |
+| 736 | `ERR_REPORT_NOT_UNDER_REVIEW_BY_USER` | report is not under review by this manager |
+| 737 | `ERR_REPORT_INVALID_STATUS` | invalid report status |
+| 738 | `ERR_REPORT_FILE_LIMIT_REACHED` | maximum number of files reached for this report field |
+| 739 | `ERR_REPORT_INVALID_ATTACHMENT` | attachment not found in this report field |
+| 740 | `ERR_REPORT_INVALID_CLIENT` | client must be an active resident of the report community |
+| 741 | `ERR_REPORT_INVALID_POI` | POI record not found or not accessible for this report |
+| 742 | `ERR_REPORT_CANNOT_EXPORT` | the report PDF is only available once the report is delivered |
+
+#### Shared Code
+
+- `platform/user_modules/report_pdf.js` (`$ReportPdf`) — PDF renderer, default report style, date/field formatting.
+- `platform/user_modules/funcs.js` (`$Funcs`) — added `getCommunityName(communityId)`, `getFileNamesByIds(fileIds)`, `parseJson(val, fallback)`, `getDataItemIdsByAttr(dataTable, attrName, attrVal)`, `getOfficerLatestLocation(officerId)` and `isPdfSafeImage(buffer)` (synchronous JPEG/PNG validation before embedding in pdfkit — a corrupt PNG otherwise throws inside pdfkit's async zlib decoding during `$Export`'s deasync wait and aborts the Node process; used by the report PDF and the POI export). `report_template.js` (style JSON parsing) and `tracking.js` (latest GPS position) now use the shared helpers (code review 2026-10-12, `docs/code-reviews/report-review.md`).
+- **Concurrency (update):** `update_report` performs its header update conditionally on the status read (`WHERE IRP_STATUS=?`) and aborts with `ERR_REPORT_CANNOT_EDIT` if a concurrent transition happened (e.g. an officer editing a `submitted` report while a manager starts the review).
+
+#### Open Items
+
+- Decisions Q1–Q16 resolved and implemented; open follow-ups (Q17, Q19–Q22): `docs/issues-questions/report-issues-questions.md`.
+- Deferred features: `docs/deferred_requirements/09-report-enhancements.md`.
 
 ---
 

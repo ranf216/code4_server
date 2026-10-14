@@ -71,9 +71,9 @@ These error codes are specific to the Admin User module:
 
 | RC | Meaning | When Returned |
 |---|---|---|
-| 770 | User not found | The specified `user_id` does not exist, is not an admin, or has been deleted |
-| 771 | Cannot delete/deactivate | Self-deletion, or the target is the last remaining admin in the system |
-| 772 | Cannot change own role | A Super Admin attempted to change their own role |
+| 790 | User not found | The specified `user_id` does not exist, is not an admin, or has been deleted |
+| 791 | Cannot delete/deactivate | Self-deletion, or the target is the last remaining admin in the system |
+| 792 | Cannot change own role | A Super Admin attempted to change their own role |
 
 Additional error codes that may be returned by specific endpoints:
 
@@ -240,7 +240,7 @@ The response field structure is identical to the objects in the `get_users_list`
 
 | RC | When |
 |---|---|
-| 770 | The specified `user_id` does not exist or has been deleted |
+| 790 | The specified `user_id` does not exist or has been deleted |
 
 ---
 
@@ -397,7 +397,7 @@ When the `email` field is included and its value differs from the user's current
 The `role` parameter is optional. When provided, the server changes the user's role to the specified value. **Constraints:**
 
 - **Only Super Admins** can change a user's role (the endpoint is restricted to Super Admin ACL).
-- **Cannot change your own role:** If the Super Admin tries to change their own role (i.e., `user_id` matches the caller's own user ID), the server returns `rc: 772`.
+- **Cannot change your own role:** If the Super Admin tries to change their own role (i.e., `user_id` matches the caller's own user ID), the server returns `rc: 792`.
 - **Valid values only:** The `role` must be a valid role identifier (see Section 2.1.1). Invalid values return `rc: 106`.
 
 > **Design Note:** The SDS originally specified that "Role type" is not editable. A design decision was made to allow Super Admins to change roles to support the platform's expanded role structure (Manager, Planning, Logistics, Finance). This deviation is documented in the project's architectural decisions.
@@ -406,7 +406,7 @@ The `role` parameter is optional. When provided, the server changes the user's r
 
 Setting `is_active: false` deactivates the user. The server performs a critical safety check:
 
-- **If the target user is the last remaining active admin** in the system, the server **blocks the deactivation** and returns `rc: 771` with message "cannot delete your own account".
+- **If the target user is the last remaining active admin** in the system, the server **blocks the deactivation** and returns `rc: 791` with message "cannot delete your own account".
 - If successful, the deactivated user's session is **immediately terminated** — they are logged out and cannot log in again until reactivated.
 
 Reactivating a user is done by sending `is_active: true`.
@@ -424,18 +424,18 @@ Reactivating a user is done by sending `is_active: true`.
 
 | RC | When | Recommended UI Action |
 |---|---|---|
-| 770 | User not found or deleted | Show "User not found" and refresh the list |
-| 771 | Trying to deactivate the last admin | Show "Cannot deactivate this user — they are the last active admin in the system. At least one admin must remain active." (see Section 2.4.4) |
-| 772 | Trying to change own role | Show "You cannot change your own role" |
+| 790 | User not found or deleted | Show "User not found" and refresh the list |
+| 791 | Trying to deactivate the last admin | Show "Cannot deactivate this user — they are the last active admin in the system. At least one admin must remain active." (see Section 2.4.4) |
+| 792 | Trying to change own role | Show "You cannot change your own role" |
 | 102 | Missing `initial_password` when email is being changed | Show "An initial password is required when changing the email address" on the initial password field |
 | 106 | Invalid `role` value | Show "Invalid role selected" on the role dropdown |
 | 235 | Invalid email format | Show "Please enter a valid email address" on the email field |
 | 240 | Email already exists | Show "A user with this email already exists" on the email field |
 | 242 | `initial_password` does not meet criteria | Show the server's `message` field detailing which criteria failed, on the initial password field |
 
-#### 2.4.4 Handling the "Last Admin" Error (RC 771)
+#### 2.4.4 Handling the "Last Admin" Error (RC 791)
 
-When the server returns `rc: 771` in response to a deactivation attempt, the UI should display a clear, informative message:
+When the server returns `rc: 791` in response to a deactivation attempt, the UI should display a clear, informative message:
 
 ```
 ┌─────────────────────────────────────────────────────────┐
@@ -488,12 +488,12 @@ The server actively validates deletion constraints. If any check fails, a specif
 
 | RC | Meaning | Recommended UI Action |
 |---|---|---|
-| 770 | User not found | Show "User not found" and refresh the list |
-| 771 | Cannot delete — self-deletion or last admin | See Section 2.5.1 |
+| 790 | User not found | Show "User not found" and refresh the list |
+| 791 | Cannot delete — self-deletion or last admin | See Section 2.5.1 |
 
-#### 2.5.1 Handling Deletion Constraint Errors (RC 771)
+#### 2.5.1 Handling Deletion Constraint Errors (RC 791)
 
-The `rc: 771` error is returned in two scenarios:
+The `rc: 791` error is returned in two scenarios:
 1. **Self-deletion:** The Super Admin is trying to delete their own account.
 2. **Last admin:** The target user is the last remaining active admin in the system.
 
@@ -527,7 +527,7 @@ If the Super Admin clicks **[Deactivate Instead]**, call the `update_user` endpo
 }
 ```
 
-> **Note:** The deactivation call may also return `rc: 771` if the target is the last admin. In that case, show the informative "last admin" message from Section 2.4.3 without the deactivation option.
+> **Note:** The deactivation call may also return `rc: 791` if the target is the last admin. In that case, show the informative "last admin" message from Section 2.4.3 without the deactivation option.
 
 #### Recommended Deletion Flow
 
@@ -544,13 +544,13 @@ If the Super Admin clicks **[Deactivate Instead]**, call the `update_user` endpo
          │
          ├─ rc: 0    → Show success toast, refresh users list
          │
-         ├─ rc: 770  → Show "User not found", refresh list
+         ├─ rc: 790  → Show "User not found", refresh list
          │
-         └─ rc: 771  → Show constraint prompt with deactivation option
+         └─ rc: 791  → Show constraint prompt with deactivation option
                         │
                         ├─ [Deactivate Instead] → Call update_user { is_active: false }
                         │   ├─ rc: 0   → Show "User deactivated", refresh list
-                        │   └─ rc: 771 → Show "Cannot deactivate — last admin"
+                        │   └─ rc: 791 → Show "Cannot deactivate — last admin"
                         │
                         └─ [Cancel] → Close prompt
 ```
@@ -592,7 +592,7 @@ Resets a user's password to a new initial password. The user will be forced to c
 
 | RC | When | Recommended UI Action |
 |---|---|---|
-| 770 | User not found | Show "User not found" and refresh the list |
+| 790 | User not found | Show "User not found" and refresh the list |
 | 242 | Password does not meet criteria | Show the server's `message` field detailing which criteria failed |
 
 #### Post-Reset Behaviour
@@ -631,7 +631,7 @@ After a successful reset:
          │
          ├─ rc: 242 → Show password criteria error
          │
-         └─ rc: 770 → Show "User not found"
+         └─ rc: 790 → Show "User not found"
 ```
 
 ---
@@ -680,7 +680,7 @@ After a successful change:
 | 247 | Current password is incorrect | Show "The current password you entered is incorrect" on the current password field |
 | 242 | New password does not meet criteria | Show the server's `message` field detailing which criteria failed |
 | 248 | New password is the same as current | Show "Your new password must be different from your current password" |
-| 770 | User not found (edge case) | Redirect to login — the account may have been deleted |
+| 790 | User not found (edge case) | Redirect to login — the account may have been deleted |
 
 #### 2.7.1 Mandatory vs. Voluntary Password Change
 
@@ -713,13 +713,13 @@ After a user logs in via `User/login`, check the response for a field indicating
 
 ## 3. Complete Error Code Reference
 
-### 3.1 Admin User Error Codes (RC 770–779)
+### 3.1 Admin User Error Codes (RC 790–799)
 
 | RC | Constant Name | Description | Affected Endpoints |
 |---|---|---|---|
-| 770 | `ERR_ADMIN_USER_NOT_FOUND` | The user does not exist or has been deleted | `get_user`, `update_user`, `delete_user`, `reset_password`, `change_password` |
-| 771 | `ERR_ADMIN_CANNOT_DELETE_SELF` | Self-deletion/deactivation or last admin constraint | `delete_user`, `update_user` (deactivation) |
-| 772 | `ERR_ADMIN_CANNOT_EDIT_SELF_ROLE` | Super Admin cannot change their own role | `update_user` (role change) |
+| 790 | `ERR_ADMIN_USER_NOT_FOUND` | The user does not exist or has been deleted | `get_user`, `update_user`, `delete_user`, `reset_password`, `change_password` |
+| 791 | `ERR_ADMIN_CANNOT_DELETE_SELF` | Self-deletion/deactivation or last admin constraint | `delete_user`, `update_user` (deactivation) |
+| 792 | `ERR_ADMIN_CANNOT_EDIT_SELF_ROLE` | Super Admin cannot change their own role | `update_user` (role change) |
 
 ### 3.2 Input Validation Error Codes
 
@@ -858,9 +858,9 @@ Submit:
     → If email was changed, include initial_password in payload
     → Call AdminUser/update_user with changed values
     → On rc: 0   → Close modal, refresh list
-    → On rc: 770 → Show "User not found", close modal, refresh list
-    → On rc: 771 → Show "Last admin" constraint message
-    → On rc: 772 → Show "Cannot change your own role"
+    → On rc: 790 → Show "User not found", close modal, refresh list
+    → On rc: 791 → Show "Last admin" constraint message
+    → On rc: 792 → Show "Cannot change your own role"
     → On rc: 102 → Show "Initial password required" on password field
     → On rc: 240 → Show "Email already exists" on email field
     → On rc: 242 → Show password criteria error on initial password field
@@ -876,12 +876,12 @@ Super Admin clicks "Delete":
     → On confirm:
         → Call AdminUser/delete_user { user_id }
         → On rc: 0   → Refresh list, show success toast
-        → On rc: 771 → Show constraint prompt with deactivation option
+        → On rc: 791 → Show constraint prompt with deactivation option
             → If Super Admin clicks "Deactivate Instead":
                 → Call AdminUser/update_user { user_id, is_active: false }
                 → On rc: 0   → Refresh list, show "User deactivated"
-                → On rc: 771 → Show "Cannot deactivate — last admin"
-        → On rc: 770 → Show "User not found", refresh list
+                → On rc: 791 → Show "Cannot deactivate — last admin"
+        → On rc: 790 → Show "User not found", refresh list
 ```
 
 ### 4.5 Reset Password Flow
@@ -894,7 +894,7 @@ Super Admin clicks "Reset Password":
         → Call AdminUser/reset_password { user_id, password }
         → On rc: 0   → Show success, close dialog
         → On rc: 242 → Show password criteria error
-        → On rc: 770 → Show "User not found"
+        → On rc: 790 → Show "User not found"
 ```
 
 ### 4.6 Change Password (Self-Service) Flow

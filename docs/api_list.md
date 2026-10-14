@@ -197,15 +197,20 @@ This document lists all APIs required for the Code4 Security Operations Platform
 
 | API | ACL | Description |
 |-----|-----|-------------|
-| `Report/get_reports_list` | ADMIN, OFFICER, RESIDENT | Get incident reports list with filters |
-| `Report/get_report` | ADMIN, OFFICER, RESIDENT | Get full report content |
-| `Report/create_report` | OFFICER | Officer creates a new report (from call or standalone) |
-| `Report/update_report` | ADMIN, OFFICER | Edit report content |
-| `Report/submit_report` | OFFICER | Officer submits a draft report |
-| `Report/approve_report` | ADMIN | Manager approves a report |
-| `Report/deliver_report` | ADMIN | Manager delivers report to client |
-| `Report/request_changes` | ADMIN | Manager requests changes on a report |
+| `Report/get_reports_list` | ADMIN, OFFICER, RESIDENT | Get incident reports list with filters (officer: own, resident: delivered to them, admin: non-draft in their communities) |
+| `Report/get_report` | ADMIN, OFFICER, RESIDENT | Get full report content (admin view includes original values, manager notes, lock and history) |
+| `Report/create_report` | OFFICER | Officer creates a new draft report (from call or standalone) |
+| `Report/update_report` | ADMIN, OFFICER | Edit report content (officer while editable; manager while holding the review) |
+| `Report/submit_report` | OFFICER | Officer submits / resubmits a report |
+| `Report/start_review` | ADMIN | Manager opens a submitted report for review (status Under Review, locked for other managers) |
+| `Report/release_review` | ADMIN | Manager closes the review without action (back to Submitted) |
+| `Report/approve_report` | ADMIN | Manager approves a report (section inclusion + management summary) |
+| `Report/deliver_report` | ADMIN | Manager delivers report to client (generates formatted PDF) |
+| `Report/request_changes` | ADMIN | Manager requests changes on a report (mandatory comments) |
+| `Report/export_report_pdf` | ADMIN, RESIDENT | Signed download URL of the watermarked client PDF of a delivered report (admin: optional regeneration) |
+| `Report/get_report_history` | ADMIN | Full audit trail of a report (transitions, field-level edits, review actions) |
 | `Report/get_report_for_client` | RESIDENT | Client views a delivered report |
+| `Report/get_report_metadata` | ADMIN, OFFICER, RESIDENT | Report statuses, categories and history actions |
 
 ---
 

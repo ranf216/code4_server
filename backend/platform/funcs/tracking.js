@@ -49,21 +49,6 @@ function fetchOfficerRecord(officerId)
 	return rows.length > 0 ? rows[0] : null;
 }
 
-function fetchLatestLocation(officerId)
-{
-	let rows = $Db.executeQuery(
-		`SELECT GPL_ID, GPL_OFC_USR_ID, GPL_COM_ID,
-		        GPL_LATITUDE, GPL_LONGITUDE,
-		        GPL_ACCURACY, GPL_SPEED, GPL_HEADING, GPL_ALTITUDE,
-		        GPL_SFT_ID, GPL_SVC_ID, GPL_SOURCE, GPL_CREATED_ON
-		 FROM \`gps_log\`
-		 WHERE GPL_OFC_USR_ID=?
-		 ORDER BY GPL_CREATED_ON DESC
-		 LIMIT 1`,
-		[officerId]);
-	return rows.length > 0 ? rows[0] : null;
-}
-
 function getGpsSettings()
 {
 	let settings = { ...$Config.get("SETTINGS_DEFAULTS").gps };
@@ -489,7 +474,7 @@ module.exports = class
 		}
 
 		// --- get latest GPS entry ---
-		let location = fetchLatestLocation(officerId);
+		let location = $Funcs.getOfficerLatestLocation(officerId);
 		if (!location)
 		{
 			return $ERRS.ERR_TRACKING_NO_LOCATION_DATA;
@@ -667,7 +652,7 @@ module.exports = class
 		{
 			return { ...$ERRS.ERR_SUCCESS, eta_available: false, reason: "no officer assigned" };
 		}
-		let location = fetchLatestLocation(officerId);
+		let location = $Funcs.getOfficerLatestLocation(officerId);
 		if (!location)
 		{
 			return { ...$ERRS.ERR_SUCCESS, eta_available: false, reason: "no officer location data" };

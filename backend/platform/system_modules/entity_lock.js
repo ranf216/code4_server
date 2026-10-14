@@ -121,6 +121,48 @@ module.exports =
     },
 
     // -------------------------------------------------------------------------
+    // checkMany(table, recordIds)
+    // Batched read-only variant of check() - one query for any number of records
+    // (use in list endpoints instead of calling check() inside a loop).
+    //
+    // Returns a map with an entry for EVERY requested record ID (as string):
+    //   { "<recordId>": { is_locked: false, locked_by: null, locked_on: null, expires_on: null },
+    //     "<recordId>": { is_locked: true, locked_by: userId, locked_on: datetime, expires_on: datetime } }
+    // -------------------------------------------------------------------------
+    checkMany(table, recordIds)
+    {
+        let locks = {};
+        if (!Array.isArray(recordIds) || recordIds.length === 0)
+        {
+            return locks;
+        }
+
+        let ids = [...new Set(recordIds.map(String))];
+        for (let i = 0; i < ids.length; i++)
+        {
+            locks[ids[i]] = {is_locked: false, locked_by: null, locked_on: null, expires_on: null};
+        }
+
+        let lockRows = $Db.executeQuery(
+            `SELECT ENL_RECORD_ID, ENL_USR_ID, ENL_LOCKED_ON, ENL_EXPIRES_ON
+            FROM \`entity_lock\`
+            WHERE ENL_TABLE = ? AND ENL_RECORD_ID IN (${ids.toPlaceholders()}) AND ENL_EXPIRES_ON >= NOW()`,
+            [table, ...ids]);
+
+        for (let i = 0; i < lockRows.length; i++)
+        {
+            locks[lockRows[i].ENL_RECORD_ID] = {
+                is_locked: true,
+                locked_by: lockRows[i].ENL_USR_ID,
+                locked_on: lockRows[i].ENL_LOCKED_ON,
+                expires_on: lockRows[i].ENL_EXPIRES_ON
+            };
+        }
+
+        return locks;
+    },
+
+    // -------------------------------------------------------------------------
     // forceRelease(table, recordId)
     // Admin override: removes the lock regardless of owner.
     // -------------------------------------------------------------------------

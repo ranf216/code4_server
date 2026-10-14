@@ -35,20 +35,20 @@ Requirements identified during POI module implementation that are out of scope f
 
 ---
 
-## 3. Report Encounter (Officer → Incident Creation)
+## ~~3. Report Encounter (Officer → Incident Creation)~~ ✅ Implemented (Phase 7.2)
 **Source:** SDS §3.13.2
-**Status:** Not implemented. Requires Report module (Phase 7).
+**Status:** Implemented per Report decision Q3 (option b — direct POI link, `incident_report.IRP_POI_ID`).
 
-### Requirements:
-- [ ] Officer taps "Report Encounter" on POI detail screen
-- [ ] Pre-populate new service call / incident report with:
-  - Person name and record ID in description
-  - Record type as incident category
-  - Officer's current GPS location as incident address
-- [ ] Link the resulting incident back to the POI record in `poi_incident`
-- [ ] Depends on: Report module (dev_flow §7)
+### Implementation:
+- [x] Officer taps "Report Encounter" on the POI detail screen → `Report/create_report` with `poi_id` (+ optional `latitude`, `longitude`, `location_address`)
+- [x] Pre-populates the incident report with:
+  - Person name, known aliases and POI Record ID in `incident_description` (editable)
+  - Record type as `incident_type`
+  - Officer's current GPS location as `incident_location` (parameters, or the officer's latest `gps_log` point)
+- [x] The resulting report is linked to the POI record (`IRP_POI_ID`) and returned under "Related Incidents" by `POI/get_poi_record` as `related_reports` (alongside call links in `related_incidents`)
+- [x] Depends on: Report module (dev_flow §7.2 ✅)
 
-**Interim workaround:** Officers can use `Call/create_call` and reference the POI Record ID in the description.
+Open follow-up details (record type display name, call/POI precedence, related-report visibility): `docs/issues-questions/report-issues-questions.md` Q22.
 
 ---
 

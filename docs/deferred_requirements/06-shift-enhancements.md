@@ -55,7 +55,7 @@ Implemented as `cron_shift_reminders.js` with configurable `shift_starting_soon_
 
 **Current behavior:** Shift transitions to `completed` status. No summary document is generated.
 
-**Dependencies:** Report module (Phase 7.1), analytics infrastructure.
+**Dependencies:** Report module (Phase 7.1 ✅ templates, Phase 7.2 ✅ incident reports), analytics infrastructure.
 
 ---
 

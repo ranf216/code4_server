@@ -246,6 +246,7 @@ module.exports = class
             poi_expiring_enabled: this.$poi_expiring_enabled,
             poi_expired_enabled: this.$poi_expired_enabled,
             report_submitted_enabled: this.$report_submitted_enabled,
+            report_under_review_enabled: this.$report_under_review_enabled,
             report_approved_enabled: this.$report_approved_enabled,
             report_changes_enabled: this.$report_changes_enabled,
             report_delivered_enabled: this.$report_delivered_enabled,

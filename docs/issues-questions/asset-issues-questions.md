@@ -47,7 +47,7 @@ All three keys are optional; omitted keys default to empty arrays (no restrictio
 
 **Decision:** Implemented. Server-side enforcement is active in Phase 4.1 with a default limit of 1,000 map items per community (assets + posts + map zones combined). The limit is checked before every creation endpoint (`create_asset`, `create_assets_batch`, `create_post`, `create_map_zone`). For batch creation, the total is validated as `current_count + batch_size`.
 
-The limit is configurable: when `settings:asset → max_map_items_per_community` is set in the `key_value` table, it overrides the default. Until the Settings asset namespace is built, the hardcoded default of 1,000 applies. Error code: `ERR_MAP_ITEM_LIMIT_EXCEEDED` (762).
+The limit is configurable: when `settings:asset → max_map_items_per_community` is set in the `key_value` table, it overrides the default. Until the Settings asset namespace is built, the hardcoded default of 1,000 applies. Error code: `ERR_MAP_ITEM_LIMIT_EXCEEDED` (782).
 
 ---
 

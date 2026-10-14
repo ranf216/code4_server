@@ -23,6 +23,7 @@ SDS does not specify whether active (published) templates can be edited in-place
 **Resolution:** Approved for Phase 7.1; snapshot mandate required for Phase 7.2.
 1. **Phase 7.1:** Editing active templates in-place is approved while no in-flight reports exist.
 2. **Phase 7.2 Integration Requirement:** When Phase 7.2 (`report.js`) is implemented, creating a report from a template **must freeze a JSON snapshot** of the template's sections and fields into `incident_report.RPT_CONTENT_SNAPSHOT` (following the Post Order Version `POV_CONTENT` pattern). This guarantees that subsequent edits to a report template will never break historical report rendering or audit logs.
+   - ✅ **Implemented in Phase 7.2** as `incident_report.IRP_CONTENT_SNAPSHOT` (prefix `IRP_` because `RPT_` belongs to `report_template`). The snapshot also freezes the effective style settings.
 
 ---
 
@@ -32,7 +33,7 @@ SDS does not mention hard deletion of templates.
 
 **Resolution:** Archival is primary; soft-delete (`delete_template`) supported for drafts.
 1. **Archival (`status = 'archived'`):** The primary operational mechanism to retire active templates while preserving historical report integrity.
-2. **Soft-Delete (`delete_template` setting `RPT_DELETED_ON = NOW()`):** `delete_template` endpoint restricted to templates in `draft` status. Returns `ERR_REPORT_TEMPLATE_CANNOT_EDIT` (rc 724) if the template is not in draft status. When Phase 7.2 adds the `incident_report` table, the endpoint will also check for linked reports and return `ERR_REPORT_TEMPLATE_HAS_LINKED_REPORTS` (rc 725) if any exist.
+2. **Soft-Delete (`delete_template` setting `RPT_DELETED_ON = NOW()`):** `delete_template` endpoint restricted to templates in `draft` status. Returns `ERR_REPORT_TEMPLATE_CANNOT_EDIT` (rc 724) if the template is not in draft status. When Phase 7.2 adds the `incident_report` table, the endpoint will also check for linked reports and return `ERR_REPORT_TEMPLATE_HAS_LINKED_REPORTS` (rc 725) if any exist. ✅ Linked-report check implemented in Phase 7.2.
 
 ---
 

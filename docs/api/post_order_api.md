@@ -298,7 +298,7 @@ Officers can acknowledge having read a specific version of a Post Order. Each of
     | 676 | invalid post order section type | One or more sections have an invalid `section_type`. |
     | 679 | maximum number of attachments per section reached | A section has more than 5 attachment file IDs. |
     | 681 | a post order already exists for this post | The specified post already has an active Post Order. |
-    | 752 | post not found | No active post exists with the given `post_id`. |
+    | 772 | post not found | No active post exists with the given `post_id`. |
 
 - **Usage & Flows:**
     Called from the "Create Post Order" form in the management portal (SDS 4.10.3). The consumer selects a post, fills in header fields and at least one section, then submits. The Post Order is created in Draft status at version 0.0. The consumer should call `publish_post_order` separately to make it visible to officers. Section types are configured in Settings (SDS 5.4.3) and should be loaded by the consumer before rendering the section form.
