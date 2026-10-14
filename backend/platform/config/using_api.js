@@ -5,6 +5,7 @@ module.exports =
 	"asset",
 	"call",
 	"community",
+	"dashboard",
 	// "dialer",
 	"file",
 	"notification",

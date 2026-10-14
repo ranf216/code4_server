@@ -113,4 +113,12 @@ module.exports =
                                                 "log_req_res"                   : "o:b:false***log request and response JSONs for each API call",
                                             },
 
+    "test_dashboard_apis"                   : {
+                                                "@acl"                          : [$ACL.USER_TYPE_ADMIN],
+                                                "@doc"                          : "Test all Dashboard module APIs (get_overview, get_calls_statistics, get_tasks_summary, get_reports_summary, scope filtering, date ranges, community filtering, response structure, cross-endpoint consistency)",
+                                                "@mode"                         : "test",
+                                                "#token"                        : "s",
+                                                "log_req_res"                   : "o:b:false***log request and response JSONs for each API call",
+                                            },
+
 };

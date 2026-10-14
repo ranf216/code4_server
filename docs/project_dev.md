@@ -1,7 +1,7 @@
 # Server Implementation Documentation
 
-**Document Version:** 1.9  
-**Last Updated:** 2026-10-12
+**Document Version:** 2.0  
+**Last Updated:** 2026-10-13
 **Purpose:** Comprehensive documentation of the project server business logic implementation
 
 ---
@@ -1419,6 +1419,115 @@ draft ──submit──► submitted ──start_review──► under_review �
 
 - Decisions Q1–Q16 resolved and implemented; open follow-ups (Q17, Q19–Q22): `docs/issues-questions/report-issues-questions.md`.
 - Deferred features: `docs/deferred_requirements/09-report-enhancements.md`.
+
+---
+
+## Phase 8 — Dashboard & Analytics
+
+### 8.1 Dashboard (`platform/api/dashboard.js`, `platform/funcs/dashboard.js`)
+
+Read-only aggregation module that provides an at-a-glance overview of service calls, tasks, and incident reports. No new database tables — the module queries `service_call`, `task`, `incident_report`, `community`, `officer`, and `user_details`.
+
+#### Design Decisions
+
+- **Admin-only access:** All four endpoints require `USER_TYPE_ADMIN` (any admin role). Residents and officers do not access the dashboard API.
+- **No new error codes:** The module is read-only and aggregates existing data. Invalid/empty filters produce empty result sets rather than errors (no new error-code range required).
+- **Community filtering:** Every endpoint accepts an optional `community_id` (default `0` = all communities). When set to a valid community ID, all counts and recent items are scoped to that community.
+- **Dynamic open-status filtering:** Open statuses are resolved dynamically via `$Funcs.getDataItemIdsByAttr(tableName, "is_open", true)` using the `is_open` attribute from `$DataItems` JSON files (`call_status.json`, `task_status.json`, `report_status.json`). No hardcoded status arrays — the `buildOpenStatusCondition()` helper builds parameterized IN clauses.
+- **$DataItems integration:** Constructor calls `$DataItems.define()` for `call_status`, `task_status`, `task_type`, and `report_status`. Task type display names are resolved via `$DataItems.getItemName(type, TABLE_TASK_TYPE)`.
+- **Soft-delete filtering:** Every query filters `*_DELETED_ON IS NULL` to exclude soft-deleted records.
+- **Priority sort ordering:** Recent tasks are sorted by priority (urgent → important → normal → low) then by creation date descending, using a CASE expression.
+- **Date-range filtering:** `get_calls_statistics` defaults to last 30 days; `get_tasks_summary` and `get_reports_summary` accept optional `from_date`/`to_date` for breakdown queries (by-status, by-type). Open counts and recent items always reflect current state regardless of date range.
+- **Scope "my":** Tasks: `TSK_ASSIGNED_TO = userId`. Reports: `IRP_REVIEWER_USR_ID = userId` (reviewer who started/holds review, per Q1/Q2 decisions in `docs/issues-questions/dashboard-issues-questions.md`).
+
+#### API Summary
+
+| API | ACL | Description |
+|---|---|---|
+| `Dashboard/get_overview` | ADMIN | Homepage dashboard — aggregate counts (active calls, open tasks, open reports, active communities, active officers) and 5 most recent open items per category |
+| `Dashboard/get_calls_statistics` | ADMIN | Calls dashboard — total/emergency/service call counts, breakdowns by category/status/priority, average response time (emergencies), average handling time (service calls), false-emergency and accidental-request counts, date-range filter |
+| `Dashboard/get_tasks_summary` | ADMIN | Tasks dashboard — open tasks count, breakdowns by status and type, 5 recent open tasks by priority. Supports `scope` (`all`/`my`) and optional date-range filters |
+| `Dashboard/get_reports_summary` | ADMIN | Reports dashboard — open reports count, total reports in last 14 days, breakdown by status, 5 recent open reports. Supports `scope` (`all`/`my`) and optional date-range filters |
+
+#### `get_overview`
+
+Returns aggregate counts and recent open items for homepage dashboard cards.
+
+**Parameters:**
+- `community_id` (optional, int, default `0`) — filter to a specific community
+
+**Response fields:**
+- `active_calls_count` — count of calls with status `new` or `accepted`
+- `open_tasks_count` — count of tasks with status `new`, `accepted`, or `approved`
+- `open_reports_count` — count of reports with status `submitted`, `under_review`, or `changes_requested`
+- `active_communities_count` — count of active, non-deleted communities
+- `active_officers_count` — count of active officers (non-deleted, `USD_STATUS=1`)
+- `recent_calls` — 5 most recent open calls (with resident name, officer name, community name)
+- `recent_tasks` — 5 most recent open tasks sorted by priority then creation date (with title from task type name, creator/assignee names)
+- `recent_reports` — 5 most recent open reports (with officer name, community name)
+
+#### `get_calls_statistics`
+
+Detailed call statistics with community and date-range filters (SDS 4.5.1.1).
+
+**Parameters:**
+- `community_id` (optional, int, default `0`)
+- `from_date` (optional, string `YYYY-MM-DD`, default: 30 days ago)
+- `to_date` (optional, string `YYYY-MM-DD`, default: today)
+
+**Response fields:**
+- `total_calls` — total calls in the date range
+- `emergency_calls_count` — medical + security emergencies
+- `medical_emergency_count`, `security_emergency_count`, `concierge_service_count`, `panic_count`, `test_count`
+- `false_emergencies_count` — canceled emergency calls
+- `accidental_requests_count` — canceled service calls
+- `calls_by_status` — object keyed by status (`new`, `accepted`, `resolved`, `canceled`)
+- `calls_by_category` — object keyed by category
+- `calls_by_priority` — object keyed by priority
+- `avg_response_time_minutes` — average time from creation to acceptance for emergencies (null if no data)
+- `avg_handling_time_minutes` — average time from creation to resolution for service calls (null if no data)
+- `avg_handling_time_from_assignment_minutes` — average time from acceptance to resolution for service calls (null if no data)
+- `recent_calls` — 5 most recent open calls
+- `from_date`, `to_date` — the applied filter dates
+
+#### `get_tasks_summary`
+
+Tasks dashboard section (SDS 4.5.2).
+
+**Parameters:**
+- `community_id` (optional, int, default `0`)
+- `scope` (optional, string, default `all`) — `all` = all tasks, `my` = tasks assigned to the calling admin
+- `from_date` (optional, string `YYYY-MM-DD`) — start date for breakdowns; omit for all-time
+- `to_date` (optional, string `YYYY-MM-DD`) — end date for breakdowns; omit for all-time
+
+**Response fields:**
+- `open_tasks_count` — count of tasks with open status (current state, ignores date range)
+- `tasks_by_status` — object keyed by task status (date-filtered when `from_date`/`to_date` provided)
+- `tasks_by_type` — object keyed by task type (date-filtered when `from_date`/`to_date` provided)
+- `recent_tasks` — 5 most recent open tasks sorted by priority, each with `title` (task type display name from `$DataItems`), `type`, `description`
+- `from_date`, `to_date` — returned only when date-range filters were provided
+
+#### `get_reports_summary`
+
+Incident reports dashboard section (SDS 4.5.5).
+
+**Parameters:**
+- `community_id` (optional, int, default `0`)
+- `scope` (optional, string, default `all`) — `all` = all reports, `my` = reports where the calling admin is the reviewer
+- `from_date` (optional, string `YYYY-MM-DD`) — start date for breakdowns; omit for all-time
+- `to_date` (optional, string `YYYY-MM-DD`) — end date for breakdowns; omit for all-time
+
+**Response fields:**
+- `open_reports_count` — count of reports with open status (current state, ignores date range)
+- `total_reports_last_14_days` — total reports created in the last 14 days (current state, ignores date range)
+- `reports_by_status` — object keyed by report status (date-filtered when `from_date`/`to_date` provided)
+- `recent_reports` — 5 most recent open reports
+- `from_date`, `to_date` — returned only when date-range filters were provided
+
+#### Open Items
+
+- All initial questions (Q1–Q6) resolved: `docs/issues-questions/dashboard-issues-questions.md`.
+- Deferred features: `docs/deferred_requirements/10-dashboard-enhancements.md`.
 
 ---
 

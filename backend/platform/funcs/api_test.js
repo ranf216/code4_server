@@ -8863,4 +8863,9 @@ module.exports = class
     {
         return this._runTest(() => $TestApiReport.test_report_apis(this.$Session));
     }
+
+    test_dashboard_apis()
+    {
+        return this._runTest(() => $TestApiDashboard.test_dashboard_apis(this.$Session));
+    }
 }
