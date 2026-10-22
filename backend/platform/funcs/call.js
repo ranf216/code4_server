@@ -1,5 +1,15 @@
 const MAX_MEDIA_COUNT = 5;
 
+const ALLOWED_DOCUMENT_MIME_TYPES =
+[
+    "application/pdf",
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    "text/csv",
+    "text/plain",
+    "image/png",
+    "image/jpeg",
+];
+
 function fetchCallRecord(callId)
 {
     let rows = $Db.executeQuery(
@@ -9,7 +19,8 @@ function fetchCallRecord(callId)
                 SVC_SCHEDULED_DATE, SVC_SCHEDULED_TIME_FROM, SVC_SCHEDULED_TIME_TO,
                 SVC_MEDIA, SVC_AUDIO, SVC_VIDEO,
                 SVC_CONFIRMATION_MEDIA, SVC_CONFIRMATION_VIDEO,
-                SVC_OFFICER_COMMENTS, SVC_REACTION, SVC_RESIDENT_COMMENT,
+                SVC_OFFICER_COMMENTS, SVC_DOCUMENTS, SVC_TRANSCRIPTIONS,
+                SVC_REACTION, SVC_RESIDENT_COMMENT,
                 SVC_PASSED_BY, SVC_ASSIGNED_BY,
                 SVC_ACCEPTED_ON, SVC_RESOLVED_ON, SVC_CANCELED_ON,
                 SVC_CREATED_ON, SVC_LAST_UPDATE, SVC_DELETED_ON
@@ -41,6 +52,35 @@ function parsePassedByArray(jsonVal)
     }
     let arr = (typeof jsonVal === "string") ? JSON.parse(jsonVal) : jsonVal;
     return Array.isArray(arr) ? arr : [];
+}
+
+function parseDocumentsArray(jsonVal)
+{
+    if (!jsonVal)
+    {
+        return [];
+    }
+    let arr = (typeof jsonVal === "string") ? JSON.parse(jsonVal) : jsonVal;
+    if (!Array.isArray(arr))
+    {
+        return [];
+    }
+    return arr.map(name => $Files.getUrl({file_name: name})).filter(url => url);
+}
+
+function parseTranscriptionsArray(jsonVal)
+{
+    if (!jsonVal)
+    {
+        return [];
+    }
+    let arr = (typeof jsonVal === "string") ? JSON.parse(jsonVal) : jsonVal;
+    return Array.isArray(arr) ? arr : [];
+}
+
+function isAllowedDocumentMimeType(mimeType)
+{
+    return ALLOWED_DOCUMENT_MIME_TYPES.indexOf(mimeType) !== -1;
 }
 
 function resolveFileList(newFileIds, keepUrls)
@@ -93,9 +133,9 @@ function resolveSingleFile(fileId)
     return {file_name: fileRows[0].FIL_FILE_NAME};
 }
 
-function mapCallRow(row)
+function mapCallRow(row, userType)
 {
-    return {
+    let mapped = {
         call_id: row.SVC_ID,
         category: row.SVC_CATEGORY,
         service_type: row.SVC_SERVICE_TYPE || null,
@@ -130,6 +170,19 @@ function mapCallRow(row)
         created_on: row.SVC_CREATED_ON,
         last_update: row.SVC_LAST_UPDATE || null,
     };
+
+    if (userType === $Const.USER_TYPE_ADMIN || userType === $Const.USER_TYPE_OFFICER)
+    {
+        mapped.documents = parseDocumentsArray(row.SVC_DOCUMENTS);
+        mapped.transcriptions = parseTranscriptionsArray(row.SVC_TRANSCRIPTIONS);
+    }
+    else
+    {
+        mapped.documents = null;
+        mapped.transcriptions = null;
+    }
+
+    return mapped;
 }
 
 function getActiveAdminIds()
@@ -482,7 +535,8 @@ module.exports = class
                     SVC_SCHEDULED_DATE, SVC_SCHEDULED_TIME_FROM, SVC_SCHEDULED_TIME_TO,
                     SVC_MEDIA, SVC_AUDIO, SVC_VIDEO,
                     SVC_CONFIRMATION_MEDIA, SVC_CONFIRMATION_VIDEO,
-                    SVC_OFFICER_COMMENTS, SVC_REACTION, SVC_RESIDENT_COMMENT,
+                    SVC_OFFICER_COMMENTS, SVC_DOCUMENTS, SVC_TRANSCRIPTIONS,
+                    SVC_REACTION, SVC_RESIDENT_COMMENT,
                     SVC_ASSIGNED_BY, SVC_ACCEPTED_ON, SVC_RESOLVED_ON, SVC_CANCELED_ON,
                     SVC_CREATED_ON, SVC_LAST_UPDATE,
                     RES_USD.USD_FIRST_NAME RES_FIRST_NAME, RES_USD.USD_LAST_NAME RES_LAST_NAME,
@@ -497,7 +551,7 @@ module.exports = class
              LIMIT ${limit} OFFSET ${offset}`,
             params);
 
-        vals.calls = rows.map(row => mapCallRow(row));
+        vals.calls = rows.map(row => mapCallRow(row, userType));
         vals.total_count = totalCount;
         vals.offset = offset;
         vals.limit = limit;
@@ -523,7 +577,8 @@ module.exports = class
                     SVC_SCHEDULED_DATE, SVC_SCHEDULED_TIME_FROM, SVC_SCHEDULED_TIME_TO,
                     SVC_MEDIA, SVC_AUDIO, SVC_VIDEO,
                     SVC_CONFIRMATION_MEDIA, SVC_CONFIRMATION_VIDEO,
-                    SVC_OFFICER_COMMENTS, SVC_REACTION, SVC_RESIDENT_COMMENT,
+                    SVC_OFFICER_COMMENTS, SVC_DOCUMENTS, SVC_TRANSCRIPTIONS,
+                    SVC_REACTION, SVC_RESIDENT_COMMENT,
                     SVC_ASSIGNED_BY, SVC_ACCEPTED_ON, SVC_RESOLVED_ON, SVC_CANCELED_ON,
                     SVC_CREATED_ON, SVC_LAST_UPDATE,
                     RES_USD.USD_FIRST_NAME RES_FIRST_NAME, RES_USD.USD_LAST_NAME RES_LAST_NAME,
@@ -571,7 +626,7 @@ module.exports = class
             }
         }
 
-        vals.call = mapCallRow(call);
+        vals.call = mapCallRow(call, userType);
 
         return {...rc, ...vals};
     }
@@ -1264,6 +1319,114 @@ module.exports = class
         $Db.executeQuery(
             `UPDATE \`service_call\` SET SVC_RESIDENT_COMMENT=?, SVC_LAST_UPDATE=? WHERE SVC_ID=? AND SVC_DELETED_ON IS NULL`,
             [this.$comment, $Utils.now(), this.$call_id]);
+        if ($Db.isError())
+        {
+            return $Err.DBError("ERR_DB_UPDATE_ERROR", $Db.lastErrorMsg());
+        }
+
+        return rc;
+    }
+
+    // =========================================================================
+    // Add Call Document (Admin, Officer)
+    // =========================================================================
+
+    add_call_document()
+    {
+        let rc = $ERRS.ERR_SUCCESS;
+        let userId = this.$Session.userId;
+        let userType = this.$Session.userType;
+
+        // Only admins and officers may attach documents
+        if (userType !== $Const.USER_TYPE_ADMIN && userType !== $Const.USER_TYPE_OFFICER)
+        {
+            return $ERRS.ERR_NO_PRIVILEGES;
+        }
+
+        let hasDocuments = this.$document_file_ids && this.$document_file_ids.length > 0;
+        let hasTranscription = !$Utils.empty(this.$transcription_text);
+
+        if (!hasDocuments && !hasTranscription)
+        {
+            return rc;
+        }
+
+        // Validate call exists
+        let call = fetchCallRecord(this.$call_id);
+        if (!call)
+        {
+            return $ERRS.ERR_CALL_NOT_FOUND;
+        }
+
+        // Permission check: officer must be assigned to the call or in the same community
+        if (userType === $Const.USER_TYPE_OFFICER)
+        {
+            let officerComId = $Funcs.getUserCommunityId(userId);
+            if (call.SVC_OFC_USR_ID !== userId && call.SVC_COM_ID !== officerComId)
+            {
+                return $ERRS.ERR_CALL_NOT_FOUND;
+            }
+        }
+
+        // Resolve and validate document files
+        let newFileNames = [];
+        if (hasDocuments)
+        {
+            let fileRows = $Db.executeQuery(
+                `SELECT FIL_ID, FIL_FILE_NAME, FIL_MIME_TYPE
+                 FROM \`file\`
+                 WHERE FIL_ID IN (${this.$document_file_ids.toPlaceholders()})`,
+                this.$document_file_ids);
+            if (fileRows.length !== this.$document_file_ids.length)
+            {
+                return $ERRS.ERR_FILE_NOT_FOUND;
+            }
+
+            for (let i = 0; i < fileRows.length; i++)
+            {
+                if (!isAllowedDocumentMimeType(fileRows[i].FIL_MIME_TYPE))
+                {
+                    return $ERRS.ERR_INVALID_FILE_TYPE;
+                }
+                newFileNames.push(fileRows[i].FIL_FILE_NAME);
+            }
+        }
+
+        // Build updated documents array
+        let existingDocs = [];
+        if (call.SVC_DOCUMENTS)
+        {
+            let parsed = (typeof call.SVC_DOCUMENTS === "string") ? JSON.parse(call.SVC_DOCUMENTS) : call.SVC_DOCUMENTS;
+            if (Array.isArray(parsed)) existingDocs = parsed;
+        }
+        let updatedDocs = existingDocs.concat(newFileNames);
+
+        // Build updated transcriptions array
+        let existingTranscriptions = [];
+        if (call.SVC_TRANSCRIPTIONS)
+        {
+            let parsed = (typeof call.SVC_TRANSCRIPTIONS === "string") ? JSON.parse(call.SVC_TRANSCRIPTIONS) : call.SVC_TRANSCRIPTIONS;
+            if (Array.isArray(parsed)) existingTranscriptions = parsed;
+        }
+        let updatedTranscriptions = existingTranscriptions;
+
+        if (hasTranscription)
+        {
+            let transcriptionFileName = newFileNames.length > 0 ? newFileNames[0] : "";
+            updatedTranscriptions = existingTranscriptions.concat([{
+                file_name: transcriptionFileName,
+                transcription_text: this.$transcription_text,
+                created_on: $Utils.now()
+            }]);
+        }
+
+        // Atomic update
+        let now = $Utils.now();
+        $Db.executeQuery(
+            `UPDATE \`service_call\`
+             SET SVC_DOCUMENTS=?, SVC_TRANSCRIPTIONS=?, SVC_LAST_UPDATE=?
+             WHERE SVC_ID=? AND SVC_DELETED_ON IS NULL`,
+            [JSON.stringify(updatedDocs), JSON.stringify(updatedTranscriptions), now, this.$call_id]);
         if ($Db.isError())
         {
             return $Err.DBError("ERR_DB_UPDATE_ERROR", $Db.lastErrorMsg());

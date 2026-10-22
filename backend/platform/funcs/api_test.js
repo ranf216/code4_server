@@ -7234,6 +7234,267 @@ module.exports = class
             }
 
             // =================================================================
+            // Test 51: add_call_document (admin, transcription only)
+            // =================================================================
+
+            testResults.push({step: "Test 51: add_call_document (admin, transcription only)", status: "running"});
+            if (emergencyCallId === null)
+            {
+                testResults.push({step: "Test 51: add_call_document (admin, transcription only)", status: "failed", error: "Cannot test - emergency call was not created"});
+            }
+            else
+            {
+                rv = $executeAPI(this.$Session, "Call/add_call_document", {
+                    call_id: emergencyCallId,
+                    transcription_text: `Test transcription ${uniqueId}`
+                });
+                if ($Err.isERR(rv))
+                {
+                    testResults.push({step: "Test 51: add_call_document (admin, transcription only)", status: "failed", error: rv.message});
+                }
+                else
+                {
+                    testResults.push({step: "Test 51: add_call_document (admin, transcription only)", status: "passed"});
+                }
+            }
+
+            // =================================================================
+            // Test 52: add_call_document (invalid call ID, expect error)
+            // =================================================================
+
+            testResults.push({step: "Test 52: add_call_document (invalid call_id, expect error)", status: "running"});
+            rv = $executeAPI(this.$Session, "Call/add_call_document", {
+                call_id: 999999999,
+                transcription_text: "Should not work"
+            });
+            if (rv.rc === 560)
+            {
+                testResults.push({step: "Test 52: add_call_document (invalid call_id, expect error)", status: "passed", message: "correctly returned ERR_CALL_NOT_FOUND"});
+            }
+            else
+            {
+                testResults.push({step: "Test 52: add_call_document (invalid call_id, expect error)", status: "warning", message: "unexpected response", rc: rv.rc});
+            }
+
+            // =================================================================
+            // Test 53: add_call_document (invalid file IDs, expect error)
+            // =================================================================
+
+            testResults.push({step: "Test 53: add_call_document (invalid file IDs, expect error)", status: "running"});
+            if (emergencyCallId === null)
+            {
+                testResults.push({step: "Test 53: add_call_document (invalid file IDs, expect error)", status: "failed", error: "Cannot test"});
+            }
+            else
+            {
+                rv = $executeAPI(this.$Session, "Call/add_call_document", {
+                    call_id: emergencyCallId,
+                    document_file_ids: [999999999]
+                });
+                if (rv.rc === 321)
+                {
+                    testResults.push({step: "Test 53: add_call_document (invalid file IDs, expect error)", status: "passed", message: "correctly returned ERR_FILE_NOT_FOUND"});
+                }
+                else
+                {
+                    testResults.push({step: "Test 53: add_call_document (invalid file IDs, expect error)", status: "warning", message: "unexpected response", rc: rv.rc});
+                }
+            }
+
+            // =================================================================
+            // Test 54: add_call_document (as resident, expect ACL rejection)
+            // =================================================================
+
+            testResults.push({step: "Test 54: add_call_document (as resident, expect ACL error)", status: "running"});
+            if (emergencyCallId === null || addedResidentId === null)
+            {
+                testResults.push({step: "Test 54: add_call_document (as resident, expect ACL error)", status: "failed", error: "Cannot test"});
+            }
+            else
+            {
+                try
+                {
+                    this.$Session.impersonateAccount(addedResidentId);
+
+                    rv = $executeAPI(this.$Session, "Call/add_call_document", {
+                        call_id: emergencyCallId,
+                        transcription_text: "Resident should not be able to do this"
+                    });
+
+                    this.$Session.accountImpersonationStack = null;
+                    this.$Session.userId = adminUserId;
+                    this.$Session.userType = $Const.USER_TYPE_ADMIN;
+
+                    if (rv.rc === 103)
+                    {
+                        testResults.push({step: "Test 54: add_call_document (as resident, expect ACL error)", status: "passed", message: "correctly returned ERR_NO_PRIVILEGES"});
+                    }
+                    else
+                    {
+                        testResults.push({step: "Test 54: add_call_document (as resident, expect ACL error)", status: "warning", message: "unexpected response", rc: rv.rc});
+                    }
+                }
+                catch (impErr)
+                {
+                    this.$Session.accountImpersonationStack = null;
+                    this.$Session.userId = adminUserId;
+                    this.$Session.userType = $Const.USER_TYPE_ADMIN;
+                    testResults.push({step: "Test 54: add_call_document (as resident, expect ACL error)", status: "failed", error: impErr.message});
+                }
+            }
+
+            // =================================================================
+            // Test 55: get_call (admin sees transcriptions after add_call_document)
+            // =================================================================
+
+            testResults.push({step: "Test 55: get_call (admin sees transcriptions)", status: "running"});
+            if (emergencyCallId === null)
+            {
+                testResults.push({step: "Test 55: get_call (admin sees transcriptions)", status: "failed", error: "Cannot verify"});
+            }
+            else
+            {
+                rv = $executeAPI(this.$Session, "Call/get_call", {call_id: emergencyCallId});
+                if ($Err.isERR(rv))
+                {
+                    testResults.push({step: "Test 55: get_call (admin sees transcriptions)", status: "failed", error: rv.message});
+                }
+                else
+                {
+                    let c = rv.call;
+                    if (c.transcriptions !== null && Array.isArray(c.transcriptions) && c.transcriptions.length > 0)
+                    {
+                        let lastTx = c.transcriptions[c.transcriptions.length - 1];
+                        if (lastTx.transcription_text === `Test transcription ${uniqueId}`)
+                        {
+                            testResults.push({step: "Test 55: get_call (admin sees transcriptions)", status: "passed", verified: true, count: c.transcriptions.length});
+                        }
+                        else
+                        {
+                            testResults.push({step: "Test 55: get_call (admin sees transcriptions)", status: "warning", verified: false, message: "transcription text mismatch"});
+                        }
+                    }
+                    else
+                    {
+                        testResults.push({step: "Test 55: get_call (admin sees transcriptions)", status: "warning", verified: false, message: "transcriptions null or empty"});
+                    }
+                }
+            }
+
+            // =================================================================
+            // Test 56: get_call (resident does NOT see documents/transcriptions)
+            // =================================================================
+
+            testResults.push({step: "Test 56: get_call (resident, documents/transcriptions null)", status: "running"});
+            if (emergencyCallId === null || addedResidentId === null)
+            {
+                testResults.push({step: "Test 56: get_call (resident, documents/transcriptions null)", status: "failed", error: "Cannot verify"});
+            }
+            else
+            {
+                try
+                {
+                    this.$Session.impersonateAccount(addedResidentId);
+
+                    rv = $executeAPI(this.$Session, "Call/get_call", {call_id: emergencyCallId});
+
+                    this.$Session.accountImpersonationStack = null;
+                    this.$Session.userId = adminUserId;
+                    this.$Session.userType = $Const.USER_TYPE_ADMIN;
+
+                    if ($Err.isERR(rv))
+                    {
+                        testResults.push({step: "Test 56: get_call (resident, documents/transcriptions null)", status: "failed", error: rv.message});
+                    }
+                    else
+                    {
+                        let c = rv.call;
+                        if (c.documents === null && c.transcriptions === null)
+                        {
+                            testResults.push({step: "Test 56: get_call (resident, documents/transcriptions null)", status: "passed", verified: true});
+                        }
+                        else
+                        {
+                            testResults.push({step: "Test 56: get_call (resident, documents/transcriptions null)", status: "warning", verified: false, documents: c.documents, transcriptions: c.transcriptions});
+                        }
+                    }
+                }
+                catch (impErr)
+                {
+                    this.$Session.accountImpersonationStack = null;
+                    this.$Session.userId = adminUserId;
+                    this.$Session.userType = $Const.USER_TYPE_ADMIN;
+                    testResults.push({step: "Test 56: get_call (resident, documents/transcriptions null)", status: "failed", error: impErr.message});
+                }
+            }
+
+            // =================================================================
+            // Test 57: add_call_document (as officer, transcription on assigned call)
+            // =================================================================
+
+            testResults.push({step: "Test 57: add_call_document (as officer, transcription)", status: "running"});
+            if (emergencyCallId === null || addedOfficerId === null)
+            {
+                testResults.push({step: "Test 57: add_call_document (as officer, transcription)", status: "failed", error: "Cannot test"});
+            }
+            else
+            {
+                try
+                {
+                    this.$Session.impersonateAccount(addedOfficerId);
+
+                    rv = $executeAPI(this.$Session, "Call/add_call_document", {
+                        call_id: emergencyCallId,
+                        transcription_text: `Officer transcription ${uniqueId}`
+                    });
+
+                    this.$Session.accountImpersonationStack = null;
+                    this.$Session.userId = adminUserId;
+                    this.$Session.userType = $Const.USER_TYPE_ADMIN;
+
+                    if ($Err.isERR(rv))
+                    {
+                        testResults.push({step: "Test 57: add_call_document (as officer, transcription)", status: "failed", error: rv.message});
+                    }
+                    else
+                    {
+                        testResults.push({step: "Test 57: add_call_document (as officer, transcription)", status: "passed"});
+                    }
+                }
+                catch (impErr)
+                {
+                    this.$Session.accountImpersonationStack = null;
+                    this.$Session.userId = adminUserId;
+                    this.$Session.userType = $Const.USER_TYPE_ADMIN;
+                    testResults.push({step: "Test 57: add_call_document (as officer, transcription)", status: "failed", error: impErr.message});
+                }
+            }
+
+            // =================================================================
+            // Test 58: add_call_document (no documents or transcription — no-op)
+            // =================================================================
+
+            testResults.push({step: "Test 58: add_call_document (empty request, no-op)", status: "running"});
+            if (emergencyCallId === null)
+            {
+                testResults.push({step: "Test 58: add_call_document (empty request, no-op)", status: "failed", error: "Cannot test"});
+            }
+            else
+            {
+                rv = $executeAPI(this.$Session, "Call/add_call_document", {
+                    call_id: emergencyCallId
+                });
+                if ($Err.isERR(rv))
+                {
+                    testResults.push({step: "Test 58: add_call_document (empty request, no-op)", status: "failed", error: rv.message});
+                }
+                else
+                {
+                    testResults.push({step: "Test 58: add_call_document (empty request, no-op)", status: "passed"});
+                }
+            }
+
+            // =================================================================
             // Cleanup
             // =================================================================
 

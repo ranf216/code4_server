@@ -62,13 +62,17 @@ These features are documented in the SDS but are **not implemented** in the init
 
 ---
 
-## 6. Documents & Transcriptions (SDS 2.4.1.3.2, 4.4.2)
+## 6. Documents & Transcriptions (SDS 2.4.1.3.2, 4.4.2) — ✅ Partially Implemented
 
 **Requirement:** Attach documents to calls, and provide AI-powered transcription of audio/video attachments.
 
-**Current behavior:** Not implemented. Only images, single audio, and single video are supported.
+**Current behavior:** ✅ **Partially implemented.**
+- [x] `Call/add_call_document` — Admins and officers can attach document files (PDF, XLSX, CSV, TXT, PNG, JPEG) to calls. File IDs are resolved and validated against allowed MIME types. File names are appended to `SVC_DOCUMENTS` JSON array.
+- [x] Manual transcription text can be provided alongside document uploads. Transcription objects `{file_name, transcription_text, created_on}` are appended to `SVC_TRANSCRIPTIONS` JSON array.
+- [x] Role-based response filtering: `documents` and `transcriptions` fields in call responses are visible only to ADMIN and OFFICER callers; RESIDENT callers receive `null`.
+- [ ] AI-powered automatic transcription of audio/video attachments — still deferred pending AI transcription service integration.
 
-**Dependencies:** AI transcription service integration, document file type support.
+**Dependencies:** ~~AI transcription service integration, document file type support.~~ Document uploads implemented. AI transcription service still deferred.
 
 ---
 

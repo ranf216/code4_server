@@ -489,6 +489,7 @@ Manages the full lifecycle of service calls, emergency calls, panic button alert
 | `Call/assign_call` | ADMIN | Assign officer to service call (sets status to accepted). |
 | `Call/add_reaction` | RESIDENT | Add like/dislike reaction to resolved call (creator only). |
 | `Call/add_comment` | RESIDENT | Add comment to resolved call (creator only). |
+| `Call/add_call_document` | ADMIN, OFFICER | Attach documents (PDF, XLSX, CSV, TXT, PNG, JPEG) and/or transcriptions to a call. |
 | `Call/delete_test_call` | ADMIN | Soft-delete a test call. Only category=test calls can be deleted. |
 
 #### Implementation Details
@@ -503,6 +504,7 @@ Manages the full lifecycle of service calls, emergency calls, panic button alert
 - **assign_call** — Admin assigns officer. Validates officer exists and is active. Sets status to `accepted`. Notifies both officer and resident.
 - **add_reaction** — Only call creator, only after resolved. Sends `resident_like` notification to officer on like.
 - **add_comment** — Only call creator, only after resolved.
+- **add_call_document** — Attaches document files and/or text transcriptions to a call. Validates call exists and is non-deleted. Officers must be assigned to the call or in the same community. Validates file IDs exist in the `file` table and checks MIME types against allowed document types (PDF, XLSX, CSV, TXT, PNG, JPEG). Appends resolved file names to `SVC_DOCUMENTS` JSON array. If `transcription_text` is provided, appends a transcription object `{file_name, transcription_text, created_on}` to `SVC_TRANSCRIPTIONS` JSON array. Response mapping via `mapCallRow()` includes `documents` and `transcriptions` only for ADMIN and OFFICER callers; RESIDENT callers receive `null`.
 - **delete_test_call** — Soft-delete via `SVC_DELETED_ON`. Only `category=test` calls allowed.
 
 #### Call Error Codes (560–589)
@@ -526,7 +528,7 @@ Manages the full lifecycle of service calls, emergency calls, panic button alert
 
 #### Design Notes
 - **Soft deletion:** Uses `SVC_DELETED_ON` timestamp for test call deletion only. Regular calls are never deleted (status lifecycle: new→accepted→resolved or canceled).
-- **Media handling:** Resident media (`SVC_MEDIA`) and officer confirmation media (`SVC_CONFIRMATION_MEDIA`) are JSON arrays of file names (max 5 each). Files are uploaded separately via `File/upload_file_base64` or multipart upload; file IDs are resolved to file names at call creation/update time.
+- **Media handling:** Resident media (`SVC_MEDIA`) and officer confirmation media (`SVC_CONFIRMATION_MEDIA`) are JSON arrays of file names (max 5 each). Files are uploaded separately via `File/upload_file_base64` or multipart upload; file IDs are resolved to file names at call creation/update time. `SVC_DOCUMENTS` stores document file names (PDF, XLSX, CSV, TXT, PNG, JPEG). `SVC_TRANSCRIPTIONS` stores transcription objects `[{file_name, transcription_text, created_on}]`. Documents and transcriptions are role-filtered: visible to ADMIN/OFFICER only, null for RESIDENT.
 - **Notifications:** Uses `$executeAPI` to create notifications via the Notification module. Emergency/panic→bulk to all officers in community. Service→officers. Accept/resolve/cancel→individual to affected parties.
 - **Priority override:** Emergency and panic calls always get `urgent` priority regardless of user input.
 - **Access control:** Layered — ACL restricts user types, then business logic restricts to relevant records (own calls, assigned calls, same community).

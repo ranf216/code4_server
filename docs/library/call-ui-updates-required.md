@@ -135,7 +135,35 @@ When a call with `category` = `medical_emergency`, `security_emergency`, or `pan
 
 Admins are the **only** users who can resolve panic calls. The resolve button should always be available for admins regardless of call category.
 
-### 1.5 Cancel Call Action
+### 1.5 Attach Documents Panel
+
+**Location:** Button in the call detail panel. Visible for **Admin and Officer** users on any non-deleted call.
+
+**Label:** "Attach Document" or "Add Document"
+
+**On click:** Open a dialog with the following fields:
+
+| Field | Type | Required | Maps to |
+|---|---|---|---|
+| Document Files | File upload (multiple) | No | `document_file_ids` |
+| Transcription Text | Textarea | No | `transcription_text` |
+
+**Allowed file types:** PDF, XLSX, CSV, TXT, PNG, JPEG. Display this restriction clearly in the upload area.
+
+**Upload flow:**
+1. User selects one or more files.
+2. Each file is uploaded via `File/upload_file_base64` to get a `file_id`.
+3. Optionally, user enters transcription text.
+4. Submit via `Call/add_call_document` with the collected `document_file_ids` and `transcription_text`.
+
+**After success:** Refresh the call detail to show the newly attached documents in the detail panel.
+
+**Documents & Transcriptions Display (in Call Detail §1.2.1):**
+- Add a **"Documents"** section showing document file links from the `documents` array.
+- Add a **"Transcriptions"** section showing each transcription entry with file name, text, and timestamp from the `transcriptions` array.
+- **Visibility note:** These fields are only populated for Admin and Officer callers. Resident callers receive `null` — do not render these sections for Residents.
+
+### 1.6 Cancel Call Action
 
 **Location:** Button in the call detail panel. **Only visible for concierge service calls** in `new` or `accepted` status.
 
@@ -353,6 +381,12 @@ When an officer is actively handling a call (status = `accepted`):
 **Resolve Call:**
 - "Resolve" button → opens resolution form with optional comments and media
 - Submits via `Call/resolve_call`
+
+**Attach Documents:**
+- "Attach Document" button → opens file picker for document uploads (PDF, XLSX, CSV, TXT, PNG, JPEG)
+- Optional transcription text field
+- Upload files first via `File/upload_file_base64`, then submit via `Call/add_call_document`
+- After success, refresh the call detail to show newly attached documents in a "Documents" section
 
 #### 3.4.3 Panic Call Restriction (CRITICAL)
 

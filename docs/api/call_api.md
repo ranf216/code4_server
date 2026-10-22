@@ -69,6 +69,10 @@ Concierge service calls require a `service_type` value. Valid service types are 
 
 Calls support up to **5 image files**, **1 audio file**, and **1 video file**. Officer confirmation evidence supports a separate set of up to **5 confirmation images** and **1 confirmation video**. All file IDs must be obtained via `File/upload_file_base64` before attaching.
 
+### Documents & Transcriptions
+
+Admins and officers can attach post-call documents (PDF, XLSX, CSV, TXT, PNG, JPEG) and optional text transcriptions via `Call/add_call_document`. Documents and transcriptions are **only visible to Admin and Officer callers**. Resident callers receive `null` for both fields in call responses.
+
 ### Notifications
 
 The system automatically sends push notifications at key lifecycle events:
@@ -241,6 +245,8 @@ The system automatically sends push notifications at key lifecycle events:
     | `confirmation_media` | array | Array of officer confirmation image URLs. |
     | `confirmation_video_url` | string or null | Officer confirmation video URL. |
     | `officer_comments` | string | Officer's notes/comments. |
+    | `documents` | array or null | Array of document URLs (Admin/Officer only; `null` for Residents). |
+    | `transcriptions` | array or null | Array of transcription objects `{file_name, transcription_text, created_on}` (Admin/Officer only; `null` for Residents). |
     | `reaction` | integer or null | Resident reaction: `1` = like, `-1` = dislike, `null` = none. |
     | `resident_comment` | string | Resident's post-resolution comment. |
     | `resident_user_id` | string | User ID of the call creator (resident or officer). |
@@ -628,6 +634,44 @@ The system automatically sends push notifications at key lifecycle events:
 
 - **Usage & Flows:**
     Displayed alongside the reaction widget on the resolved call detail screen. The resident can type a text comment (e.g. "Great response time, thank you!"). This comment is visible to officers and admins when viewing the call details.
+
+---
+
+### POST Call/add_call_document
+*Attaches document files and/or a text transcription to a call. Only admins and officers can attach documents. Allowed file types: PDF, XLSX, CSV, TXT, PNG, JPEG.*
+
+- **API Parameters:**
+    | Parameter | Type | Required | Default | Description |
+    |-----------|------|----------|---------|-------------|
+    | `#token` | string | Yes | — | A valid session token (Admin or Officer). |
+    | `call_id` | integer | Yes | — | The call ID to attach documents to. |
+    | `document_file_ids` | array | No | `[]` | Array of file ID strings for document attachments (obtained via `File/upload_file_base64`). Allowed MIME types: PDF, XLSX, CSV, TXT, PNG, JPEG. |
+    | `transcription_text` | string | No | `""` | Optional text transcription for audio or video documents. |
+
+    At least one of `document_file_ids` or `transcription_text` must be provided; otherwise the call succeeds with no changes.
+
+- **Return Values:**
+    ```json
+    {
+        "rc": 0,
+        "message": "success"
+    }
+    ```
+
+    On success, the document file names are appended to the call's documents array. If `transcription_text` is provided, a transcription object `{file_name, transcription_text, created_on}` is appended to the call's transcriptions array.
+
+- **Error Cases:**
+    | rc | Message | Scenario |
+    |----|---------|----------|
+    | 201 | invalid user token | Invalid or expired token. |
+    | 560 | call not found | Call does not exist, has been deleted, or the officer does not have access. |
+    | 321 | file not found | One or more file IDs in `document_file_ids` do not exist. |
+    | 324 | invalid file type | One or more files have a MIME type not in the allowed list (PDF, XLSX, CSV, TXT, PNG, JPEG). |
+
+    **Access control:** Admins can attach documents to any call. Officers can attach documents only to calls assigned to them or calls in their community.
+
+- **Usage & Flows:**
+    Used by admins and officers to attach post-call documentation such as police reports, radio logs, spot reports, and transcriptions. Upload files first via `File/upload_file_base64`, then pass the returned file IDs. The documents and transcriptions are visible only to Admin and Officer callers when retrieving call details — Residents receive `null` for both fields.
 
 ---
 

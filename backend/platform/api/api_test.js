@@ -44,7 +44,7 @@ module.exports =
 
     "test_call_apis"                        : {
                                                 "@acl"                          : [$ACL.USER_TYPE_ADMIN],
-                                                "@doc"                          : "Test all Call module APIs (create, get, update, cancel, accept, pass, resolve, assign, reaction, comment, delete_test_call)",
+                                                "@doc"                          : "Test all Call module APIs (create, get, update, cancel, accept, pass, resolve, assign, reaction, comment, add_call_document, delete_test_call)",
                                                 "@mode"                         : "test",
                                                 "#token"                        : "s",
                                             },

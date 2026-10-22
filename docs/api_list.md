@@ -92,7 +92,7 @@ This document lists all APIs required for the Code4 Security Operations Platform
 | `Call/resolve_call` | OFFICER | Officer resolves/closes a call |
 | `Call/assign_officer` | ADMIN | Manager assigns officer to a service call |
 | `Call/add_call_media` | OFFICER, RESIDENT | Upload images/video/audio to a call |
-| `Call/add_call_document` | ADMIN, OFFICER | Upload document to a call |
+| `Call/add_call_document` | ADMIN, OFFICER | Attach documents (PDF, XLSX, CSV, TXT, PNG, JPEG) and/or transcriptions to a call |
 | `Call/add_call_comment` | ADMIN, OFFICER, RESIDENT | Add communication/comment to a panic call |
 | `Call/like_call` | RESIDENT | Resident likes a resolved call |
 | `Call/delete_test_call` | ADMIN | Delete a test emergency call |

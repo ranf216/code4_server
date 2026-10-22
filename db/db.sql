@@ -453,6 +453,8 @@ CREATE TABLE `service_call` (
   `SVC_CONFIRMATION_MEDIA` json DEFAULT NULL COMMENT 'Officer confirmation images (array of file names, max 5)',
   `SVC_CONFIRMATION_VIDEO` varchar(200) DEFAULT NULL COMMENT 'Officer confirmation video file name',
   `SVC_OFFICER_COMMENTS` text,
+  `SVC_DOCUMENTS` json DEFAULT NULL COMMENT 'JSON array of file names for attached documents (police report, radio logs, spot reports)',
+  `SVC_TRANSCRIPTIONS` json DEFAULT NULL COMMENT 'JSON array of transcription objects [{file_name, transcription_text, created_on}]',
   `SVC_REACTION` tinyint DEFAULT NULL COMMENT '1=like, -1=dislike, null=no reaction',
   `SVC_RESIDENT_COMMENT` text,
   `SVC_PASSED_BY` json DEFAULT NULL COMMENT 'Array of officer user IDs who passed on this call',
