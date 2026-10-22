@@ -171,6 +171,7 @@ Applied consistently in:
 | `Call/assign_call` | ADMIN | Assign an officer to a service call |
 | `Call/add_reaction` | RESIDENT | Like/dislike a resolved call |
 | `Call/add_comment` | RESIDENT | Comment on a resolved call |
+| `Call/add_call_document` | ADMIN, OFFICER | Attach documents and transcriptions to a call |
 | `Call/delete_test_call` | ADMIN | Soft-delete a test call |
 
 ### 3.2 create_call
@@ -305,7 +306,33 @@ Sends `call_updated` notification to the other party (resident → officer, offi
 **Restriction:** Resident must be the call creator. Call must be `resolved`.  
 **Parameters:** `comment` (string, required).
 
-### 3.13 delete_test_call
+### 3.13 add_call_document
+
+**ACL:** `USER_TYPE_ADMIN`, `USER_TYPE_OFFICER`
+
+**Parameters:**
+
+| Parameter | Type | Required | Description |
+|---|---|---|---|
+| `call_id` | int | Yes | Target call ID |
+| `document_file_ids` | array | No | File IDs from `File/upload_file_base64`. Allowed MIME types: PDF, XLSX, CSV, TXT, PNG, JPEG |
+| `transcription_text` | string | No | Text transcription for audio/video documents |
+
+**Business Logic:**
+1. If neither `document_file_ids` nor `transcription_text` is provided, return success (no-op).
+2. Validate call exists and is non-deleted via `fetchCallRecord()`.
+3. **Officer access:** Officer must be assigned to the call (`SVC_OFC_USR_ID`) or in the same community (`SVC_COM_ID`).
+4. Validate file IDs exist in `file` table (bulk query — no queries in loops). Return `ERR_FILE_NOT_FOUND` (321) if any are missing.
+5. Validate each file's `FIL_MIME_TYPE` against `ALLOWED_DOCUMENT_MIME_TYPES`. Return `ERR_INVALID_FILE_TYPE` (324) on mismatch.
+6. Append resolved file names to existing `SVC_DOCUMENTS` JSON array.
+7. If `transcription_text` is provided, append `{file_name, transcription_text, created_on}` object to `SVC_TRANSCRIPTIONS` JSON array. The `file_name` is the first resolved document file name (or empty string if no documents provided).
+8. Atomic UPDATE of both columns + `SVC_LAST_UPDATE`.
+
+**Response:** `{ rc: 0 }`
+
+**Role-based response filtering:** The `mapCallRow()` function includes `documents` and `transcriptions` fields only for `USER_TYPE_ADMIN` and `USER_TYPE_OFFICER` callers. `USER_TYPE_RESIDENT` callers receive `null` for both fields.
+
+### 3.14 delete_test_call
 
 **ACL:** `USER_TYPE_ADMIN`  
 **Restriction:** Call category must be `test`.  
@@ -341,6 +368,8 @@ Sends `call_updated` notification to the other party (resident → officer, offi
 | `SVC_CONFIRMATION_MEDIA` | json | Yes | Officer confirmation images |
 | `SVC_CONFIRMATION_VIDEO` | varchar(200) | Yes | Officer confirmation video |
 | `SVC_OFFICER_COMMENTS` | text | Yes | Officer notes |
+| `SVC_DOCUMENTS` | json | Yes | Attached document file names (PDF, XLSX, CSV, TXT, PNG, JPEG) |
+| `SVC_TRANSCRIPTIONS` | json | Yes | Transcription objects `[{file_name, transcription_text, created_on}]` |
 | `SVC_REACTION` | tinyint | Yes | 1=like, -1=dislike, null=none |
 | `SVC_RESIDENT_COMMENT` | text | Yes | Resident feedback |
 | `SVC_PASSED_BY` | json | Yes | Officer IDs who passed |

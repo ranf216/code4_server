@@ -128,6 +128,16 @@ module.exports =
                                                 },
 
 
+            "add_call_document"                 : {
+                                                    "@acl"                          : [$ACL.USER_TYPE_ADMIN, $ACL.USER_TYPE_OFFICER],
+                                                    "@doc"                          : "Attach documents and/or transcriptions to a call. Allowed file types: PDF, XLSX, CSV, TXT, PNG, JPEG.",
+                                                    "#token"                        : "s",
+                                                    "call_id"                       : "i***Call ID",
+                                                    "document_file_ids"             : "o:a:***Array of uploaded file IDs for documents (from File/upload_file_base64)",
+                                                    "transcription_text"            : "o:s:***Optional text transcription for audio or video documents",
+                                                },
+
+
             "delete_test_call"                  : {
                                                     "@acl"                          : [$ACL.USER_TYPE_ADMIN],
                                                     "@doc"                          : "Soft-delete a test call. Only calls with category=test can be deleted.",

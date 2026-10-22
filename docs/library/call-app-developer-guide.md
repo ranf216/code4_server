@@ -125,6 +125,8 @@ When the API returns a call (via `get_call` or in the `calls` array from `get_ca
 - `media` — Array of image URLs (max 5). Empty array `[]` if no images.
 - `audio_url`, `video_url` — Single file URLs or `null`.
 - `confirmation_media`, `confirmation_video_url` — Officer-submitted evidence.
+- `documents` — Array of document URLs (Admin/Officer only; `null` for Residents). Attached via `Call/add_call_document`.
+- `transcriptions` — Array of transcription objects `{file_name, transcription_text, created_on}` (Admin/Officer only; `null` for Residents).
 - `service_type` — Only populated for `concierge_service` calls.
 - `scheduled_date`, `scheduled_time_from`, `scheduled_time_to` — Only relevant for concierge service calls.
 - `assigned_by` — Admin user ID who assigned the officer (null if officer self-accepted).
@@ -276,7 +278,39 @@ Admins can cancel concierge service calls. Emergency and panic calls **cannot** 
 }
 ```
 
-### 5.7 Delete Test Call — `Call/delete_test_call`
+### 5.7 Attach Documents to a Call — `Call/add_call_document`
+
+Admins can attach post-call documents (police reports, radio logs, spot reports) and optional transcriptions to any call.
+
+**Request:**
+```json
+{
+    "token": "<admin_token>",
+    "call_id": 42,
+    "document_file_ids": ["file_001", "file_002"],
+    "transcription_text": "Transcript of the audio recording from the incident."
+}
+```
+
+Both `document_file_ids` and `transcription_text` are optional, but at least one must be provided. Allowed file types: PDF, XLSX, CSV, TXT, PNG, JPEG.
+
+**Response (success):**
+```json
+{
+    "rc": 0
+}
+```
+
+**Expected errors:**
+| RC | When |
+|---|---|
+| 560 | Call not found |
+| 321 | One or more file IDs not found |
+| 324 | File MIME type not allowed |
+
+**Note:** Documents and transcriptions are visible only to Admin and Officer users. Residents receive `null` for both fields in call responses.
+
+### 5.8 Delete Test Call — `Call/delete_test_call`
 
 Removes test calls from the system (soft-delete — they will no longer appear in any listing).
 
@@ -564,7 +598,29 @@ Officers can resolve calls assigned to them, **except panic calls**.
 | 573 | Call is not assigned to this officer |
 | 569 | Call is not in `accepted` status |
 
-### 7.7 Panic Call — Officer UI Restriction
+### 7.7 Attach Documents to a Call — `Call/add_call_document`
+
+Officers can attach documents and transcriptions to calls they are assigned to or calls in their community.
+
+```json
+{
+    "token": "<officer_token>",
+    "call_id": 42,
+    "document_file_ids": ["file_001"],
+    "transcription_text": "Audio transcription content."
+}
+```
+
+Allowed file types: PDF, XLSX, CSV, TXT, PNG, JPEG. Upload files first via `File/upload_file_base64`.
+
+**Expected errors:**
+| RC | When |
+|---|---|
+| 560 | Call not found or officer does not have access |
+| 321 | File ID not found |
+| 324 | File type not allowed |
+
+### 7.8 Panic Call — Officer UI Restriction
 
 When an officer is viewing an active panic call they have accepted:
 
