@@ -222,7 +222,7 @@ Manages officers — the primary operational actors in the system. Full CRUD for
 
 Officers are `USER_TYPE_OFFICER` (2) in the `user` table. Each officer has a login phone number (OTP-based auth), first/last name, email, community assignment, title, description, address, roles, certification badges, and active/inactive status.
 
-- **get_officers** — Lists all non-deleted officers. Optional `community_id` filter, `include_inactive` (default: active only), `search_text` for free-text search across name, email, phone, community name. Sortable by `first_name`, `last_name`, `community`, `created_on`.
+- **get_officers** — Lists all non-deleted officers. Optional `community_id` filter, `include_inactive` (default: active only), `search_text` for free-text search across name, email, phone, community name, title, roles, certification badges, and address (SDS 4.3.5). Sortable by `first_name`, `last_name`, `community`, `created_on`.
 - **get_officer** — Returns full officer details by user ID including evaluations array. Returns `ERR_OFFICER_NOT_FOUND` (520) if not found.
 - **add_officer** — Creates a new officer. Validates phone uniqueness, email uniqueness (if provided), and community existence/active status. Creates user via `User/add_user` with OTP login authority. Sets community association, image, and officer-specific fields. Returns new `user_id`.
 - **update_officer** — Dynamic partial update across `user_details` and `officer` tables. Phone change requires re-identification (terminates session). Email and community changes validated. Deactivation terminates session.

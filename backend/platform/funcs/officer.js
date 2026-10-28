@@ -73,8 +73,8 @@ module.exports = class
         {
             let term = "%" + this.$search_text + "%";
             conditions.push(
-                `(USD_FIRST_NAME LIKE ? OR USD_LAST_NAME LIKE ? OR USR_EMAIL LIKE ? OR USD_PHONE_NUM LIKE ? OR COM_NAME LIKE ?)`);
-            params.push(term, term, term, term, term);
+                `(USD_FIRST_NAME LIKE ? OR USD_LAST_NAME LIKE ? OR USR_EMAIL LIKE ? OR USD_PHONE_NUM LIKE ? OR COM_NAME LIKE ? OR OFC_TITLE LIKE ? OR OFC_ROLES LIKE ? OR OFC_CERTIFICATION_BADGES LIKE ? OR OFC_ADDRESS LIKE ?)`);
+            params.push(term, term, term, term, term, term, term, term, term);
         }
 
         let validSortColumns = {

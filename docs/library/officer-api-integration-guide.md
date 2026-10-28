@@ -115,7 +115,7 @@ Retrieves a list of all officers. Use this to populate the Officers Management t
 |---|---|---|---|---|
 | `community_id` | integer | No | `0` | Filter by community. `0` = show all communities. Pass a specific community ID to filter. |
 | `include_inactive` | boolean | No | `false` | Set to `true` to include deactivated officers. By default, only active officers are shown. |
-| `search_text` | string | No | `""` | Free-text search. Filters across first name, last name, email, phone number, and community name. Case-insensitive, supports partial matching. |
+| `search_text` | string | No | `""` | Free-text search. Filters across first name, last name, email, phone number, community name, title, roles, certification badges, and address. Case-insensitive, supports partial matching. |
 | `sort_by` | string | No | `""` | Column to sort by. Valid values: `"first_name"`, `"last_name"`, `"community"`, `"created_on"`. If empty, defaults to first name ascending. |
 | `sort_dir` | string | No | `"asc"` | Sort direction: `"asc"` or `"desc"`. |
 
@@ -178,6 +178,10 @@ The `search_text` parameter triggers a **server-side search**. The server matche
 3. Email address
 4. Phone number
 5. Community name
+6. Title
+7. Roles (JSON array — searches within serialized string)
+8. Certification badges (JSON array — searches within serialized string)
+9. Address
 
 An officer is included in results if **any** of the above match. The search is case-insensitive and supports partial matching (e.g., searching "dav" will match "David").
 

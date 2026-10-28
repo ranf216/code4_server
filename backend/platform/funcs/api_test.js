@@ -3013,6 +3013,103 @@ module.exports = class
             }
 
             // -----------------------------------------------------------------
+            // Extended Search Tests (SDS 4.3.5 — search across officer fields)
+            // -----------------------------------------------------------------
+
+            testResults.push({step: "Test 16e: update_officer (set searchable fields)", status: "running"});
+            rv = $executeAPI(this.$Session, "Officer/update_officer", {
+                user_id: addedOfficerId,
+                title: "TitleSearch_" + uniqueId,
+                address: "AddrSearch_" + uniqueId,
+                roles: ["RoleSearch_" + uniqueId],
+                certification_badges: ["BadgeSearch_" + uniqueId]
+            });
+            if ($Err.isERR(rv))
+            {
+                testResults.push({step: "Test 16e: update_officer (set searchable fields)", status: "failed", error: rv.message});
+            }
+            else
+            {
+                testResults.push({step: "Test 16e: update_officer (set searchable fields)", status: "passed"});
+            }
+
+            testResults.push({step: "Test 16f: get_officers (search by title)", status: "running"});
+            rv = $executeAPI(this.$Session, "Officer/get_officers", { search_text: "TitleSearch_" + uniqueId, include_inactive: true });
+            if ($Err.isERR(rv))
+            {
+                testResults.push({step: "Test 16f: get_officers (search by title)", status: "failed", error: rv.message});
+            }
+            else
+            {
+                let found = rv.officers.find(o => o.user_id === addedOfficerId);
+                if (found)
+                {
+                    testResults.push({step: "Test 16f: get_officers (search by title)", status: "passed", result_count: rv.total_count});
+                }
+                else
+                {
+                    testResults.push({step: "Test 16f: get_officers (search by title)", status: "failed", message: "Officer not found when searching by title"});
+                }
+            }
+
+            testResults.push({step: "Test 16g: get_officers (search by role)", status: "running"});
+            rv = $executeAPI(this.$Session, "Officer/get_officers", { search_text: "RoleSearch_" + uniqueId, include_inactive: true });
+            if ($Err.isERR(rv))
+            {
+                testResults.push({step: "Test 16g: get_officers (search by role)", status: "failed", error: rv.message});
+            }
+            else
+            {
+                let found = rv.officers.find(o => o.user_id === addedOfficerId);
+                if (found)
+                {
+                    testResults.push({step: "Test 16g: get_officers (search by role)", status: "passed", result_count: rv.total_count});
+                }
+                else
+                {
+                    testResults.push({step: "Test 16g: get_officers (search by role)", status: "failed", message: "Officer not found when searching by role"});
+                }
+            }
+
+            testResults.push({step: "Test 16h: get_officers (search by badge)", status: "running"});
+            rv = $executeAPI(this.$Session, "Officer/get_officers", { search_text: "BadgeSearch_" + uniqueId, include_inactive: true });
+            if ($Err.isERR(rv))
+            {
+                testResults.push({step: "Test 16h: get_officers (search by badge)", status: "failed", error: rv.message});
+            }
+            else
+            {
+                let found = rv.officers.find(o => o.user_id === addedOfficerId);
+                if (found)
+                {
+                    testResults.push({step: "Test 16h: get_officers (search by badge)", status: "passed", result_count: rv.total_count});
+                }
+                else
+                {
+                    testResults.push({step: "Test 16h: get_officers (search by badge)", status: "failed", message: "Officer not found when searching by badge"});
+                }
+            }
+
+            testResults.push({step: "Test 16i: get_officers (search by address)", status: "running"});
+            rv = $executeAPI(this.$Session, "Officer/get_officers", { search_text: "AddrSearch_" + uniqueId, include_inactive: true });
+            if ($Err.isERR(rv))
+            {
+                testResults.push({step: "Test 16i: get_officers (search by address)", status: "failed", error: rv.message});
+            }
+            else
+            {
+                let found = rv.officers.find(o => o.user_id === addedOfficerId);
+                if (found)
+                {
+                    testResults.push({step: "Test 16i: get_officers (search by address)", status: "passed", result_count: rv.total_count});
+                }
+                else
+                {
+                    testResults.push({step: "Test 16i: get_officers (search by address)", status: "failed", message: "Officer not found when searching by address"});
+                }
+            }
+
+            // -----------------------------------------------------------------
             // Officer Evaluations
             // -----------------------------------------------------------------
 

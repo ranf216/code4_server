@@ -113,7 +113,7 @@ Position above the table, below the page title. Contains:
 - **Type:** Text input with search icon
 - **Placeholder:** "Search officers..."
 - **Behaviour:** Debounce input (300–500ms). Send `search_text` to the server on each change. Clear button to reset.
-- **Server-side search:** The server searches across first name, last name, email, phone, and community name. Do NOT implement client-side filtering.
+- **Server-side search:** The server searches across first name, last name, email, phone, community name, title, roles, certification badges, and address. Do NOT implement client-side filtering.
 
 #### 1.3.5 Sort Controls
 
