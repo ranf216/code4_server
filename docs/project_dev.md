@@ -926,7 +926,7 @@ Post Orders are structured, versioned documents attached to a specific post with
 
 | Table | Prefix | Purpose |
 |-------|--------|---------|
-| `post_order` | `PO_` | Main post order record, one per post |
+| `post_order` | `PO_` | Main post order record, one active (draft/published) per post |
 | `post_order_section` | `POS_` | Ordered sections within a post order |
 | `post_order_attachment` | `POF_` | File attachments per section (max 5) |
 | `post_order_version` | `POV_` | Published version snapshots (JSON content) |
@@ -950,7 +950,7 @@ Draft → Published → Archived
 
 - **Draft:** Visible/editable by admins only. Not visible to officers or clients.
 - **Published:** Active version. Officers and clients can read. Push notifications sent on publish.
-- **Archived:** No longer shown to officers/clients. Retained for audit in version history.
+- **Archived:** No longer shown to officers/clients. Retained for audit in version history. Once archived, a new post order can be created for the same post.
 - Editing a published PO sets status back to `draft`; the latest `post_order_version` remains the officer-facing content until the new draft is published.
 - Only one draft at a time per post order. Only drafts with no published history can be deleted.
 
@@ -993,7 +993,7 @@ Section type CRUD is handled by Settings module: `Settings/get_po_section_types`
 | 678 | `ERR_POST_ORDER_DRAFT_EXISTS` | a draft already exists for this post order |
 | 679 | `ERR_POST_ORDER_MEDIA_LIMIT_REACHED` | maximum number of attachments per section reached |
 | 680 | `ERR_POST_ORDER_VERSION_NOT_FOUND` | post order version not found |
-| 681 | `ERR_POST_ORDER_ALREADY_EXISTS` | a post order already exists for this post |
+| 681 | `ERR_POST_ORDER_ALREADY_EXISTS` | an active post order already exists for this post |
 
 #### Data Items
 
@@ -1024,7 +1024,7 @@ Notifications are sent to all officers currently allocated to the post (via `shi
 - **Transaction discipline:** All SELECTs (post lookup, file resolution, section snapshot, officer list) happen before `beginTransaction()`. Transactions contain only INSERTs/UPDATEs.
 - **Version snapshots:** On publish, all current sections (including attachment URLs and notes) are serialized to `POV_CONTENT` JSON in `post_order_version`. This ensures historical versions are immutable even if the working sections are later edited.
 - **Section replacement:** `update_post_order` with `sections` array performs a full replace: soft-deletes existing sections/attachments, then inserts new ones. This matches the SDS requirement for free reordering.
-- **One PO per post:** Enforced by checking for existing non-deleted PO with the same `PO_PST_ID` before insert.
+- **One active PO per post:** Enforced by checking for existing non-deleted PO with status `draft` or `published` for the same `PO_PST_ID` before insert. Archived post orders are excluded from this check, allowing a new draft to be created for a post whose previous PO was archived.
 
 #### Deferred Features
 

@@ -210,13 +210,17 @@ All three are registered via `$DataItems.define()` in the module constructor, pr
 
 ### 3.1 Post Cardinality & Active Validation (Q1)
 
-One active post order per post is enforced in application logic. Before creating a new PO, the server queries:
+One active (draft or published) post order per post is enforced in application logic. Before creating a new PO, the server queries:
 
 ```sql
-SELECT PO_ID FROM `post_order` WHERE PO_PST_ID=? AND PO_DELETED_ON IS NULL
+SELECT PO_ID
+FROM `post_order`
+WHERE PO_PST_ID = ?
+  AND PO_STATUS IN ('draft', 'published')
+  AND PO_DELETED_ON IS NULL
 ```
 
-If a row exists, the server returns `ERR_POST_ORDER_ALREADY_EXISTS` (rc 681). A database-level unique constraint is not used because soft-deleted records would conflict with new active records (Decision D1).
+If a row exists, the server returns `ERR_POST_ORDER_ALREADY_EXISTS` (rc 681). Archived post orders are excluded from this check — once a post order is archived, a new draft can be created for the same post. A database-level unique constraint is not used because soft-deleted and archived records would conflict with new active records (Decision D1).
 
 ### 3.2 Immutable JSON Version Snapshots (Q2)
 
@@ -389,7 +393,7 @@ The following enhancements are documented for future phases:
 | `ERR_POST_ORDER_DRAFT_EXISTS` | 678 | a draft already exists for this post order | Reserved for future use |
 | `ERR_POST_ORDER_MEDIA_LIMIT_REACHED` | 679 | maximum number of attachments per section reached | >5 attachments per section |
 | `ERR_POST_ORDER_VERSION_NOT_FOUND` | 680 | post order version not found | Bad version_id |
-| `ERR_POST_ORDER_ALREADY_EXISTS` | 681 | a post order already exists for this post | Duplicate PO per post |
+| `ERR_POST_ORDER_ALREADY_EXISTS` | 681 | a post order already exists for this post | Active (draft/published) PO exists for post |
 
 ---
 

@@ -705,11 +705,13 @@ module.exports = class
 			return $ERRS.ERR_POST_NOT_FOUND;
 		}
 
-		// Check if a post order already exists for this post
+		// Check if an active (draft or published) post order already exists for this post
 		let existingRows = $Db.executeQuery(
 			`SELECT PO_ID FROM \`post_order\`
-			 WHERE PO_PST_ID=? AND PO_DELETED_ON IS NULL`,
-			[this.$post_id]);
+			 WHERE PO_PST_ID=?
+			   AND PO_STATUS IN (?, ?)
+			   AND PO_DELETED_ON IS NULL`,
+			[this.$post_id, $Const.PO_STATUS_DRAFT, $Const.PO_STATUS_PUBLISHED]);
 		if (existingRows.length > 0)
 		{
 			return $ERRS.ERR_POST_ORDER_ALREADY_EXISTS;

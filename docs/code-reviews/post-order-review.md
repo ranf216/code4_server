@@ -262,6 +262,6 @@ content = content.map(s => {
 | `ERR_POST_ORDER_DRAFT_EXISTS` | 678 | reserved | Not currently used |
 | `ERR_POST_ORDER_MEDIA_LIMIT_REACHED` | 679 | >5 attachments per section | ✅ |
 | `ERR_POST_ORDER_VERSION_NOT_FOUND` | 680 | bad version_id | ✅ |
-| `ERR_POST_ORDER_ALREADY_EXISTS` | 681 | duplicate PO per post | ✅ |
+| `ERR_POST_ORDER_ALREADY_EXISTS` | 681 | active (draft/published) PO exists for post | ✅ |
 
 **Note:** RC 674 (`ERR_POST_ORDER_SECTION_NOT_FOUND`) and RC 678 (`ERR_POST_ORDER_DRAFT_EXISTS`) are defined but not currently used. They are reserved for future use and do not conflict with any existing codes.

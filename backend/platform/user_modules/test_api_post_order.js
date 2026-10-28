@@ -1288,6 +1288,129 @@ module.exports =
 			}
 
 			// =================================================================
+			// Test 41: create_post_order after archive (should succeed)
+			// =================================================================
+
+			testResults.push({step: "Test 41: create_post_order after archive", status: "running"});
+			let tempPost9Rv = $executeAPI(session, "Asset/create_post", {
+				community_id: testCommunityId,
+				name: `PO AfterArchive Post ${uniqueId}`,
+				description: "Post for create-after-archive test",
+				priority: "normal",
+				shape: "place",
+				location: JSON.stringify({lat: 25.285, lng: 55.305})
+			});
+			if (!$Err.isERR(tempPost9Rv))
+			{
+				// Create first PO
+				let firstPoRv = $executeAPI(session, "PostOrder/create_post_order", {
+					post_id: tempPost9Rv.post_id,
+					sections: [{section_type: testSectionTypeId, title: "Original PO", description: "First post order", client_visible: true}]
+				});
+				if (!$Err.isERR(firstPoRv))
+				{
+					let firstPoId = firstPoRv.post_order_id;
+					// Publish it (version 1.0)
+					let pubRv = $executeAPI(session, "PostOrder/publish_post_order", {
+						post_order_id: firstPoId,
+						version_type: "minor",
+						change_summary: "Initial publish for archive test",
+						notify_officers: false
+					});
+					if (!$Err.isERR(pubRv))
+					{
+						// Archive it
+						let archRv = $executeAPI(session, "PostOrder/archive_post_order", {post_order_id: firstPoId});
+						if (!$Err.isERR(archRv))
+						{
+							// Now create a new PO for the same post — this should succeed
+							let secondPoRv = $executeAPI(session, "PostOrder/create_post_order", {
+								post_id: tempPost9Rv.post_id,
+								sections: [{section_type: testSectionTypeId, title: "Replacement PO", description: "Second post order after archive", client_visible: true}]
+							});
+							if (!$Err.isERR(secondPoRv))
+							{
+								let secondPoId = secondPoRv.post_order_id;
+								testResults.push({step: "Test 41: create_post_order after archive", status: "passed", first_po_id: firstPoId, second_po_id: secondPoId});
+
+								// Test 42: verify both POs appear in list
+								testResults.push({step: "Test 42: get_post_orders_list (both archived and new)", status: "running"});
+								let listRv = $executeAPI(session, "PostOrder/get_post_orders_list", {community_id: testCommunityId});
+								if (!$Err.isERR(listRv))
+								{
+									let foundArchived = listRv.post_orders.find(po => po.post_order_id === firstPoId);
+									let foundNew = listRv.post_orders.find(po => po.post_order_id === secondPoId);
+									if (foundArchived && foundArchived.status === "archived" && foundNew && foundNew.status === "draft")
+									{
+										testResults.push({step: "Test 42: get_post_orders_list (both archived and new)", status: "passed", archived_found: true, new_found: true});
+									}
+									else
+									{
+										testResults.push({step: "Test 42: get_post_orders_list (both archived and new)", status: "warning",
+											message: "Expected both archived and new draft POs in list",
+											archived_found: !!foundArchived, archived_status: foundArchived ? foundArchived.status : null,
+											new_found: !!foundNew, new_status: foundNew ? foundNew.status : null});
+									}
+								}
+								else
+								{
+									testResults.push({step: "Test 42: get_post_orders_list (both archived and new)", status: "failed", error: listRv.message});
+								}
+
+								// Test 43: publish the new PO — version should start at 1.0
+								testResults.push({step: "Test 43: publish_post_order (new PO starts at 1.0)", status: "running"});
+								let pub2Rv = $executeAPI(session, "PostOrder/publish_post_order", {
+									post_order_id: secondPoId,
+									version_type: "minor",
+									change_summary: "First publish of replacement PO",
+									notify_officers: false
+								});
+								if (!$Err.isERR(pub2Rv))
+								{
+									if (pub2Rv.version === "1.0")
+									{
+										testResults.push({step: "Test 43: publish_post_order (new PO starts at 1.0)", status: "passed", version: pub2Rv.version});
+									}
+									else
+									{
+										testResults.push({step: "Test 43: publish_post_order (new PO starts at 1.0)", status: "warning", message: "Expected version 1.0", version: pub2Rv.version});
+									}
+								}
+								else
+								{
+									testResults.push({step: "Test 43: publish_post_order (new PO starts at 1.0)", status: "failed", error: pub2Rv.message});
+								}
+
+								// Clean up second PO (archive it since it has published history)
+								$executeAPI(session, "PostOrder/archive_post_order", {post_order_id: secondPoId});
+							}
+							else
+							{
+								testResults.push({step: "Test 41: create_post_order after archive", status: "failed", error: secondPoRv.message, rc: secondPoRv.rc});
+							}
+						}
+						else
+						{
+							testResults.push({step: "Test 41: create_post_order after archive", status: "failed", error: "Could not archive first PO: " + archRv.message});
+						}
+					}
+					else
+					{
+						testResults.push({step: "Test 41: create_post_order after archive", status: "failed", error: "Could not publish first PO: " + pubRv.message});
+					}
+				}
+				else
+				{
+					testResults.push({step: "Test 41: create_post_order after archive", status: "failed", error: "Could not create first PO: " + firstPoRv.message});
+				}
+				$executeAPI(session, "Asset/delete_post", {post_id: tempPost9Rv.post_id});
+			}
+			else
+			{
+				testResults.push({step: "Test 41: create_post_order after archive", status: "failed", error: "Could not create temp post"});
+			}
+
+			// =================================================================
 			// Cleanup
 			// =================================================================
 

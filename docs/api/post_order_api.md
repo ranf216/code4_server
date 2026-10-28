@@ -22,7 +22,7 @@ A non-zero `rc` indicates an error. Additional data fields are merged into this 
 
 A Post Order is a structured set of instructions attached to a specific post (guard station, gate, patrol point, etc.) within a community. It defines the duties, procedures, emergency protocols, and any other guidance an officer needs when assigned to that post.
 
-- Each post can have at most **one active Post Order** at a time.
+- Each post can have at most **one active Post Order** (in Draft or Published status) at a time. Once a Post Order is archived, a new one can be created for the same post.
 - Post Orders are composed of one or more **sections**, each with a configurable section type, title, description, optional admin-only notes, and optional file attachments (up to 5 per section).
 - Administrators create and manage Post Orders. Officers and residents/clients consume them in read-only form with role-appropriate visibility.
 
@@ -297,7 +297,7 @@ Officers can acknowledge having read a specific version of a Post Order. Each of
     | 201 | invalid user token | Invalid or expired token. |
     | 676 | invalid post order section type | One or more sections have an invalid `section_type`. |
     | 679 | maximum number of attachments per section reached | A section has more than 5 attachment file IDs. |
-    | 681 | a post order already exists for this post | The specified post already has an active Post Order. |
+    | 681 | a post order already exists for this post | The specified post already has an active (draft or published) Post Order. Archived Post Orders do not block creation of a new one. |
     | 772 | post not found | No active post exists with the given `post_id`. |
 
 - **Usage & Flows:**
