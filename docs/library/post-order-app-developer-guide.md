@@ -448,7 +448,7 @@ Records the officer's acknowledgement of a specific or the current published ver
 | `ERR_POST_ORDER_DRAFT_EXISTS` | 678 | a draft already exists for this post order | Reserved |
 | `ERR_POST_ORDER_MEDIA_LIMIT_REACHED` | 679 | maximum number of attachments per section reached | >5 attachments per section |
 | `ERR_POST_ORDER_VERSION_NOT_FOUND` | 680 | post order version not found | Bad version_id |
-| `ERR_POST_ORDER_ALREADY_EXISTS` | 681 | a post order already exists for this post | Duplicate PO per post |
+| `ERR_POST_ORDER_ALREADY_EXISTS` | 681 | a post order already exists for this post | Active (draft/published) PO exists for post |
 
 ---
 
