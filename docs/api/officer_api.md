@@ -49,7 +49,7 @@ Managers can record performance evaluations for officers. Each evaluation contai
     | `#token` | string | Yes | An Admin session token. |
     | `community_id` | integer | No | Filter by community. `0` or omitted returns all communities. |
     | `include_inactive` | boolean | No | When `true`, inactive officers are included. Default: `false`. |
-    | `search_text` | string | No | Free-text search across first name, last name, email, phone number, and community name. |
+    | `search_text` | string | No | Free-text search across first name, last name, email, phone number, community name, title, roles, certification badges, and address. |
     | `sort_by` | string | No | Sort column. Accepted values: `first_name`, `last_name`, `community`, `created_on`. Default: `first_name`. |
     | `sort_dir` | string | No | Sort direction: `asc` or `desc`. Default: `asc`. |
 
@@ -111,7 +111,7 @@ Managers can record performance evaluations for officers. Each evaluation contai
     | 201 | invalid user token | Invalid or expired token. |
 
 - **Usage & Flows:**
-    Called by the management portal to populate the Officers List (SDS 4.3.1). The `include_inactive` parameter maps to the active/inactive filter toggle (SDS 4.3.5). The `community_id` parameter implements the community name filter. The `search_text` parameter supports free-text search across all table columns (SDS 4.3.5). The `sort_by` and `sort_dir` parameters allow column-based sorting. Also used from the community detail view to show officers per community (SDS 4.2.2).
+    Called by the management portal to populate the Officers List (SDS 4.3.1). The `include_inactive` parameter maps to the active/inactive filter toggle (SDS 4.3.5). The `community_id` parameter implements the community name filter. The `search_text` parameter supports free-text search across all profile columns — first name, last name, email, phone number, community name, title, roles, certification badges, and address (SDS 4.3.5). The `sort_by` and `sort_dir` parameters allow column-based sorting. Also used from the community detail view to show officers per community (SDS 4.2.2).
 
 ---
 

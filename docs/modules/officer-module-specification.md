@@ -350,7 +350,7 @@ if (officer.USR_LAST_LOGIN !== null)
 **Implementation:** `get_officers()` accepts:
 - `community_id` — filter by specific community (0 = all)
 - `include_inactive` — boolean toggle (default false = active only)
-- `search_text` — free-text search across first name, last name, email, phone, and community name
+- `search_text` — free-text search across first name, last name, email, phone, community name, title, roles, certification badges, and address (SDS 4.3.5)
 - `sort_by` — validated against whitelist: `first_name`, `last_name`, `community`, `created_on`
 - `sort_dir` — `asc` or `desc`
 
@@ -516,7 +516,7 @@ SELECT ... FROM `user`
 WHERE USR_TYPE=? AND USD_DELETED_ON IS NULL AND OFC_DELETED_ON IS NULL
     [AND USD_COM_ID=?]           -- if community_id > 0
     [AND USR_STATUS = 1]         -- if !include_inactive
-    [AND (LIKE search across 5 columns)]  -- if search_text provided
+    [AND (LIKE search across 9 columns)]  -- if search_text provided
 ORDER BY ${validSortColumns[sort_by]} ${direction}
 ```
 

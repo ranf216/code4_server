@@ -6,7 +6,7 @@ module.exports =
                                                     "#token"                        : "s",
                                                     "community_id"                  : "o:i:0***Filter by community ID (0 = all)",
                                                     "include_inactive"              : "o:b:false***Include inactive officers (default false)",
-                                                    "search_text"                   : "o:s:***Free-text search across name, email, phone, community",
+                                                    "search_text"                   : "o:s:***Free-text search across name, email, phone, community, title, roles, badges, address",
                                                     "sort_by"                       : "o:s:***Sort column: first_name, last_name, community, created_on",
                                                     "sort_dir"                      : "o:s:asc***Sort direction: asc or desc",
                                                 },
