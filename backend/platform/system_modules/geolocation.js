@@ -60,6 +60,29 @@ module.exports = class
 		return this.isStatusOK();
 	}
 
+	setLocationByZipCode(zip, countryCode = "us")
+	{
+		let url = `${this.apiProtocol}://maps.googleapis.com/maps/api/geocode/json?` +
+										($Utils.empty(this.apiKey) ? "" : "key=" + this.apiKey + "&") +
+										`sensor=false&language=${this.apiLang}` +
+										`&components=postal_code:${encodeURIComponent(zip)}|country:${encodeURIComponent(countryCode)}`;
+
+		let data = $Utils.urlGet(url);
+
+		try
+		{
+			this.jsondata = JSON.parse(data);
+		}
+		catch(e)
+		{
+			$Logger.logString($Const.LL_ERROR, `Geolocation.setLocationByZipCode retuned invalid json. URL: ${url}. Response: '${data}'`);
+			this.jsondata = null;
+		}
+
+		this._checkStatus();
+		return this.isStatusOK();
+	}
+
 	getTimeAndDistanceToDestination(lat, lon)
 	{
 		const headers = {

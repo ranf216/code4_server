@@ -244,6 +244,11 @@ module.exports = class
             return $ERRS.ERR_DIALER_INVALID_DIRECTION;
         }
 
+        if (!(this.$phone = $Utils.validatePhone(this.$phone)))
+        {
+            return $ERRS.ERR_INVALID_PHONE_NUMBER;
+        }
+
         let now = $Utils.now();
 
         $Db.executeQuery(
@@ -479,6 +484,11 @@ module.exports = class
 
     send_sms()
     {
+        if (!(this.$phone_number = $Utils.validatePhone(this.$phone_number)))
+        {
+            return $ERRS.ERR_INVALID_PHONE_NUMBER;
+        }
+
         return $Sms.sendSms(this.$phone_number, this.$message);
     }
 };
