@@ -211,6 +211,51 @@ module.exports =
 		vals.config_file_name = encConfigFileName;
 
 		return {...rc, ...vals};
+	},
+
+	decryptConfig(prefix, domain)
+	{
+		let vals = {};
+		let rc = $ERRS.ERR_SUCCESS;
+
+		let envs = require($Const.CONFIG_PATH + "/environments.js");
+		let environment = "default";
+		let decConfigFileName = `.${prefix}.config.dec.json`;
+		let encConfigFileName = ".config.enc";
+
+
+		if (domain != "default")
+		{
+			if ($Utils.isset(envs[domain]))
+			{
+				environment = envs[domain];
+				encConfigFileName = `.${environment}.config.enc`;
+			}
+			else
+			{
+				return $ERRS.ERR_FILE_NOT_FOUND;
+			}
+		}
+
+		if (!fs.existsSync($Const.CONFIG_PATH + "/" + encConfigFileName))
+		{
+			return $ERRS.ERR_FILE_NOT_FOUND;
+		}
+
+		const encData = $Utils.fileGetContents($Const.CONFIG_PATH + "/" + encConfigFileName);
+		const decData = decryptData(encData, this.get("env_uid"));
+		const jsonData = JSON.parse(decData);
+		const json = JSON.stringify(jsonData, null, 4);
+
+		const rv = $Files.saveFile($Const.CONFIG_PATH + "/" + decConfigFileName, json);
+		if ($Err.isERR(rv))
+		{
+			return rv;
+		}
+
+		vals.config_file_name = decConfigFileName;
+
+		return {...rc, ...vals};
 	}
 };
 
