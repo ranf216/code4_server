@@ -10,9 +10,9 @@ module.exports = {
 	"env_uid"								: "514d8eb3ddb89845d50f96877ad22e8965b5ad86eb0714679c8356c23ad61069",
 	"env_is_production"						: false,
 	"env_display"							: true,
-	"env_name"								: "STAGING",
-	"env_text_color"						: "#3A88FF",
-	"env_bkg_color"							: "#ffffff",
+	"env_name"								: "SANDBOX",
+	"env_text_color"						: "#11053B",
+	"env_bkg_color"							: "#FFFC41",
 
 	// Access rights
 	"enable_superuser_api"					: false,
@@ -28,7 +28,7 @@ module.exports = {
 	"enable_db_exporter"					: true,
 	"enable_sql_formatter"					: true,
 	"enable_doc_library"					: true,
-	"enable_system_login"					: false,
+	"enable_system_login"					: true,
 	"restrict_superuser_api_to_ip"			: [],
 	"restrict_upgrade_api_to_ip"			: [],
 	"restrict_test_api_to_ip"				: [],
@@ -46,11 +46,11 @@ module.exports = {
 	// Basic
 	"ignore_ssl_cert"						: true,
 	"use_ssl"								: false,
-	"debug_email"							: true,
+	"debug_email"							: false,
 	"user_cache_mode"						: 2, // 0 = none, 1 = db mem table, 2 = file system cache
 	"using_s3"								: true,
 	"fail_deprecated_api"					: false,
-	"enable_set_file_access"				: false,
+	"enable_set_file_access"				: true,
 	"default_language"						: "en",
 	"default_phone_country_code"			: "us",
 
@@ -82,7 +82,7 @@ module.exports = {
 	"cache_path"							: $Const.INFRA_ROOT + "/runtime/cache",
 	"key_value_sets_path"					: $Const.INFRA_ROOT + "/runtime/key_value_sets",
 	"temp_path"								: $Const.INFRA_ROOT + "/content/temp",
-	"multipart_temp_path"					: $Const.INFRA_ROOT + "/content/temp",
+	"multipart_temp_path"					: "multipart_temp_path",
 
 	// File access
 	"standard_file_access"					: {"user" : "ec2-user", "group" : "ec2-user", "mode" : "0664"},
@@ -107,7 +107,7 @@ module.exports = {
 	"password_valid_for_seconds"			: 0, // Indefinitely
 	"#open_api_passcode"					: "{Any Passcode}",
 	"password_criteria"						: {
-												"force_criteria"						: false,
+												"force_criteria"						: true,
 												"min_chars"								: 8,
 												"max_chars"								: 18,
 												"has_lowercase"							: true,
@@ -122,12 +122,12 @@ module.exports = {
 
 	// Database
 	"#db_user"								: "{user name}",
-	"db_schema"								: "code4_staging",
+	"db_schema"								: "code4_sand",
 	"#db_pwd"								: "{password}",
-	"db_instance"							: "development-db.cli8ezs4cwqd.us-west-1.rds.amazonaws.com",
+	"db_instance"							: "fightback-db.cli8ezs4cwqd.us-west-1.rds.amazonaws.com",
 	"db_port"								: "3306",
 	"db_pool_size"							: 50,
-	"db_throw_exception_on_error"			: true,
+	"db_throw_exception_on_error"			: false,
 	"db_log_exception_on_error"				: true,
 	"db_ignore_ssl"							: false, // Turn true for production on pods
 
@@ -185,13 +185,13 @@ module.exports = {
 
 	// SMS
 	"sms"									: {
-												"provider"								: "{provider name}", // twilio
+												"provider"								: "twilio", // twilio
 												"#auth_id"								: "{auth_id}",
 												"#auth_token"							: "{Auth token}",
-												"messaging_service_sid"					: "{Messaging service sid}",
-												"sender_num"							: "{Sender num}",
+												"messaging_service_sid"					: "MGdcc62703ab429ae60c953a82e22b5926",
+												"sender_num"							: "+18448997473",
 												"send_timeout_ms"						: 5000,
-												"send_to_debug_log"						: true,
+												"send_to_debug_log"						: false,
 											},
 
 	"otp_verification"						: {
@@ -201,9 +201,9 @@ module.exports = {
 												"max_tries"								: 3,
 												"return_is_registered"					: true,
 												// Development
-												"send_otp_to_debug_log"					: true,
-												"override_otp_code_verification"		: true,
-												"enable_backdoor_code"					: false,
+												"send_otp_to_debug_log"					: false,
+												"override_otp_code_verification"		: false,
+												"enable_backdoor_code"					: true,
 												"#backdoor_code"						: "{Backdoor Code}",
 												"#predef_phone_nums"					: "{Array of phone numbers}",
 												"#predef_email_addresses"				: "{Array of email addresses}",
@@ -264,7 +264,7 @@ module.exports = {
 
 	// AWS		
 	"aws"									: {
-												"bucket_name"							: "com.iuetechnologies.code4.staging",
+												"bucket_name"							: "com.iuetechnologies.code4.sand",
 												"#access_key"							: "{AWS Access Key}",
 												"#access_secret"						: "{AWS Access Secret}",
 												"region"								: "us-west-1",
