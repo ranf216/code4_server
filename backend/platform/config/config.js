@@ -264,7 +264,7 @@ module.exports = {
 
 	// AWS		
 	"aws"									: {
-												"bucket_name"							: "com.iuetechnologies.code4.sand",
+												"bucket_name"							: "net.getaxis360.code4.sand",
 												"#access_key"							: "{AWS Access Key}",
 												"#access_secret"						: "{AWS Access Secret}",
 												"region"								: "us-west-1",
