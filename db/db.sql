@@ -34,7 +34,7 @@ CREATE TABLE  `bulk_action` (
   `BAC_CREATED_ON` datetime NOT NULL,
   `BAC_COMPLETED_ON` datetime DEFAULT NULL,
   PRIMARY KEY (`BAC_ID`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 --
 -- Dumping data for table `bulk_action`
@@ -53,7 +53,7 @@ CREATE TABLE `cache_version` (
   `CVR_TABLE` varchar(100) NOT NULL,
   `CVR_VERSION` int unsigned NOT NULL DEFAULT 1,
   PRIMARY KEY (`CVR_TABLE`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 --
 -- Dumping data for table `cache_version`
@@ -83,7 +83,7 @@ CREATE TABLE `call_log` (
   KEY `idx_clg_entity_id` (`CLG_ENTITY_ID`),
   KEY `idx_clg_usr_id` (`CLG_USR_ID`),
   KEY `idx_clg_created_on` (`CLG_CREATED_ON`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 /*!40000 ALTER TABLE `call_log` DISABLE KEYS */;
 /*!40000 ALTER TABLE `call_log` ENABLE KEYS */;
@@ -106,7 +106,7 @@ CREATE TABLE `change_log` (
   KEY `IX_CHL_TABLE` (`CHL_TABLE`),
   KEY `XI_CHL_RECORD_ID` (`CHL_RECORD_ID`),
   KEY `IX_CHL_CREATED_ON` (`CHL_CREATED_ON`) USING BTREE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 --
 -- Dumping data for table `change_log`
@@ -261,7 +261,7 @@ CREATE TABLE  `debug_log` (
   PRIMARY KEY (`DLG_ID`),
   KEY `IX_DLG_REQUEST_NAME` (`DLG_REQUEST_NAME`),
   KEY `IX_DLG_CREATED_ON` (`DLG_CREATED_ON`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 --
 -- Dumping data for table `debug_log`
@@ -288,7 +288,7 @@ CREATE TABLE `dialer_session` (
   PRIMARY KEY (`DLS_ID`),
   KEY `idx_dls_usr_id` (`DLS_USR_ID`),
   KEY `idx_dls_status` (`DLS_STATUS`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 /*!40000 ALTER TABLE `dialer_session` DISABLE KEYS */;
 /*!40000 ALTER TABLE `dialer_session` ENABLE KEYS */;
@@ -314,7 +314,7 @@ CREATE TABLE `dialer_queue_item` (
   KEY `idx_dqi_dls_id` (`DQI_DLS_ID`),
   KEY `idx_dqi_entity_id` (`DQI_ENTITY_ID`),
   KEY `idx_dqi_status` (`DQI_STATUS`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 /*!40000 ALTER TABLE `dialer_queue_item` DISABLE KEYS */;
 /*!40000 ALTER TABLE `dialer_queue_item` ENABLE KEYS */;
@@ -335,7 +335,7 @@ CREATE TABLE `entity_lock` (
   PRIMARY KEY (`ENL_ID`),
   UNIQUE KEY `UQ_ENL_TABLE_RECORD` (`ENL_TABLE`, `ENL_RECORD_ID`),
   KEY `IX_ENL_EXPIRES_ON` (`ENL_EXPIRES_ON`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 --
 -- Dumping data for table `entity_lock`
@@ -849,7 +849,7 @@ CREATE TABLE `file` (
   KEY `FK_FIL_USR_ID` (`FIL_USR_ID`),
   KEY `IX_FIL_FILE_NAME` (`FIL_FILE_NAME`),
   CONSTRAINT `FK_FIL_USR_ID` FOREIGN KEY (`FIL_USR_ID`) REFERENCES `user` (`USR_ID`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 --
 -- Dumping data for table `file`
@@ -875,7 +875,7 @@ CREATE TABLE `file_multipart` (
   PRIMARY KEY (`FMP_ID`),
   KEY `FK_FMP_USR_ID` (`FMP_USR_ID`),
   CONSTRAINT `FK_FMP_USR_ID` FOREIGN KEY (`FMP_USR_ID`) REFERENCES `user` (`USR_ID`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 --
 -- Dumping data for table `file_multipart`
@@ -894,7 +894,7 @@ CREATE TABLE `key_value` (
   `KVL_KEY` varchar(200) NOT NULL,
   `KVL_VALUE` text NOT NULL,
   PRIMARY KEY (`KVL_KEY`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 --
 -- Dumping data for table `key_value`
@@ -924,7 +924,7 @@ CREATE TABLE `log` (
   KEY `IX_LOG_REQUEST_NAME` (`LOG_REQUEST_NAME`),
   KEY `IX_LOG_INTERNAL_STATUS` (`LOG_INTERNAL_STATUS`),
   KEY `IX_LOG_CREATED_ON` (`LOG_CREATED_ON`) USING BTREE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 --
 -- Dumping data for table `log`
@@ -947,7 +947,7 @@ CREATE TABLE `login_log` (
   PRIMARY KEY (`LOL_ID`),
   KEY `IX_LOL_USR_ID` (`LOL_USR_ID`),
   KEY `IX_LOL_USR_TOKEN` (`LOL_USR_TOKEN`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 --
 -- Dumping data for table `login_log`
@@ -970,7 +970,7 @@ CREATE TABLE `mailer_queue` (
   `MQU_IS_FAILED` tinyint unsigned NOT NULL DEFAULT '0',
   `MQU_CREATED_ON` datetime NOT NULL,
   PRIMARY KEY (`MQU_ID`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 --
 -- Dumping data for table `mailer_queue`
@@ -1002,7 +1002,7 @@ CREATE TABLE `notification` (
   KEY `IX_NTF_USR_ID` (`NTF_USR_ID`),
   KEY `IX_NTF_USR_READ` (`NTF_USR_ID`, `NTF_IS_READ`, `NTF_DELETED_ON`),
   KEY `IX_NTF_CREATED_ON` (`NTF_CREATED_ON`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 --
 -- Dumping data for table `notification`
@@ -1025,7 +1025,7 @@ CREATE TABLE `otp_auth` (
   `OTP_TRY_NUM` int unsigned NOT NULL DEFAULT '0',
   PRIMARY KEY (`OTP_FIELD`) USING BTREE,
   KEY `IX_OTP_AUTH_KEY` (`OTP_AUTH_KEY`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 --
 -- Dumping data for table `otp_auth`
@@ -1049,7 +1049,7 @@ CREATE TABLE `queue` (
   PRIMARY KEY (`QUE_MSG_ID`),
   KEY `IX_QUE_ID` (`QUE_ID`),
   KEY `IX_QUE_LOCK_ID` (`QUE_LOCK_ID`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 --
 -- Dumping data for table `queue`
@@ -1070,7 +1070,7 @@ CREATE TABLE `service` (
   `SRV_HEARTBEAT` bigint unsigned NOT NULL,
   `SRV_METADATA` text NOT NULL,
   PRIMARY KEY (`SRV_ID`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 --
 -- Dumping data for table `service`
@@ -1092,7 +1092,7 @@ CREATE TABLE  `social_auth` (
   `SCA_AUTH_KEY` varchar(128) NOT NULL,
   PRIMARY KEY (`SCA_USER_ID_HASH`,`SCA_LOGIN_AUTHORITY`) USING BTREE,
   KEY `IX_SCA_AUTH_KEY` (`SCA_AUTH_KEY`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 --
 -- Dumping data for table `social_auth`
@@ -1117,7 +1117,7 @@ CREATE TABLE  `system_user` (
   `STU_STATUS` tinyint unsigned NOT NULL DEFAULT '1',
   PRIMARY KEY (`STU_USER_NAME`),
   KEY `IX_STU_TOKEN` (`STU_TOKEN`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 --
 -- Dumping data for table `system_user`
@@ -1147,7 +1147,7 @@ CREATE TABLE  `timed_message` (
   KEY `IX_TIM_EXTRA_INDEX_INT` (`TIM_EXTRA_INDEX_INT`),
   KEY `IX_TIM_EXTRA_INDEX_STR` (`TIM_EXTRA_INDEX_STR`),
   KEY `IX_TIM_LOCK_ID` (`TIM_LOCK_ID`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 --
 -- Dumping data for table `timed_message`
@@ -1195,7 +1195,7 @@ CREATE TABLE `user` (
   KEY `IX_USR_EMAIL` (`USR_EMAIL`),
   KEY `IX_USR_TOKEN` (`USR_TOKEN`),
   KEY `IX_USR_PHONE` (`USR_PHONE_NUM`) USING BTREE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 --
 -- Dumping data for table `user`
@@ -1256,7 +1256,7 @@ CREATE TABLE `user_details` (
   KEY `IX_USD_COM_ID` (`USD_COM_ID`),
   CONSTRAINT `FK_USD_USR_ID` FOREIGN KEY (`USD_USR_ID`) REFERENCES `user` (`USR_ID`),
   CONSTRAINT `FK_USD_COM_ID` FOREIGN KEY (`USD_COM_ID`) REFERENCES `community` (`COM_ID`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 --
 -- Dumping data for table `user_details`
@@ -1311,7 +1311,7 @@ CREATE TABLE `user_mem` (
   `USR_ROLE_DENY` int unsigned NOT NULL DEFAULT '0',
   PRIMARY KEY (`USR_ID`) USING HASH,
   KEY `IX_MUSR_TOKEN` (`USR_TOKEN`) USING HASH
-) ENGINE=MEMORY DEFAULT CHARSET=utf8mb3;
+) ENGINE=MEMORY DEFAULT CHARSET=utf8mb4;
 
 --
 -- Dumping data for table `user_mem`
@@ -1335,7 +1335,7 @@ CREATE TABLE `user_online_log` (
   PRIMARY KEY (`UOL_ID`),
   KEY `FK_UOL_USR_ID` (`UOL_USR_ID`),
   CONSTRAINT `FK_UOL_USR_ID` FOREIGN KEY (`UOL_USR_ID`) REFERENCES `user` (`USR_ID`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 --
 -- Dumping data for table `user_online_log`
@@ -1357,7 +1357,7 @@ CREATE TABLE `user_online_status` (
   PRIMARY KEY (`UOS_USR_ID`,`UOS_SERVICE_ID`),
   KEY `FK_UOS_USR_ID` (`UOS_USR_ID`),
   CONSTRAINT `FK_UOS_USR_ID` FOREIGN KEY (`UOS_USR_ID`) REFERENCES `user` (`USR_ID`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 --
 -- Dumping data for table `user_online_status`
