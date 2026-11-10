@@ -272,8 +272,8 @@ module.exports = {
 											},
 
 	"mailer_accounts"						: {
-												"from_name"								: "{default name}",
-												"from_email"							: "{default email}",
+												"from_name"								: "Axis360",
+												"from_email"							: "noreply@getaxis360.com",
 											//	"from_name_SUFFIX"						: "suffix", // to be used for muliple accounts in both Sendgrid and MalieQueue
 											//	"from_email_SUFFIX"						: "suffix", // to be used for muliple accounts in both Sendgrid and MalieQueue
 											},
