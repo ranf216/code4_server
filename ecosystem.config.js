@@ -51,6 +51,16 @@ module.exports = {
       ignore_watch : [__dirname + "/.git", __dirname + "/backend/content", __dirname + "/backend/runtime", __dirname + "/backend/key_value_sets" ],
     },
     {
+      name   : "code4_send_mail_from_queue_sand",
+      script: __dirname + "/backend/platform/jobs/cron_send_mail_from_queue.js",
+      // Specify which folder to watch
+//      watch: ["backend/platform/api", "backend/platform/config"],
+      // Specify delay between watch interval
+      watch_delay: 1000,
+      // Specify which folder to ignore 
+      ignore_watch : [__dirname + "/.git", __dirname + "/backend/content", __dirname + "/backend/runtime", __dirname + "/backend/key_value_sets" ],
+    },
+    {
       name   : "code4_cron_shift_lifecycle_sand",
       script: __dirname + "/backend/platform/jobs/cron_shift_lifecycle_check.js",
       watch_delay: 1000,
