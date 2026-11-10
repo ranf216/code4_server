@@ -288,10 +288,10 @@ module.exports = {
 											},
 
 	"sendgrid_smtp"							: {
-												"use_sendgrid_smtp"						: false,
+												"use_sendgrid_smtp"						: true,
 												"#key"									: "{sendgrid api key}",
 												"log_file"								: $Const.INFRA_ROOT + "/runtime/log/sendgrid.log",
-												"is_debug_mode"							: true,
+												"is_debug_mode"							: false,
 											},
 
 	"openai"								: {
