@@ -15,7 +15,7 @@ module.exports =
 		// "openai",
         // "notes",
         // "queue_service",
-        // "sendgrid",
+        "sendgrid",
         // "service",
         "sms",
         "socket_service",
