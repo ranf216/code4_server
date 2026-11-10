@@ -10,7 +10,7 @@ module.exports =
         // "geolocation",
         // "json_db",
         "mailer",
-        // "mailer_queue",
+        "mailer_queue",
         "message_queue",
 		// "openai",
         // "notes",

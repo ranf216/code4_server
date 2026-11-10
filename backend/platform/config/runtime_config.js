@@ -16,6 +16,10 @@ module.exports =
 					],
 	},
 
+	"sendgrid_template"													: {
+		"account_login"														: "d-18e427b5bf084321a63c0358d675f80f",
+	},
+
 	"NOTIFICATION_MAX_PAGE_SIZE"										: 100,
 	"ASSETS_LIST_PAGE_SIZE"												: 50,
 	"POSTS_LIST_PAGE_SIZE"												: 50,
