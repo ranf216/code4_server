@@ -195,7 +195,7 @@ module.exports = {
 											},
 
 	"otp_verification"						: {
-												"num_of_digits"							: 4,
+												"num_of_digits"							: 6,
 												"code_valid_for_seconds"				: 300,
 												"auth_key_valid_for_seconds"			: 3600,
 												"max_tries"								: 3,
